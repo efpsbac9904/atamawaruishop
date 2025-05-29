@@ -1,1 +1,171 @@
-index
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>やることリスト</title>
+    <link rel="icon" href="favicon.ico" type="image/x-icon">
+    <!-- 外部CSSファイルへのリンク -->
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <div id="currentTime"></div>
+        <h1>やることリスト</h1>
+        <input type="text" id="taskInput" placeholder="新しいタスクを入力" autocomplete="off">
+        <input type="date" id="taskDeadlineDate" placeholder="YYYY-MM-DD">
+        <input type="time" id="taskDeadlineTime" placeholder="HH:MM">
+        <button onclick="addTask()">追加</button>
+        <ul id="taskList"></ul>
+    </div>
+
+    <script>
+        // ローカルストレージが使用可能かチェック
+        function isLocalStorageAvailable() {
+            try {
+                localStorage.setItem('test', 'test');
+                localStorage.removeItem('test');
+                return true;
+            } catch (e) {
+                return false;
+            }
+        }
+
+        const storageAvailable = isLocalStorageAvailable();
+
+        function updateCurrentTime() {
+            const now = new Date();
+            document.getElementById('currentTime').textContent = now.toLocaleString();
+        }
+        setInterval(updateCurrentTime, 1000);
+        updateCurrentTime();
+
+        function loadTasks() {
+            if (!storageAvailable) return;
+            const savedTasks = JSON.parse(localStorage.getItem('tasks')) || [];
+            for (const task of savedTasks) {
+                createTaskElement(task.text, task.deadline);
+            }
+            sortTasks();
+        }
+
+        function saveTasks() {
+            if (!storageAvailable) return;
+            const tasks = [];
+            document.querySelectorAll('#taskList li').forEach(li => {
+                const text = li.querySelector('.task-details span').textContent;
+                const deadline = li.getAttribute('data-deadline');
+                tasks.push({ text, deadline });
+            });
+            localStorage.setItem('tasks', JSON.stringify(tasks));
+        }
+
+        function sortTasks() {
+            const taskList = document.getElementById('taskList');
+            const tasks = Array.from(taskList.children);
+
+            tasks.sort((a, b) => {
+                const deadlineA = new Date(a.getAttribute('data-deadline'));
+                const deadlineB = new Date(b.getAttribute('data-deadline'));
+                if (isNaN(deadlineA)) return 1;
+                if (isNaN(deadlineB)) return -1;
+                return deadlineA - deadlineB;
+            });
+
+            tasks.forEach(task => taskList.appendChild(task));
+        }
+
+        function createTaskElement(taskText, deadline) {
+            const taskList = document.getElementById('taskList');
+            const li = document.createElement('li');
+            const taskDetails = document.createElement('div');
+            taskDetails.className = 'task-details';
+
+            const textElement = document.createElement('span');
+            textElement.textContent = taskText;
+            taskDetails.appendChild(textElement);
+
+            const deadlineText = document.createElement('small');
+            taskDetails.appendChild(deadlineText);
+
+            const buttonContainer = document.createElement('div');
+            buttonContainer.className = 'button-container';
+
+            const deleteButton = document.createElement('button');
+            deleteButton.textContent = '削除';
+            deleteButton.onclick = function () {
+                taskList.removeChild(li);
+                saveTasks();
+            };
+
+            const editButton = document.createElement('button');
+            editButton.textContent = '期限編集';
+            editButton.className = 'edit-deadline';
+            editButton.onclick = function () {
+                const newDate = prompt('新しい期限の日付 (YYYY-MM-DD):', deadline ? deadline.split('T')[0] : '');
+                const newTime = prompt('新しい期限の時刻 (HH:MM):', deadline ? deadline.split('T')[1] : '');
+                if (newDate && newTime) {
+                    const newDeadline = `${newDate}T${newTime}`;
+                    li.setAttribute('data-deadline', newDeadline);
+                    updateDeadlineText(newDeadline);
+                    sortTasks();
+                    saveTasks();
+                }
+            };
+
+            buttonContainer.appendChild(editButton);
+            buttonContainer.appendChild(deleteButton);
+
+            li.appendChild(taskDetails);
+            li.appendChild(buttonContainer);
+            taskList.appendChild(li);
+            li.setAttribute('data-deadline', deadline || '');
+
+            function updateDeadlineText(deadline) {
+                if (deadline) {
+                    const deadlineDate = new Date(deadline);
+                    const now = new Date();
+                    const diff = deadlineDate - now;
+                    if (diff <= 0) {
+                        deadlineText.textContent = `期限: ${deadlineDate.toLocaleString()} (期限切れ)`;
+                    } else {
+                        const hours = Math.floor(diff / (1000 * 60 * 60));
+                        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                        deadlineText.textContent = `期限: ${deadlineDate.toLocaleString()} (残り: ${hours}時間${minutes}分)`;
+                    }
+                } else {
+                    deadlineText.textContent = '期限: 未設定';
+                }
+            }
+
+            updateDeadlineText(deadline);
+            setInterval(() => updateDeadlineText(deadline), 60000);
+        }
+
+        function addTask() {
+            const taskInput = document.getElementById('taskInput');
+            const taskDeadlineDate = document.getElementById('taskDeadlineDate');
+            const taskDeadlineTime = document.getElementById('taskDeadlineTime');
+
+            if (taskInput.value.trim() === '') {
+                alert('タスクを入力してください。');
+                return;
+            }
+
+            const deadline = taskDeadlineDate.value && taskDeadlineTime.value
+                ? `${taskDeadlineDate.value}T${taskDeadlineTime.value}`
+                : null;
+
+            createTaskElement(taskInput.value, deadline);
+            saveTasks();
+            sortTasks();
+
+            taskInput.value = '';
+            taskDeadlineDate.value = '';
+            taskDeadlineTime.value = '';
+        }
+
+        window.onload = loadTasks;
+    </script>
+</body>
+</html>
