@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>学習記録分析サイト</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f9f9f9;
+        }
+        header {
+            background-color: #4CAF50;
+            color: white;
+            text-align: center;
+            padding: 1rem;
+        }
+        main {
+            padding: 1rem;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        input[type="file"] {
+            margin: 1rem 0;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .chart {
+            margin-top: 2rem;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>学習記録分析サイト</h1>
+    </header>
+    <main>
+        <div class="container">
+            <h2>学習データをアップロード</h2>
+            <p>学習記録データ（CSV形式）をアップロードして分析結果を確認できます。</p>
+            <input type="file" id="fileInput" accept=".csv">
+            <button onclick="analyzeData()">分析を開始</button>
+
+            <div class="chart" id="chartContainer">
+                <!-- グラフをここに表示 -->
+            </div>
+        </div>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        function analyzeData() {
+            const fileInput = document.getElementById('fileInput');
+            const file = fileInput.files[0];
+
+            if (!file) {
+                alert('ファイルを選択してください。');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const data = event.target.result;
+                const rows = data.split('\n').map(row => row.split(','));
+
+                const labels = rows[0].slice(1); // 最初の行から日付や項目名を取得
+                const values = rows.slice(1).map(row => row.slice(1).map(Number));
+
+                renderChart(labels, values);
+            };
+
+            reader.readAsText(file);
+        }
+
+        function renderChart(labels, values) {
+            const ctx = document.createElement('canvas');
+            const chartContainer = document.getElementById('chartContainer');
+            chartContainer.innerHTML = '';
+            chartContainer.appendChild(ctx);
+
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: values.map((valueSet, index) => ({
+                        label: `データセット ${index + 1}`,
+                        data: valueSet,
+                        borderColor: `hsl(${index * 60}, 70%, 50%)`,
+                        fill: false
+                    }))
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        },
+                        title: {
+                            display: true,
+                            text: '学習記録分析結果'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+</html>
