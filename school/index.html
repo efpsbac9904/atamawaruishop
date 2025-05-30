@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ようこそ！超弩級バカ高等学校（チョーバカ！）へ！</title>
+    <style>
+        /* --- 全体的なスタイル --- */
+        body {
+            font-family: 'MS PGothic', 'Osaka', sans-serif; /* 懐かしのフォント */
+            background-color: #FFFF00; /* 目がチカチカする黄色 */
+            color: #FF00FF; /* 毒々しいマゼンタ */
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden; /* 横スクロール禁止！…のはず */
+            background-image: url("https://www.transparenttextures.com/patterns/stardust.png"); /* キラキラ背景 */
+        }
+
+        .container {
+            width: 90%;
+            max-width: 900px; /* 一応最大幅 */
+            margin: 20px auto;
+            padding: 15px;
+            background-color: #00FFFF; /* サイバーな水色 */
+            border: 5px dashed #FF0000; /* 赤い破線ボーダー */
+            box-shadow: 10px 10px 0px #0000FF; /* 青いドロップシャドウ */
+            border-radius: 15px; /* ちょっと丸い */
+        }
+
+        /* --- ヘッダー --- */
+        header {
+            text-align: center;
+            padding: 20px;
+            background-color: #FF69B4; /* ホットピンク */
+            border-bottom: 10px groove #FFFF00; /* 黄色い溝ボーダー */
+        }
+
+        header h1 {
+            font-size: 2.5em; /* やたらデカい */
+            color: #FFFFFF;
+            text-shadow: 3px 3px 0 #000000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000; /* 黒縁取り */
+            margin: 0;
+            font-family: "Comic Sans MS", cursive, sans-serif; /* コミックソング風 */
+        }
+
+        header img.logo {
+            width: 150px; /* ロゴサイズ */
+            height: auto;
+            animation: spin 5s linear infinite; /* ロゴ回転！ */
+            margin-top: 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* --- ナビゲーション --- */
+        nav ul {
+            list-style-type: none;
+            padding: 0;
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        nav ul li {
+            display: inline-block; /* 横並び */
+            margin: 0 10px;
+        }
+
+        nav ul li a {
+            text-decoration: none;
+            color: #0000FF; /* 青文字 */
+            background-color: #ADFF2F; /* 黄緑背景 */
+            padding: 10px 15px;
+            border: 3px outset #008000; /* 緑の浮き出しボーダー */
+            border-radius: 10px;
+            font-weight: bold;
+            transition: transform 0.2s; /* ちょっとした動き */
+        }
+
+        nav ul li a:hover {
+            background-color: #FFD700; /* ゴールドに変化 */
+            color: #FF0000;
+            transform: scale(1.1); /* ちょいデカくなる */
+        }
+
+        /* --- セクションごとのスタイル --- */
+        section {
+            margin-bottom: 30px;
+            padding: 15px;
+            background-color: rgba(255, 255, 255, 0.7); /* 半透明の白背景 */
+            border: 2px dotted #FF1493; /* ピンクの点線 */
+            border-radius: 10px;
+        }
+
+        h2 {
+            font-size: 1.8em;
+            color: #FF4500; /* オレンジレッド */
+            text-align: center;
+            border-bottom: 3px double #000080; /* 紺色の二重線 */
+            padding-bottom: 5px;
+            margin-bottom: 15px;
+            font-family: 'Impact', Charcoal, sans-serif; /* インパクト重視 */
+        }
+
+        h2::before, h2::after {
+            content: "☆彡"; /* キラキラマーク */
+            color: #FFD700;
+            margin: 0 5px;
+        }
+
+        /* --- お知らせ --- */
+        .news ul {
+            list-style-type: "💥"; /* 絵文字リストマーカー */
+            padding-left: 30px;
+        }
+
+        .news li {
+            margin-bottom: 10px;
+            color: #800080; /* 紫 */
+        }
+
+        /* --- 校長挨拶 --- */
+        .principal-greet img {
+            float: right; /* 画像右寄せ */
+            width: 150px;
+            height: auto;
+            border: 5px ridge #FFA500; /* オレンジの額縁風 */
+            margin-left: 15px;
+            border-radius: 50%; /* 丸く切り抜き */
+        }
+
+        .principal-greet p {
+            line-height: 1.8; /* 行間広め */
+            color: #006400; /* ダークグリーン */
+            font-weight: bold; /* 太字 */
+        }
+
+        /* --- ここがスゴい --- */
+        .amazing-points ol {
+            list-style-type: decimal-leading-zero; /* 01, 02... */
+            padding-left: 30px;
+        }
+        .amazing-points li {
+            font-size: 1.1em;
+            margin-bottom: 8px;
+            color: #4B0082; /* インディゴ */
+        }
+
+        /* --- 今週の標語 --- */
+        .motto p {
+            font-size: 1.5em;
+            text-align: center;
+            color: #DC143C; /* クリムゾン */
+            font-weight: bolder;
+            padding: 10px;
+            background-color: #FFFACD; /* レモンシフォン */
+            border: 3px dashed #FF8C00; /* ダークオレンジ破線 */
+            border-radius: 8px;
+        }
+
+        /* --- フッター --- */
+        footer {
+            text-align: center;
+            padding: 20px;
+            margin-top: 30px;
+            background-color: #808080; /* グレー */
+            color: #FFFFFF; /* 白文字 */
+            border-top: 5px solid #000000; /* 黒線 */
+        }
+
+        /* --- marqueeタグ（文字が流れるやつ） --- */
+        marquee {
+            font-size: 1.2em;
+            color: #FF0000;
+            background-color: #FFFFE0; /* 薄い黄色 */
+            padding: 5px;
+            font-weight: bold;
+            border: 2px solid #000000;
+        }
+
+        /* --- 点滅 --- */
+        .blink {
+            animation: blinker 1s linear infinite;
+        }
+
+        @keyframes blinker {
+            50% { opacity: 0; }
+        }
+
+        /* --- スマホ対応（気持ち程度） --- */
+        @media (max-width: 600px) {
+            header h1 {
+                font-size: 1.8em;
+            }
+            nav ul li {
+                display: block; /* 縦並び */
+                margin: 10px 0;
+            }
+            .principal-greet img {
+                float: none;
+                display: block;
+                margin: 10px auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <img src="https://placehold.co/150x100/FF69B4/FFFFFF?text=Atamawarui&font=comicsans" alt="チョーバカ高校ロゴ（手書き風）" class="logo">
+        <h1><span class="blink">☆</span>ようこそ！超弩級バカ高等学校（チョーバカ！）の公式っぽい何かへ！<span class="blink">☆</span></h1>
+        <marquee scrollamount="10">緊急速報！校長がまた迷子！見かけた人は職員室まで！ // 新入生歓迎！購買の10円パンダ（パンじゃない）増量中！ // 今週のラッキーアイテムは「割れた湯呑み」！</marquee>
+    </header>
+
+    <div class="container">
+        <nav>
+            <ul>
+                <li><a href="#">ホームみたいなやつ</a></li>
+                <li><a href="#">学校のこと（あんま知らない）</a></li>
+                <li><a href="#">センセーたち</a></li>
+                <li><a href="#">行事とか？（未定）</a></li>
+                <li><a href="#">入れんの？</a></li>
+                <li><a href="#">なんか書くとこ</a></li>
+            </ul>
+        </nav>
+
+        <section class="news">
+            <h2><span class="blink">🚨</span>緊急速報！でもないお知らせ<span class="blink">🚨</span></h2>
+            <ul>
+                <li><strong>[今日の日付だけど忘れた]</strong> ホームページ、なんか作ってみた。見てる？（担当：校長の甥・タケシ）</li>
+                <li><strong>[日付不明]</strong> 今日の給食のカレー、ルーが固形だった。ラッキー？</li>
+                <li><strong>[たぶん先週]</strong> 校庭の隅に生えてるキノコ、食べたらお腹壊した（教頭体験談）</li>
+                <li><strong>[？？？]</strong> 「世界征服」って部活、まだ部員募集中らしいよ！知らんけど！</li>
+            </ul>
+        </section>
+
+        <section class="principal-greet">
+            <h2><img src="https://placehold.co/50x50/00FF00/000000?text=炎&font=impact" alt="炎" style="vertical-align: middle; width:30px; height:30px;">校長あいさつ<img src="https://placehold.co/50x50/00FF00/000000?text=炎&font=impact" alt="炎" style="vertical-align: middle; width:30px; height:30px;"></h2>
+            <img src="https://placehold.co/150x200/FFA500/000000?text=校長(仁王立ち)&font=impact" alt="馬鹿正直 校長">
+            <p>押忍！オレが校長の馬鹿正直（ばか しょうじき）だ！<br>
+            なんか知らんが、この学校のトップに君臨して早ウン十年！<br>
+            勉強？そんなもん、<strong style="color:red; font-size:1.2em;">ググればいいじゃん？</strong>時代はソレよ！<br>
+            うちの学校はな、<strong style="font-family: 'Comic Sans MS', cursive; color: blue; font-size:1.3em;">ハート</strong>で語るんだよ！<strong style="font-family: 'Comic Sans MS', cursive; color: blue; font-size:1.3em;">ハート</strong>で！<br>
+            だから、お前らも<strong style="font-family: 'Comic Sans MS', cursive; color: blue; font-size:1.3em;">ハート</strong>でついてこい！なんかよくわからんけど、<strong style="font-size:1.5em; color: #FF0000; animation: blinker 0.5s linear infinite;">気合だ！気合！</strong><br>
+            以上！なんか質問あるやつは、とりあえず大声で叫んでみてくれ！聞こえたら答える！（たぶん）</p>
+        </section>
+
+        <section class="amazing-points">
+            <h2>チョーバカ高校！ここがスゴいのか？！</h2>
+            <ol>
+                <li>テストがほぼ<strong style="color:green;">絵しりとり！</strong> …だった時代もあるらしい。今は校長の気分次第！</li>
+                <li>校則が<strong style="font-size:1.3em; color:purple;">1個だけ！</strong> …「校長を敬うこと（物理的に）」。他は自由だぁー！</li>
+                <li>進路指導は<strong style="text-decoration: underline wavy red;">「人生、ノリと勢い」！</strong> …卒業生の9割がフリーター、残り1割は夢を追い続けている（自称）。</li>
+                <li><strong class="blink" style="color:orange;">謎の最新設備！</strong> …用途不明のボタンがたくさんついた機械が職員室に鎮座！誰も使い方を知らない！</li>
+            </ol>
+        </section>
+
+        <section class="motto">
+            <h2>今週の標語 (校長直筆風)</h2>
+            <p style="font-family: 'Sawarabi Mincho', serif; writing-mode: vertical-rl; text-orientation: mixed; height: 200px; margin: 0 auto; width: fit-content; background-color: #fff8dc; border: 2px solid #8b4513; padding: 20px;">
+                赤信号<br>
+                みんなで渡れば<br>
+                まぁいっか！<br>
+                <span style="font-size:0.8em;"></span>
+            </p>
+        </section>
+
+    </div>
+
+    <footer>
+        <p> たぶんチョーバカ高校 2025. 無断転載？どんどんやっちゃって！（ほんとにええで）</p>
+        <p><span class="blink">このホームページはフィクションです。実在の人物・団体とは一切関係ありません。たぶん。</span></p>
+    </footer>
+
+</body>
+</html>
