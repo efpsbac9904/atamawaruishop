@@ -22,13 +22,25 @@
     <div id="root"></div>
 
     <script>
-        // グローバル変数からFirebase設定を取得
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+        // ここにあなたのFirebaseプロジェクトの実際の情報に置き換えます
+        // Firebaseコンソール > プロジェクト設定 > マイアプリ (Web) から取得してください
+       const firebaseConfig = {
+  apiKey: "AIzaSyCkgXJSs-bdAxgEIQK1fc-dnURB5zKAtPM",
+  authDomain: "simplebbspagetest.firebaseapp.com",
+  projectId: "simplebbspagetest",
+  storageBucket: "simplebbspagetest.firebasestorage.app",
+  messagingSenderId: "180539119626",
+  appId: "1:180539119626:web:18082de9a30a1cb75b27f3"
+};
+
+        // Firestoreのコレクションパスで使用するアプリケーションID
+        // firebaseConfig.projectId を使うか、任意のユニークな文字列を設定してください。
+        const appId = firebaseConfig.projectId; // もしくは 'my-bbs-app-identifier';
+
+        // カスタム認証トークンを使用しない場合は null に設定します
+        const initialAuthToken = null;
 
         // Firebaseアプリを初期化
-        // compatバージョンを使用することで、firebaseグローバルオブジェクトが利用可能になります
         const app = firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore(app);
         const auth = firebase.auth(app);
@@ -48,7 +60,6 @@
             const [errorMessage, setErrorMessage] = useState('');
             const [replyToPostId, setReplyToPostId] = useState(null);
 
-            // 認証状態の監視とFirestoreの初期化
             useEffect(() => {
                 const unsubscribeAuth = auth.onAuthStateChanged(async (user) => {
                     if (user) {
@@ -74,21 +85,19 @@
                 return () => unsubscribeAuth();
             }, [userName]);
 
-            // 投稿のリアルタイムリスナー
             useEffect(() => {
                 if (!isAuthReady || !userId) {
                     return;
                 }
 
                 const postsCollectionRef = db.collection(`artifacts/${appId}/public/data/posts`);
-                const q = postsCollectionRef; // orderByはFirestoreのインデックスが必要になる場合があるため、ここでは使用しない
+                const q = postsCollectionRef;
 
                 const unsubscribeSnapshot = q.onSnapshot((snapshot) => {
                     const fetchedPosts = snapshot.docs.map(doc => ({
                         id: doc.id,
                         ...doc.data()
                     }));
-                    // タイムスタンプで降順にソート (新しいものが上に来るように)
                     fetchedPosts.sort((a, b) => (b.timestamp?.toDate() || 0) - (a.timestamp?.toDate() || 0));
                     setPosts(fetchedPosts);
                 }, (error) => {
@@ -166,7 +175,6 @@
                 setNewPostContent('');
             };
 
-            // JSXの代わりにReact.createElementを使用
             return createElement('div', { className: 'min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4 font-inter' },
                 createElement('div', { className: 'bg-white p-8 rounded-xl shadow-2xl w-full max-w-2xl transform transition-all duration-300 hover:scale-[1.01]' },
                     createElement('h1', { className: 'text-4xl font-extrabold text-center text-gray-800 mb-8 tracking-tight' }, 'シンプルな掲示板'),
@@ -191,7 +199,6 @@
                         )
                     ),
 
-                    // メイン投稿フォーム
                     !replyToPostId && createElement('form', { onSubmit: handlePostSubmit, className: 'mb-8' },
                         createElement('div', { className: 'mb-4' },
                             createElement('label', { htmlFor: 'newPost', className: 'block text-gray-700 text-sm font-bold mb-2' }, '新しい投稿:'),
@@ -209,7 +216,6 @@
                         }, '投稿する')
                     ),
 
-                    // 返信フォーム
                     replyToPostId && createElement('div', { className: 'bg-gray-50 p-6 rounded-lg shadow-inner mb-8 border border-gray-200' },
                         createElement('h3', { className: 'text-xl font-bold text-gray-700 mb-4' },
                             '返信 (投稿ID: ',
@@ -276,7 +282,6 @@
                         ))
                     ),
 
-                    // 削除確認モーダル
                     showConfirmation && createElement('div', { className: 'fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50' },
                         createElement('div', { className: 'bg-white p-6 rounded-lg shadow-xl max-w-sm w-full text-center' },
                             createElement('p', { className: 'text-lg font-semibold mb-4' }, 'この投稿を削除しますか？'),
@@ -287,7 +292,7 @@
                                 }, 'はい'),
                                 createElement('button', {
                                     onClick: cancelDelete,
-                                    className: 'bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded-lg transition duration-200'
+                                    className: 'bg-gray-300 hover:bg-gray-400 text-white font-bold py-2 px-4 rounded-lg transition duration-200'
                                 }, 'いいえ')
                             )
                         )
@@ -296,7 +301,6 @@
             );
         }
 
-        // root要素にAppコンポーネントをレンダリング
         const root = ReactDOM.createRoot(document.getElementById('root'));
         root.render(createElement(App, null));
     </script>
