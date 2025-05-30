@@ -1,0 +1,319 @@
+import React, { useState, useEffect } from 'react';
+import { initializeApp } from 'firebase/app';
+import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from 'firebase/auth';
+import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, serverTimestamp, deleteDoc, doc } from 'firebase/firestore';
+
+// Firebaseの設定はグローバル変数から取得
+const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+// Firebaseアプリを初期化
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const auth = getAuth(app);
+
+function App() {
+  const [posts, setPosts] = useState([]);
+  const [newPostContent, setNewPostContent] = useState('');
+  const [userName, setUserName] = useState('');
+  const [userId, setUserId] = useState(null);
+  const [isAuthReady, setIsAuthReady] = useState(false);
+  const [showConfirmation, setShowConfirmation] = useState(false);
+  const [postToDelete, setPostToDelete] = useState(null);
+  const [errorMessage, setErrorMessage] = useState('');
+  const [replyToPostId, setReplyToPostId] = useState(null); // 返信先の投稿ID
+
+  // 認証状態の監視とFirestoreの初期化
+  useEffect(() => {
+    const unsubscribeAuth = onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        setUserId(user.uid);
+        // ユーザー名が設定されていない場合、匿名ユーザーとして設定
+        if (!userName) {
+          setUserName(`匿名ユーザー ${user.uid.substring(0, 8)}`);
+        }
+      } else {
+        // 認証トークンがある場合はカスタム認証、ない場合は匿名認証
+        try {
+          if (initialAuthToken) {
+            await signInWithCustomToken(auth, initialAuthToken);
+          } else {
+            await signInAnonymously(auth);
+          }
+        } catch (error) {
+          console.error("認証エラー:", error);
+          setErrorMessage("認証に失敗しました。");
+        }
+      }
+      setIsAuthReady(true); // 認証準備完了
+    });
+
+    return () => unsubscribeAuth();
+  }, [userName]); // userNameが変更されたときに再実行
+
+  // 投稿のリアルタイムリスナー
+  useEffect(() => {
+    if (!isAuthReady || !userId) {
+      return; // 認証が完了していない場合は何もしない
+    }
+
+    const postsCollectionRef = collection(db, `artifacts/${appId}/public/data/posts`);
+    // orderByはFirestoreのインデックスが必要になる場合があるため、ここでは使用しない
+    // 代わりに取得後にクライアント側でソートする
+    const q = query(postsCollectionRef);
+
+    const unsubscribeSnapshot = onSnapshot(q, (snapshot) => {
+      const fetchedPosts = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      // タイムスタンプで降順にソート (新しいものが上に来るように)
+      fetchedPosts.sort((a, b) => (b.timestamp?.toDate() || 0) - (a.timestamp?.toDate() || 0));
+      setPosts(fetchedPosts);
+    }, (error) => {
+      console.error("投稿の取得エラー:", error);
+      setErrorMessage("投稿の読み込み中にエラーが発生しました。");
+    });
+
+    return () => unsubscribeSnapshot();
+  }, [isAuthReady, userId]); // isAuthReadyとuserIdが変更されたときに再実行
+
+  const handlePostSubmit = async (e) => {
+    e.preventDefault();
+    if (!newPostContent.trim() || !userName.trim()) {
+      setErrorMessage("ユーザー名と内容を入力してください。");
+      return;
+    }
+    if (!userId) {
+      setErrorMessage("ユーザーIDが利用できません。認証が完了するまでお待ちください。");
+      return;
+    }
+
+    setErrorMessage(''); // エラーメッセージをクリア
+
+    try {
+      const postData = {
+        userId: userId,
+        userName: userName,
+        content: newPostContent,
+        timestamp: serverTimestamp()
+      };
+
+      // 返信の場合、parentIdを追加
+      if (replyToPostId) {
+        postData.parentId = replyToPostId;
+      }
+
+      await addDoc(collection(db, `artifacts/${appId}/public/data/posts`), postData);
+      setNewPostContent('');
+      setReplyToPostId(null); // 返信状態をリセット
+    } catch (error) {
+      console.error("投稿の追加エラー:", error);
+      setErrorMessage("投稿の送信中にエラーが発生しました。");
+    }
+  };
+
+  const handleDeleteClick = (postId) => {
+    setPostToDelete(postId);
+    setShowConfirmation(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!postToDelete) return;
+
+    try {
+      await deleteDoc(doc(db, `artifacts/${appId}/public/data/posts`, postToDelete));
+      setShowConfirmation(false);
+      setPostToDelete(null);
+    } catch (error) {
+      console.error("投稿の削除エラー:", error);
+      setErrorMessage("投稿の削除中にエラーが発生しました。");
+    }
+  };
+
+  const cancelDelete = () => {
+    setShowConfirmation(false);
+    setPostToDelete(null);
+  };
+
+  // 返信ボタンクリック時の処理
+  const handleReplyClick = (postId) => {
+    setReplyToPostId(postId);
+    setNewPostContent(''); // 返信フォーム用に内容をクリア
+  };
+
+  // 返信キャンセル時の処理
+  const cancelReply = () => {
+    setReplyToPostId(null);
+    setNewPostContent('');
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4 font-inter">
+      <div className="bg-white p-8 rounded-xl shadow-2xl w-full max-w-2xl transform transition-all duration-300 hover:scale-[1.01]">
+        <h1 className="text-4xl font-extrabold text-center text-gray-800 mb-8 tracking-tight">
+          シンプルな掲示板
+        </h1>
+
+        {errorMessage && (
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
+            <span className="block sm:inline">{errorMessage}</span>
+          </div>
+        )}
+
+        <div className="mb-6">
+          <label htmlFor="userName" className="block text-gray-700 text-sm font-bold mb-2">
+            ユーザー名:
+          </label>
+          <input
+            type="text"
+            id="userName"
+            value={userName}
+            onChange={(e) => setUserName(e.target.value)}
+            className="shadow appearance-none border rounded-lg w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-400 transition duration-200"
+            placeholder="あなたの名前を入力してください"
+          />
+          {userId && (
+            <p className="text-xs text-gray-500 mt-1">
+              あなたのユーザーID: <span className="font-mono text-blue-600 break-all">{userId}</span>
+            </p>
+          )}
+        </div>
+
+        {/* メイン投稿フォーム */}
+        {!replyToPostId && ( // 返信フォームが表示されていない場合のみ表示
+          <form onSubmit={handlePostSubmit} className="mb-8">
+            <div className="mb-4">
+              <label htmlFor="newPost" className="block text-gray-700 text-sm font-bold mb-2">
+                新しい投稿:
+              </label>
+              <textarea
+                id="newPost"
+                value={newPostContent}
+                onChange={(e) => setNewPostContent(e.target.value)}
+                className="shadow appearance-none border rounded-lg w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-400 h-24 resize-y transition duration-200"
+                placeholder="ここにメッセージを入力してください..."
+              ></textarea>
+            </div>
+            <button
+              type="submit"
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition duration-300 ease-in-out transform hover:-translate-y-0.5 hover:shadow-lg"
+            >
+              投稿する
+            </button>
+          </form>
+        )}
+
+        {/* 返信フォーム */}
+        {replyToPostId && (
+          <div className="bg-gray-50 p-6 rounded-lg shadow-inner mb-8 border border-gray-200">
+            <h3 className="text-xl font-bold text-gray-700 mb-4">
+              返信 (投稿ID: <span className="font-mono text-blue-600">{replyToPostId.substring(0, 8)}...</span>)
+            </h3>
+            <form onSubmit={handlePostSubmit}>
+              <div className="mb-4">
+                <label htmlFor="replyContent" className="block text-gray-700 text-sm font-bold mb-2">
+                  返信内容:
+                </label>
+                <textarea
+                  id="replyContent"
+                  value={newPostContent}
+                  onChange={(e) => setNewPostContent(e.target.value)}
+                  className="shadow appearance-none border rounded-lg w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-400 h-24 resize-y transition duration-200"
+                  placeholder="ここに返信を入力してください..."
+                ></textarea>
+              </div>
+              <div className="flex justify-end space-x-2">
+                <button
+                  type="submit"
+                  className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition duration-300 ease-in-out"
+                >
+                  返信する
+                </button>
+                <button
+                  type="button"
+                  onClick={cancelReply}
+                  className="bg-gray-400 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-2 transition duration-300 ease-in-out"
+                >
+                  キャンセル
+                </button>
+              </div>
+            </form>
+          </div>
+        )}
+
+        <div className="space-y-4">
+          {posts.length === 0 && (
+            <p className="text-center text-gray-500 italic">まだ投稿がありません。</p>
+          )}
+          {posts.map((post) => (
+            <div
+              key={post.id}
+              className={`bg-blue-50 p-5 rounded-lg shadow-md border border-blue-100 flex flex-col sm:flex-row justify-between items-start sm:items-center ${post.parentId ? 'pl-8' : ''}`} // 返信の場合、左にパディングを追加
+            >
+              <div className="flex-grow">
+                {post.parentId && (
+                  <p className="text-xs text-gray-500 mb-1 italic">
+                    返信先: <span className="font-medium">{posts.find(p => p.id === post.parentId)?.userName || '不明なユーザー'}</span> (ID: {post.parentId.substring(0, 8)}...)
+                  </p>
+                )}
+                <p className="text-gray-900 font-semibold text-lg break-words">{post.content}</p>
+                <p className="text-sm text-gray-600 mt-1">
+                  <span className="font-medium">{post.userName || '匿名ユーザー'}</span>
+                  {post.timestamp && (
+                    <span className="ml-2 text-xs text-gray-500">
+                      {(post.timestamp.toDate ? post.timestamp.toDate() : new Date()).toLocaleString('ja-JP')}
+                    </span>
+                  )}
+                </p>
+                <div className="flex items-center mt-2">
+                  {/* 自分の投稿のみ削除ボタンを表示 */}
+                  {post.userId === userId && (
+                    <button
+                      onClick={() => handleDeleteClick(post.id)}
+                      className="text-red-500 hover:text-red-700 text-sm font-medium transition duration-200"
+                    >
+                      削除
+                    </button>
+                  )}
+                  <button
+                    onClick={() => handleReplyClick(post.id)}
+                    className="text-blue-500 hover:text-blue-700 text-sm font-medium transition duration-200 ml-4"
+                  >
+                    返信する
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* 削除確認モーダル */}
+        {showConfirmation && (
+          <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white p-6 rounded-lg shadow-xl max-w-sm w-full text-center">
+              <p className="text-lg font-semibold mb-4">この投稿を削除しますか？</p>
+              <div className="flex justify-center space-x-4">
+                <button
+                  onClick={confirmDelete}
+                  className="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg transition duration-200"
+                >
+                  はい
+                </button>
+                <button
+                  onClick={cancelDelete}
+                  className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded-lg transition duration-200"
+                >
+                  いいえ
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+export default App;
