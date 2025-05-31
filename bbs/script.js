@@ -70,20 +70,8 @@ async function loadPosts() {
         const username = post.username || '匿名'; // 名前がなければ「匿名」と表示
         const date = new Date(post.created_at).toLocaleString('ja-JP');
 
-        // ★★★ 修正点: 削除ボタンを追加し、data-id属性に投稿のIDを持たせる ★★★
-        postItem.innerHTML = `
-            <div class="post-meta">
-                <strong>${username}</strong> <span class="timestamp">${date}</span>
-                <button class="delete-post-btn" data-id="${post.id}">削除</button>
-            </div>
-            <div class="post-content">${post.content}</div>
-        `;
+    
         postsList.appendChild(postItem);
-    });
-
-    // ★★★ 追加点: 削除ボタンにイベントリスナーを設定する ★★★
-    document.querySelectorAll('.delete-post-btn').forEach(button => {
-        button.addEventListener('click', handleDeletePost);
     });
 }
 
