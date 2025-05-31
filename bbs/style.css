@@ -1,4 +1,4 @@
-/* 省略... 既存のスタイル */
+/* 省略... 既存のスタイル */Add commentMore actions
 
 .post-item {
     background-color: #fcfcfc;
@@ -48,8 +48,5 @@
 }
 
 .delete-button:hover {
-    background-color: #c82333;
-}
-dev {
-    background-color:#ff0
+    background-color: #c82333;Add commentMore actions
 }
