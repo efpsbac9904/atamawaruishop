@@ -74,7 +74,7 @@ async function loadPosts() {
         postItem.innerHTML = `
             <div class="post-meta">
                 <strong>${username}</strong> <span class="timestamp">${date}</span>
-                <button class="delete-post-btn" data-id="${post.id}">削除</button>
+        
             </div>
             <div class="post-content">${post.content}</div>
         `;
