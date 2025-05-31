@@ -24,7 +24,7 @@ if (!supabase) {
     console.error("Supabaseクライアントの初期化に失敗しました。処理を中断します。");
     const postsList = document.getElementById('posts-list');
     if (postsList) {
-        postsList.innerHTML = '<p style="color: red;">掲示板機能が利用できません。Supabaseの設定を確認してください。</p>';
+        postsList.innerHTML = '<p style="color: red;">掲示板機能が利用できません。管理者は、Supabaseの設定を確認してください。</p>';
     }
     const submitPostButton = document.getElementById('submit-post');
     if (submitPostButton) {
