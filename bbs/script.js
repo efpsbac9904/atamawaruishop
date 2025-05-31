@@ -1,10 +1,10 @@
-// ====================================================================Add commentMore actions
+// ====================================================================
 // ★★★ ここからが修正点: グローバル定数と関数定義の順序を整理しました ★★★
 // ====================================================================
 
 // Supabaseプロジェクトの情報をここに反映済み
-const SUPABASE_URL = 'https://vmsffshqmgerqjmmwwvh.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZtc2Zmc2hxbWdlcnFqbW13d3ZoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg2NjI4ODAsImV4cCI6MjA2NDIzODg4MH0.xxHCh9IXqvVkqUkzgEqk9Vbtso-EQDDPEvgwgf5S9G4';
+const SUPABASE_URL = 'https://qmnsrzmpfylycqmmtqfq.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFtbnNyem1wZnlseWNxbW10cWZxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDExNjM0OTMsImV4cCI6MjA1NjczOTQ5M30.2MBxBT6hGqEF81SdBa6X_iGdbN2hdjrL1RztQFHqBPI';
 
 // Supabaseクライアントの初期化関数は、その呼び出しより前に定義される必要がある
 function createClient(supabaseUrl, supabaseKey) {
@@ -70,8 +70,20 @@ async function loadPosts() {
         const username = post.username || '匿名'; // 名前がなければ「匿名」と表示
         const date = new Date(post.created_at).toLocaleString('ja-JP');
 
-    
+        // ★★★ 修正点: 削除ボタンを追加し、data-id属性に投稿のIDを持たせる ★★★
+        postItem.innerHTML = `
+            <div class="post-meta">
+                <strong>${username}</strong> <span class="timestamp">${date}</span>
+                <button class="delete-post-btn" data-id="${post.id}">削除</button>
+            </div>
+            <div class="post-content">${post.content}</div>
+        `;
         postsList.appendChild(postItem);
+    });
+
+    // ★★★ 追加点: 削除ボタンにイベントリスナーを設定する ★★★
+    document.querySelectorAll('.delete-post-btn').forEach(button => {
+        button.addEventListener('click', handleDeletePost);
     });
 }
 
@@ -107,6 +119,33 @@ submitPostButton.addEventListener('click', async () => {
     submitPostButton.disabled = false;
     submitPostButton.textContent = '投稿する';
 });
+
+// ★★★ 追加点: 投稿を削除する関数 ★★★
+async function handleDeletePost(event) {
+    const postId = event.target.dataset.id; // ボタンのdata-id属性から投稿IDを取得
+
+    if (!confirm('本当にこの投稿を削除しますか？')) {
+        return; // キャンセルされたら何もしない
+    }
+
+    event.target.disabled = true; // ボタンを無効化して二重クリック防止
+    event.target.textContent = '削除中...';
+
+    const { error } = await supabase
+        .from('posts')
+        .delete()
+        .eq('id', postId); // 指定されたIDの投稿を削除
+
+    if (error) {
+        console.error('投稿の削除中にエラーが発生しました:', error.message);
+        alert('投稿の削除に失敗しました。エラー: ' + error.message);
+    } else {
+        console.log('投稿を削除しました:', postId);
+        loadPosts(); // 削除後、投稿リストを再読み込み
+    }
+    event.target.disabled = false;
+    event.target.textContent = '削除';
+}
 
 
 // 初期ロード
