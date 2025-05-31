@@ -127,25 +127,25 @@ submitPostButton.addEventListener('click', async () => {
 //    if (!confirm('本当にこの投稿を削除しますか？')) {
 //        return; // キャンセルされたら何もしない
 //    }
-
-    event.target.disabled = true; // ボタンを無効化して二重クリック防止
-    event.target.textContent = '削除中...';
-
-    const { error } = await supabase
-        .from('posts')
-        .delete()
-        .eq('id', postId); // 指定されたIDの投稿を削除
-
-    if (error) {
-        console.error('投稿の削除中にエラーが発生しました:', error.message);
-        alert('投稿の削除に失敗しました。エラー: ' + error.message);
-    } else {
-        console.log('投稿を削除しました:', postId);
-        loadPosts(); // 削除後、投稿リストを再読み込み
-    }
-    event.target.disabled = false;
-    event.target.textContent = '削除';
-}
+//
+//    event.target.disabled = true; // ボタンを無効化して二重クリック防止
+//    event.target.textContent = '削除中...';
+//
+ //   const { error } = await supabase
+  //      .from('posts')
+  //      .delete()
+//        .eq('id', postId); // 指定されたIDの投稿を削除
+//
+//    if (error) {
+//        console.error('投稿の削除中にエラーが発生しました:', error.message);
+//        alert('投稿の削除に失敗しました。エラー: ' + error.message);
+//    } else {
+ //       console.log('投稿を削除しました:', postId);
+ //       loadPosts(); // 削除後、投稿リストを再読み込み
+//    }
+//    event.target.disabled = false;
+  //  event.target.textContent = '削除';
+//}
 
 
 // 初期ロード
