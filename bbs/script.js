@@ -120,13 +120,13 @@ submitPostButton.addEventListener('click', async () => {
     submitPostButton.textContent = '投稿する';
 });
 
-// ★★★ 追加点: 投稿を削除する関数 ★★★
-async function handleDeletePost(event) {
-    const postId = event.target.dataset.id; // ボタンのdata-id属性から投稿IDを取得
+// ★★★ コメントアウト中；投稿を削除する関数 ★★★
+//async function handleDeletePost(event) {
+  //  const postId = event.target.dataset.id; // ボタンのdata-id属性から投稿IDを取得
 
-    if (!confirm('本当にこの投稿を削除しますか？')) {
-        return; // キャンセルされたら何もしない
-    }
+//    if (!confirm('本当にこの投稿を削除しますか？')) {
+//        return; // キャンセルされたら何もしない
+//    }
 
     event.target.disabled = true; // ボタンを無効化して二重クリック防止
     event.target.textContent = '削除中...';
