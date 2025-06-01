@@ -24,7 +24,7 @@ if (!supabase) {
     console.error("Supabaseクライアントの初期化に失敗しました。処理を中断します。");
     const postsList = document.getElementById('posts-list');
     if (postsList) {
-        postsList.innerHTML = '<p style="color: red;">掲示板機能が利用できません。Supabaseの設定を確認してください。</p>';
+        postsList.innerHTML = '<p style="color: red;">掲示板機能が利用できません。管理者にSupabaseの設定を確認するよう連絡してください。</p>';
     }
     const submitPostButton = document.getElementById('submit-post');
     if (submitPostButton) {
@@ -67,7 +67,7 @@ async function loadPosts() {
         const postItem = document.createElement('div');
         postItem.className = 'post-item';
 
-        const username = post.username || '匿名'; // 名前がなければ「匿名」と表示
+        const username = post.username || 'あたまのわりぃななし'; // 名前がなければ「匿名」と表示
         const date = new Date(post.created_at).toLocaleString('ja-JP');
 
         // ★★★ 修正点: 削除ボタンを追加し、data-id属性に投稿のIDを持たせる ★★★
