@@ -67,7 +67,7 @@ async function loadPosts() {
         const postItem = document.createElement('div');
         postItem.className = 'post-item';
 
-        const username = post.username || 'あたまのわりぃななし'; // 名前がなければ「匿名」と表示
+        const username = post.username || 'ななっしんぐ'; // 名前がなければ「匿名」と表示
         const date = new Date(post.created_at).toLocaleString('ja-JP');
 
         // ★★★ 修正点: 削除ボタンを追加し、data-id属性に投稿のIDを持たせる ★★★
