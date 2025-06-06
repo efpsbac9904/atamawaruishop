@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>けーじばん</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>あたまわるいけーじばん</h1>
+
+        <div class="post-form">
+            <!-- テーブル名入力フィールドを追加 -->
+            <input type="text" id="table-name-input" placeholder="Supabaseテーブル名 (例: posts)" value="posts">
+            <input type="text" id="post-username" placeholder="名前 (任意)">
+            <textarea id="post-content" placeholder="ここにメッセージを入力してください..." rows="4" maxlength="64"></textarea>
+            <button id="submit-post">投稿する</button>
+        </div>
+
+        <div id="posts-list" class="posts-list">
+            <p>投稿がありません。</p>
+        </div>
+    </div>
+
+    <!-- カスタムモーダルとオーバーレイのHTMLを追加 -->
+    <div id="custom-modal-overlay" class="modal-overlay"></div>
+    <div id="custom-modal" class="custom-modal">
+        <div class="modal-content">
+            <p id="modal-message"></p>
+            <div class="modal-actions">
+                <button id="modal-ok-button" class="modal-button ok">OK</button>
+                <button id="modal-cancel-button" class="modal-button cancel">キャンセル</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="script.js"></script>
+</body>
+</html>
+
