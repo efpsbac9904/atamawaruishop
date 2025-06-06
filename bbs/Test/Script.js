@@ -135,18 +135,18 @@ async function loadPosts() {
         postItem.innerHTML = `
             <div class="post-content-wrapper">
                 <div class="post-meta">
-                    <strong>${username}</strong> <span class="timestamp">${date}</span>
+                    
                 </div>
-                <div class="post-content">${post.content}</div>
+                <div cla}</div>
             </div>
-            <button class="delete-button delete-post-btn" data-id="${post.id}">削除</button>
+        
         `;
         postsList.appendChild(postItem);
     });
 
     // ★★★ 追加点: 削除ボタンにイベントリスナーを設定する ★★★
-    document.querySelectorAll('.delete-post-btn').forEach(button => {
-        button.addEventListener('click', handleDeletePost);
+    document.querySele('.delete-post-btn').forEach(button => {
+        button.addEventList
     });
 }
 
