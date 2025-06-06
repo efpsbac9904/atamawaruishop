@@ -4,7 +4,7 @@
 
 // Supabaseプロジェクトの情報をここに反映済み
 const SUPABASE_URL = 'https://vmsffshqmgerqjmmwwvh.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmJhc2UiLCJyZWYiOiJ2bXNmZnNocW1nZXJxam1td3d2aCIsInJvbGUiOiJhbm9uIiwiaWF0IjoxNzQ4NjYyODgwLCJleHAiOjIwNjQyMzHODgwfQ.xxHCh9IXqvVkqUkzgEqk9Vbtso-EQDDPEvgwgf5S9G4';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZtc2Zmc2hxbWdlcnFqbW13d3ZoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg2NjI4ODAsImV4cCI6MjA2NDIzODg4MH0.xxHCh9IXqvVkqUkzgEqk9Vbtso-EQDDPEvgwgf5S9G4';
 
 // Supabaseクライアントの初期化関数は、その呼び出しより前に定義される必要がある
 function createClient(supabaseUrl, supabaseKey) {
