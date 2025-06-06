@@ -190,8 +190,37 @@ submitPostButton.addEventListener('click', async () => {
 });
 
 // ★★★ 追加点: 投稿を削除する関数 ★★★
+async function handleDeletePost(event) {
+    const postId = event.target.dataset.id; // ボタンのdata-id属性から投稿IDを取得
+    const tableName = tableNameInput.value.trim(); // 現在のテーブル名を取得
 
+    if (!tableName) {
+        await showCustomModal('テーブル名が指定されていません。');
+        return;
+    }
 
+    const confirmed = await showCustomModal('本当にこの投稿を削除しますか？', true);
+    if (!confirmed) {
+        return; // キャンセルされたら何もしない
+    }
+
+    event.target.disabled = true; // ボタンを無効化して二重クリック防止
+    event.target.textContent = '削除中...';
+
+    const { error } = await supabase
+        .from(tableName) // 動的にテーブル名を指定
+        .delete()
+        .eq('id', postId); // 指定されたIDの投稿を削除
+
+    if (error) {
+        console.error('投稿の削除中にエラーが発生しました:', error.message);
+        await showCustomModal('投稿の削除に失敗しました。エラー: ' + error.message);
+    } else {
+        console.log('投稿を削除しました:', postId);
+        loadPosts(); // 削除後、投稿リストを再読み込み
+    }
+    event.target.disabled = false;
+    event.target.textContent = '削除';
 }
 
 // テーブル名入力フィールドの変更を監視し、変更されたら投稿を再ロード
@@ -234,4 +263,3 @@ window.onload = function() {
     loadPosts();
     subscribeToRealtimeUpdates(tableNameInput.value.trim());
 };
-
