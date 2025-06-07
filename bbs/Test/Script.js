@@ -26,11 +26,6 @@ if (!supabase) {
     if (postsList) {
         postsList.innerHTML = '<p style="color: red;">掲示板機能が利用できません。管理者にSupabaseの設定を確認するよう連絡してください。</p>';
     }
-    // 削除ボタンがないため、この行は不要になります
-    // const submitPostButton = document.getElementById('submit-post');
-    // if (submitPostButton) {
-    //     submitPostButton.disabled = true;
-    // }
     throw new Error("Supabase initialization failed."); // これで以降のスクリプト実行を停止
 }
 
@@ -132,7 +127,6 @@ async function loadPosts() {
         const username = post.username || 'ななっしんぐ'; // 名前がなければ「匿名」と表示
         const date = new Date(post.created_at).toLocaleString('ja-JP');
 
-        // 削除ボタンのHTMLを削除
         postItem.innerHTML = `
             <div class="post-content-wrapper">
                 <div class="post-meta">
@@ -143,11 +137,6 @@ async function loadPosts() {
         `;
         postsList.appendChild(postItem);
     });
-
-    // 削除ボタンにイベントリスナーを設定する部分を削除
-    // document.querySelectorAll('.delete-post-btn').forEach(button => {
-    //     button.addEventListener('click', handleDeletePost);
-    // });
 }
 
 // 投稿を送信する関数
@@ -180,7 +169,8 @@ submitPostButton.addEventListener('click', async () => {
         await showCustomModal('投稿に失敗しました。エラー: ' + error.message); // エラーメッセージを表示
     } else {
         postContentInput.value = ''; // 投稿フォームをクリア
-        postUsernameInput.value = ''; // 名前フォームもクリア
+        // ★★★ 追加: 投稿後に名前をlocalStorageに保存 ★★★
+        localStorage.setItem('savedUsername', username);
         console.log('投稿成功:', data);
         loadPosts(); // 投稿後、リストを再読み込み
     }
@@ -189,42 +179,11 @@ submitPostButton.addEventListener('click', async () => {
     submitPostButton.textContent = '投稿する';
 });
 
-// 投稿を削除する関数を削除
-// async function handleDeletePost(event) {
-//     const postId = event.target.dataset.id; // ボタンのdata-id属性から投稿IDを取得
-//     const tableName = tableNameInput.value.trim(); // 現在のテーブル名を取得
-
-//     if (!tableName) {
-//         await showCustomModal('テーブル名が指定されていません。');
-//         return;
-//     }
-
-//     const confirmed = await showCustomModal('本当にこの投稿を削除しますか？', true);
-//     if (!confirmed) {
-//         return; // キャンセルされたら何もしない
-//     }
-
-//     event.target.disabled = true; // ボタンを無効化して二重クリック防止
-//     event.target.textContent = '削除中...';
-
-//     const { error } = await supabase
-//         .from(tableName) // 動的にテーブル名を指定
-//         .delete()
-//         .eq('id', postId); // 指定されたIDの投稿を削除
-
-//     if (error) {
-//         console.error('投稿の削除中にエラーが発生しました:', error.message);
-//         await showCustomModal('投稿の削除に失敗しました。エラー: ' + error.message);
-//     } else {
-//         console.log('投稿を削除しました:', postId);
-//         loadPosts(); // 削除後、投稿リストを再読み込み
-//     }
-//     event.target.disabled = false;
-//     event.target.textContent = '削除';
-// }
-
 // テーブル名入力フィールドの変更を監視し、変更されたら投稿を再ロード
 tableNameInput.addEventListener('change', () => {
+    // ★★★ 追加: テーブル名の変更をlocalStorageに保存 ★★★
+    localStorage.setItem('savedTableName', tableNameInput.value.trim());
+
     // 既存の購読を停止（もしあれば）
     if (window.supabaseRealtimeChannel) {
         window.supabaseRealtimeChannel.unsubscribe();
@@ -242,8 +201,6 @@ function subscribeToRealtimeUpdates(tableName) {
         console.warn('リアルタイム更新を購読するためのテーブル名が指定されていません。');
         return;
     }
-    // 既存の購読がある場合は、ここで停止するロジックが必要になる場合があるが、
-    // ここではtableNameInputのchangeイベントで制御しているので、重複購読は避けられるはず。
 
     // Supabaseのリアルタイムチャンネルを新しいグローバル変数に割り当てて、後で参照できるようにする
     window.supabaseRealtimeChannel = supabase
@@ -260,6 +217,17 @@ function subscribeToRealtimeUpdates(tableName) {
 
 // 初期ロードと初期テーブル名でのリアルタイム購読
 window.onload = function() {
+    // ★★★ 追加: localStorageから保存されたテーブル名と名前を読み込む ★★★
+    const savedTableName = localStorage.getItem('savedTableName');
+    if (savedTableName) {
+        tableNameInput.value = savedTableName;
+    }
+    const savedUsername = localStorage.getItem('savedUsername');
+    if (savedUsername) {
+        postUsernameInput.value = savedUsername;
+    }
+
     loadPosts();
     subscribeToRealtimeUpdates(tableNameInput.value.trim());
 };
+
