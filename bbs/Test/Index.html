@@ -12,8 +12,8 @@
 
         <div class="post-form">
             <!-- テーブル名入力フィールドを追加 -->
-            <input type="text" id="table-name-input" placeholder="Supabaseテーブル名 (例: posts)" value="posts">
-            <input type="text" id="post-username" placeholder="名前 (任意)">
+            <input type="text" id="table-name-input" placeholder="Supabaseテーブル名 (例: posts)" value="posts" maxlength="32">
+            <input type="text" id="post-username" placeholder="名前 (任意)" maxlength="16">
             <textarea id="post-content" placeholder="ここにメッセージを入力してください..." rows="4" maxlength="64"></textarea>
             <button id="submit-post">投稿する</button>
         </div>
