@@ -8,13 +8,13 @@
 </head>
 <body>
     <div class="container">
-        <h1>あたまわるいけーじばん</h1>v1.11 Beta   これはベータ版テストです。<a href=https://study.atamawaruishop.site/bbs/>安定版</a><br>テーブル名がわからなくなってしまった場合は、"posts"と入力してください。また、大文字と小文字は区別されます。
+        <h1>あたまわるいけーじばん</h1>v1.11 Beta   これはベータ版テストです。<a href=https://study.atamawaruishop.site/bbs/>安定版</a><br>テーブル名がわからなくなってしまった場合は、"posts"と入力してください。また、大文字と小文字は区別されます。<br><dev>テスト1週間前なので、現在投稿機能が無効になっています。</dev>
 
         <div class="post-form">
             <!-- テーブル名入力フィールドを追加 -->
             <input type="text" id="table-name-input" placeholder="Supabaseテーブル名 (例: posts)" value="posts" maxlength="32">
-            <input type="text" id="post-username" placeholder="名前 (任意)" maxlength="16">
-            <textarea id="post-content" placeholder="ここにメッセージを入力してください..." rows="4" maxlength="64"></textarea>
+            <input type="text" id="post-username" placeholder="無効" maxlength="16"disabled ="">
+            <textarea id="post-content" placeholder="無効" rows="4" maxlength="64" disabled =""></textarea>
             <button id="submit-post">投稿する</button>
         </div>
 
