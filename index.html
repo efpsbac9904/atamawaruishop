@@ -3,44 +3,102 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>漢字テスト作成ツール</title>
-    <link rel="stylesheet" href="style.css">
-    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <title>頭悪いショップ | リンク集</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #ffffff;
+            color: #333;
+        }
+        header {
+            background: #007BFF;
+            color: white;
+            padding: 10px 0;
+            text-align: center;
+        }
+        .container {
+            max-width: 600px;
+            margin: 20px auto;
+            padding: 10px;
+        }
+        .link-category {
+            margin-bottom: 20px;
+        }
+        .link-category h2 {
+            font-size: 18px;
+            color: #007BFF;
+            margin-bottom: 10px;
+        }
+        ul {
+            list-style: none;
+            padding: 0;
+        }
+        ul li {
+            margin: 10px 0;
+        }
+        a {
+            color: #007BFF;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        img {
+            max-width: 100%;
+            height: auto;
+            display: block;
+            margin: 10px 0;
+        }
+    </style>
 </head>
 <body>
+    <header>
+        <h1>頭悪いショップ | リンク集</h1>
+頭が悪くたって、勉強はできる!
+    </header>
     <div class="container">
-        <h1>漢字テスト作成ツール</h1>
-
-        <div class="input-section">
-            <label for="text-input">テストにしたい文章を入力してください:</label>
-            <textarea id="text-input" placeholder="例：隣の客はよく柿食う客だ。"></textarea>
-            <button id="extract-kanji-btn">
-                <i data-lucide="scan"></i> 漢字を抽出
-            </button>
+        <div class="link-category">
+            <h2>勉強関連サイト</h2>
+            <ul>
+                <li>
+                   <a href="https://study.atamawaruishop.site/Bunseki" target="_blank">
+                        学習記録分析
+                    </a>
+                </li>
+                <li>
+                    <a href="https://study.atamawaruishop.site/ToDoList" target="_blank">
+                            やることリスト
+                    </a>
+                </li>
+                <li>
+                   <a href="https://study.atamawaruishop.site/bbs" target="_blank">
+                            BBS(掲示板)
+                    </a>
+                </li>
+                   <li>
+                   <a href="https://study.atamawaruishop.site/bbs/Test/Index.html" target="_blank">
+                            掲示板(ベータ版)
+                    </a>
+                </li>
+            </ul>
         </div>
-
-        <div class="kanji-selection-section">
-            <h2><i data-lucide="check-square"></i> 問題にする漢字を選んでください:</h2>
-            <div id="kanji-list" class="kanji-grid">
-                </div>
-            <button id="generate-test-btn" disabled>
-                <i data-lucide="pencil"></i> テストを生成
-            </button>
-        </div>
-
-        <div class="test-preview-section">
-            <h2><i data-lucide="file-text"></i> テストプレビュー</h2>
-            <div id="test-output" class="test-output-area">
-                </div>
-            <button id="print-test-btn" disabled>
-                <i data-lucide="printer"></i> テストを印刷
-            </button>
+        <div class="link-category">
+            <h2>その他の頭悪いショップサイト</h2>
+            <ul>
+                <li>
+                    <a href="https://gf365.atamawaruishop.site" target="_blank">
+                                           あほAI(現在開発中)
+                    </a>
+                </li>
+                <li>
+                    <a href="https://study.atamawaruishop.site/school/" target="_blank">
+                                        チョーバカ高等学校　公式 ?
+                    </a>
+                </li>
+            </ul>
         </div>
     </div>
-
-    <script src="script.js"></script>
-    <script>
-        lucide.createIcons(); // Lucide Icons をページに表示
-    </script>
 </body>
 </html>
