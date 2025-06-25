@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>漢字テスト作成ツール</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h1>漢字テスト作成ツール</h1>
+
+        <div class="input-section">
+            <label for="text-input">テストにしたい文章を入力してください:</label>
+            <textarea id="text-input" placeholder="例：隣の客はよく柿食う客だ。"></textarea>
+            <button id="extract-kanji-btn">
+                <i data-lucide="scan"></i> 漢字を抽出
+            </button>
+        </div>
+
+        <div class="kanji-selection-section">
+            <h2><i data-lucide="check-square"></i> 問題にする漢字を選んでください:</h2>
+            <div id="kanji-list" class="kanji-grid">
+                </div>
+            <button id="generate-test-btn" disabled>
+                <i data-lucide="pencil"></i> テストを生成
+            </button>
+        </div>
+
+        <div class="test-preview-section">
+            <h2><i data-lucide="file-text"></i> テストプレビュー</h2>
+            <div id="test-output" class="test-output-area">
+                </div>
+            <button id="print-test-btn" disabled>
+                <i data-lucide="printer"></i> テストを印刷
+            </button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+    <script>
+        lucide.createIcons(); // Lucide Icons をページに表示
+    </script>
+</body>
+</html>
