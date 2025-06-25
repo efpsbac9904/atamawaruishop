@@ -5,34 +5,76 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>漢字テスト作成ツール</title>
     <link rel="stylesheet" href="style.css">
+    <!-- Lucide Icons を読み込み -->
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
 </head>
 <body>
     <div class="container">
         <h1>漢字テスト作成ツール</h1>
 
-        <div class="input-section">
+        <!-- 文章入力セクション -->
+        <div class="input-section card">
             <label for="text-input">テストにしたい文章を入力してください:</label>
             <textarea id="text-input" placeholder="例：隣の客はよく柿食う客だ。"></textarea>
-            <button id="extract-kanji-btn">
+            <button id="extract-kanji-btn" class="primary-btn">
                 <i data-lucide="scan"></i> 漢字を抽出
             </button>
         </div>
 
-        <div class="kanji-selection-section">
+        <!-- 手動追加セクション -->
+        <div class="manual-add-section card">
+            <h2><i data-lucide="edit"></i> 手動で問題を追加</h2>
+            <div class="form-group">
+                <label for="manual-text-input">問題文（漢字が含まれる文または熟語）:</label>
+                <textarea id="manual-text-input" placeholder="例：完熟トマト"></textarea>
+            </div>
+            <div class="form-group">
+                <label for="manual-target-kanji-input">問題にする漢字/熟語（上記の文中のもの）:</label>
+                <input type="text" id="manual-target-kanji-input" placeholder="例：完熟">
+            </div>
+            <div class="form-group">
+                <label for="manual-yomi-input">読み（手動で入力）:</label>
+                <input type="text" id="manual-yomi-input" placeholder="例：かんじゅく">
+            </div>
+            <button id="add-problem-btn" class="secondary-btn">
+                <i data-lucide="plus-circle"></i> 問題を追加
+            </button>
+        </div>
+
+        <!-- 問題形式選択セクション -->
+        <div class="test-type-selection card">
+            <h2><i data-lucide="type"></i> 問題形式を選んでください:</h2>
+            <div class="radio-group">
+                <label>
+                    <input type="radio" name="testType" value="reading" id="reading-only" checked> 読み問題のみ
+                </label>
+                <label>
+                    <input type="radio" name="testType" value="writing" id="writing-only"> 書き問題のみ
+                </label>
+                <label>
+                    <input type="radio" name="testType" value="both" id="both-types"> 読み・書き両方
+                </label>
+            </div>
+        </div>
+
+        <!-- 漢字選択セクション -->
+        <div class="kanji-selection-section card">
             <h2><i data-lucide="check-square"></i> 問題にする漢字を選んでください:</h2>
-            <div id="kanji-list" class="kanji-grid">
-                </div>
-            <button id="generate-test-btn" disabled>
+            <div id="problem-items-list" class="kanji-grid">
+                <!-- 抽出・追加された漢字がここに動的に表示されます -->
+            </div>
+            <button id="generate-test-btn" class="primary-btn" disabled>
                 <i data-lucide="pencil"></i> テストを生成
             </button>
         </div>
 
-        <div class="test-preview-section">
+        <!-- テストプレビューセクション -->
+        <div class="test-preview-section card">
             <h2><i data-lucide="file-text"></i> テストプレビュー</h2>
             <div id="test-output" class="test-output-area">
-                </div>
-            <button id="print-test-btn" disabled>
+                <p class="placeholder-text">問題文を入力して漢字を抽出するか、手動で問題を追加してください。</p>
+            </div>
+            <button id="print-test-btn" class="primary-btn" disabled>
                 <i data-lucide="printer"></i> テストを印刷
             </button>
         </div>
@@ -40,7 +82,8 @@
 
     <script src="script.js"></script>
     <script>
-        lucide.createIcons(); // Lucide Icons をページに表示
+        // Lucide Icons をページに表示
+        lucide.createIcons();
     </script>
 </body>
 </html>

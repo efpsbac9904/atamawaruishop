@@ -1,33 +1,52 @@
 body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    line-height: 1.6;
+    font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; /* Inter フォントを優先 */
+    line-height: 1.8; /* 行間を少し広げて読みやすく */
     color: #333;
-    background-color: #f4f4f4;
+    background-color: #f0f2f5; /* 背景色をより柔らかく */
     margin: 0;
     padding: 20px;
     display: flex;
     justify-content: center;
     align-items: flex-start;
     min-height: 100vh;
+    box-sizing: border-box; /* paddingがwidthに影響しないように */
 }
 
 .container {
     background: #fff;
     padding: 30px;
-    border-radius: 8px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    border-radius: 12px; /* 角をより丸く */
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1); /* シャドウを強調 */
     max-width: 900px;
     width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 25px; /* セクション間のスペース */
+}
+
+.card {
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    padding: 20px;
+    border: 1px solid #e0e0e0;
 }
 
 h1, h2 {
-    color: #0056b3;
+    color: #2c3e50; /* 見出しの色を濃く */
     text-align: center;
     margin-bottom: 25px;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 10px;
+    gap: 12px; /* アイコンとテキストの間のスペース */
+    font-weight: 700; /* 太字に */
+}
+
+h2 {
+    font-size: 1.5rem; /* H2のサイズ調整 */
+    margin-top: 0;
+    margin-bottom: 20px;
 }
 
 label {
@@ -35,89 +54,214 @@ label {
     margin-bottom: 8px;
     font-weight: bold;
     color: #555;
+    font-size: 0.95rem;
 }
 
-textarea {
-    width: calc(100% - 20px);
-    padding: 10px;
+textarea, input[type="text"] {
+    width: calc(100% - 22px); /* パディング考慮 */
+    padding: 11px;
     margin-bottom: 15px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
+    border: 1px solid #ccc;
+    border-radius: 6px; /* 角を丸く */
     font-size: 1rem;
-    min-height: 120px;
+    min-height: 100px; /* textareaの最小高さを調整 */
     resize: vertical;
+    box-sizing: border-box; /* パディングとボーダーをwidthに含める */
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+input[type="text"] {
+    min-height: auto; /* inputの高さは自動 */
+    height: auto;
+}
+
+textarea:focus, input[type="text"]:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
+    outline: none;
 }
 
 button {
-    background-color: #007bff;
-    color: white;
-    padding: 12px 20px;
+    padding: 12px 25px; /* パディングを調整 */
     border: none;
-    border-radius: 5px;
+    border-radius: 6px;
     cursor: pointer;
     font-size: 1rem;
-    transition: background-color 0.3s ease;
+    font-weight: 600;
+    transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.2s ease;
     display: flex;
     align-items: center;
     gap: 8px;
     justify-content: center;
     width: auto;
-    margin-bottom: 15px;
+    margin-top: 10px; /* ボタンの上に少しスペース */
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
 button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+}
+
+button:active {
+    transform: translateY(0);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.primary-btn {
+    background-color: #007bff;
+    color: white;
+}
+
+.primary-btn:hover {
     background-color: #0056b3;
+}
+
+.secondary-btn {
+    background-color: #6c757d;
+    color: white;
+}
+
+.secondary-btn:hover {
+    background-color: #5a6268;
 }
 
 button:disabled {
     background-color: #cccccc;
     cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
 }
 
 .kanji-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
-    gap: 10px;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); /* アイテム幅を少し広げ、読み入力欄に対応 */
+    gap: 15px; /* ギャップを調整 */
     margin-bottom: 20px;
-    padding: 10px;
-    border: 1px solid #eee;
-    border-radius: 5px;
-    background-color: #f9f9f9;
-    max-height: 300px; /* スクロール可能にする */
+    padding: 15px;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    background-color: #fcfcfc;
+    max-height: 400px; /* スクロール可能にする */
     overflow-y: auto;
 }
 
 .kanji-item {
     display: flex;
-    align-items: center;
-    gap: 5px;
-    background-color: #e9f5ff;
-    padding: 8px 10px;
-    border-radius: 4px;
-    border: 1px solid #cce5ff;
-    transition: background-color 0.2s ease;
+    flex-direction: column; /* チェックボックスと読み入力欄を縦に並べる */
+    align-items: flex-start; /* 左寄せ */
+    gap: 8px;
+    background-color: #e8f5fd; /* 背景色を調整 */
+    padding: 12px 15px;
+    border-radius: 8px;
+    border: 1px solid #b3e0ff;
+    transition: background-color 0.2s ease, border-color 0.2s ease;
 }
 
 .kanji-item:hover {
-    background-color: #dbeaff;
+    background-color: #dbeeff;
+    border-color: #80caff;
 }
 
 .kanji-item input[type="checkbox"] {
-    margin-right: 5px;
-    transform: scale(1.2);
+    margin-right: 8px;
+    transform: scale(1.1); /* チェックボックスのサイズ調整 */
+    align-self: flex-start; /* チェックボックスを左寄せ */
+    width: auto; /* チェックボックスの幅を自動に */
+    margin-bottom: 0; /* 下マージンをなくす */
+}
+
+.kanji-item label {
+    display: flex;
+    align-items: center;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #0056b3;
+    margin-bottom: 0; /* ラベルの下マージンをなくす */
+}
+
+.kanji-item .kanji-display {
+    margin-left: 5px; /* チェックボックスとの間隔 */
+}
+
+.kanji-item .yomi-input {
+    width: calc(100% - 10px); /* 親要素にフィットさせ、パディング考慮 */
+    padding: 7px;
+    font-size: 0.95rem;
+    margin-top: 5px;
+    margin-bottom: 0;
+    border-radius: 4px;
+    border: 1px solid #aaddff;
+    background-color: #f0f8ff; /* 読み入力欄の背景色 */
 }
 
 .test-output-area {
     border: 1px solid #ddd;
-    padding: 20px;
-    min-height: 300px;
+    padding: 25px; /* パディングを増やす */
+    min-height: 400px; /* プレビューエリアの高さを確保 */
     background-color: #fff;
-    border-radius: 5px;
+    border-radius: 8px;
     white-space: pre-wrap; /* 改行を保持 */
-    font-size: 1.1rem;
-    line-height: 2;
+    font-size: 1.15rem; /* フォントサイズを調整 */
+    line-height: 2.2; /* 行間を広げて読みやすく */
+    margin-bottom: 25px;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05); /* 内部シャドウで深みを出す */
+    color: #212529; /* テキストの色を濃く */
+}
+
+.test-output-area h2, .test-output-area h3 {
+    text-align: left; /* 印刷時に見出しを左寄せ */
+    margin-bottom: 15px;
+    color: #0056b3;
+    font-weight: 700;
+    gap: 0; /* アイコンがないのでギャップなし */
+}
+
+.test-output-area h3 {
+    font-size: 1.25rem;
+    border-bottom: 2px solid #007bff;
+    padding-bottom: 5px;
+    margin-top: 30px;
+}
+
+.test-output-area .placeholder-text {
+    text-align: center;
+    color: #888;
+    padding-top: 100px;
+    font-size: 1rem;
+}
+
+/* フォームグループのスタイル */
+.form-group {
+    margin-bottom: 15px;
+}
+
+/* ラジオボタングループのスタイル */
+.radio-group {
+    display: flex;
+    flex-wrap: wrap; /* 折り返し */
+    gap: 20px;
+    justify-content: center;
     margin-bottom: 20px;
 }
+
+.radio-group label {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    font-weight: normal;
+    color: #333;
+    margin-bottom: 0;
+}
+
+.radio-group input[type="radio"] {
+    transform: scale(1.2); /* ラジオボタンのサイズ調整 */
+    margin-right: 8px;
+    cursor: pointer;
+    width: auto; /* ラジオボタンの幅を自動に */
+    margin-bottom: 0;
+}
+
 
 /* 印刷用スタイル */
 @media print {
@@ -131,23 +275,93 @@ button:disabled {
         padding: 0;
         margin: 0;
         max-width: none;
+        gap: 0; /* 印刷時にセクション間のギャップをなくす */
     }
-    .input-section, .kanji-selection-section, button {
+    .input-section,
+    .manual-add-section,
+    .test-type-selection,
+    .kanji-selection-section,
+    button {
         display: none; /* 印刷時には非表示 */
     }
     .test-preview-section {
         width: 100%;
+        padding: 0;
+        box-shadow: none;
+        border: none;
     }
     .test-output-area {
         border: none;
         min-height: auto;
         padding: 0;
         font-size: 14pt; /* 印刷時に読みやすいフォントサイズ */
-        line-height: 2.5;
+        line-height: 2.5; /* 印刷時に行間を広げる */
+        box-shadow: none;
+        background-color: transparent;
     }
-    h1, h2 {
+    .test-output-area h1,
+    .test-output-area h2,
+    .test-output-area h3 {
         text-align: left;
         margin-bottom: 10px;
         font-size: 20pt;
+        color: #000; /* 印刷時は黒色 */
+        border-bottom: none;
+        padding-bottom: 0;
+    }
+    .test-output-area h3 {
+        font-size: 16pt;
+        margin-top: 20px;
+    }
+    .test-output-area .placeholder-text {
+        display: none; /* 印刷時にプレースホルダーテキストを非表示 */
     }
 }
+
+/* モバイル対応 */
+@media (max-width: 768px) {
+    body {
+        padding: 10px;
+    }
+    .container {
+        padding: 15px;
+        gap: 15px;
+    }
+    h1 {
+        font-size: 1.8rem;
+    }
+    h2 {
+        font-size: 1.3rem;
+    }
+    textarea, input[type="text"] {
+        width: calc(100% - 20px);
+    }
+    button {
+        width: 100%; /* モバイルではボタンをフル幅に */
+        padding: 10px 15px;
+    }
+    .kanji-grid {
+        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); /* モバイルで調整 */
+        gap: 10px;
+        padding: 10px;
+    }
+    .kanji-item {
+        padding: 10px 12px;
+    }
+    .kanji-item label {
+        font-size: 1rem;
+    }
+    .kanji-item .yomi-input {
+        font-size: 0.9rem;
+    }
+    .test-output-area {
+        padding: 15px;
+        font-size: 1rem;
+        line-height: 1.8;
+    }
+    .radio-group {
+        flex-direction: column; /* ラジオボタンを縦に並べる */
+        align-items: flex-start;
+    }
+}
+
