@@ -10,6 +10,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const generateTestBtn = document.getElementById('generate-test-btn');
     const testOutputDiv = document.getElementById('test-output');
     const printTestBtn = document.getElementById('print-test-btn');
+    const downloadPdfBtn = document.getElementById('download-pdf-btn');
 
     // 問題形式ラジオボタン
     const readingOnlyRadio = document.getElementById('reading-only');
@@ -22,16 +23,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- ヘルパー関数 ---
 
-    // ユニークなIDを生成
+    /**
+     * ユニークなIDを生成する関数
+     * @returns {string} ユニークなID
+     */
     const generateUniqueId = () => '_' + Math.random().toString(36).substr(2, 9);
 
-    // 問題アイテムリストをUIに表示する関数
+    /**
+     * 問題アイテムリストをUIに表示する関数
+     */
     const renderProblemItems = () => {
         problemItemsListDiv.innerHTML = ''; // 既存のリストをクリア
 
         if (problemItems.length === 0) {
             problemItemsListDiv.innerHTML = '<p class="placeholder-text" style="text-align: center; color: #888; padding: 20px;">問題にする漢字が見つかりません。文章を入力するか、手動で追加してください。</p>';
             generateTestBtn.disabled = true;
+            downloadPdfBtn.disabled = true; // 問題がない場合はPDFボタンも無効化
             return;
         }
 
@@ -76,10 +83,15 @@ document.addEventListener('DOMContentLoaded', () => {
         updateGenerateButtonState(); // 初期表示後にボタン状態を更新
     };
 
-    // テスト生成ボタンの有効/無効を更新する関数
+    /**
+     * テスト生成ボタンとPDFダウンロードボタンの有効/無効を更新する関数
+     */
     const updateGenerateButtonState = () => {
         const selectedCount = problemItemsListDiv.querySelectorAll('input[type="checkbox"]:checked').length;
         generateTestBtn.disabled = selectedCount === 0;
+        // テスト生成ボタンが有効なら、印刷ボタンとPDFダウンロードボタンも有効にする
+        printTestBtn.disabled = selectedCount === 0;
+        downloadPdfBtn.disabled = selectedCount === 0;
     };
 
     // --- イベントリスナー ---
@@ -90,16 +102,37 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!text.trim()) {
             testOutputDiv.innerHTML = '<p class="placeholder-text">文章を入力してください。</p>';
             printTestBtn.disabled = true;
+            downloadPdfBtn.disabled = true;
             problemItems = []; // 空にする
             renderProblemItems();
             return;
         }
 
-        // 日本語の漢字をマッチさせる正規表現
-        const kanjiRegex = /[\u4E00-\u9FFF々ヶ〆]/g; // 常用漢字以外も含む
-        const sentences = text.split(/[\n。？！．]/).filter(s => s.trim() !== ''); // 改行や句読点で文を区切る
+        // 日本語の漢字をマッチさせる正規表現（常用漢字以外も含む広範囲な漢字を対象）
+        const kanjiRegex = /[\u4E00-\u9FFF々ヶ〆]/g;
 
-        problemItems = []; // リセット
+        // 文章を句読点や改行で区切り、各文から漢字を抽出
+        // 句読点も区切り文字として保持し、文を正しく結合するために括弧で囲む
+        const rawSentences = text.split(/([。？！．\n])/);
+        const sentences = [];
+        let currentSentenceBuffer = '';
+
+        rawSentences.forEach(part => {
+            if (part.trim() === '') return; // 空の文字列はスキップ
+
+            currentSentenceBuffer += part;
+            // 句読点または改行で終わる場合に文として確定
+            if (part === '。' || part === '？' || part === '！' || part === '．' || part === '\n') {
+                sentences.push(currentSentenceBuffer.trim());
+                currentSentenceBuffer = '';
+            }
+        });
+        // 最後に残った文（句読点で終わらない場合）を追加
+        if (currentSentenceBuffer.trim() !== '') {
+            sentences.push(currentSentenceBuffer.trim());
+        }
+
+        problemItems = problemItems.filter(item => item.type === 'manual'); // 手動追加された問題は残す
 
         sentences.forEach(sentence => {
             const foundKanji = sentence.match(kanjiRegex);
@@ -107,14 +140,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 // 重複を排除し、ユニークな漢字のみを抽出
                 const uniqueKanjiInSentence = [...new Set(foundKanji)];
                 uniqueKanjiInSentence.forEach(kanji => {
-                    // 同じtargetKanjiとtextの組み合わせは追加しない
+                    // 同じtargetKanjiとtextの組み合わせは追加しない（自動抽出のみ）
                     const exists = problemItems.some(item =>
                         item.targetKanji === kanji && item.text === sentence && item.type === 'auto'
                     );
                     if (!exists) {
                         problemItems.push({
                             id: generateUniqueId(),
-                            text: sentence.trim(), // 文全体を問題文として保持
+                            text: sentence, // 文全体を問題文として保持
                             targetKanji: kanji,
                             yomi: '', // 読みは手動で入力
                             type: 'auto' // 自動抽出
@@ -125,7 +158,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         testOutputDiv.innerHTML = '<p class="placeholder-text">問題にする漢字を選択し、「テストを生成」ボタンを押してください。</p>';
-        printTestBtn.disabled = true;
+        updateGenerateButtonState(); // ボタン状態を更新
         renderProblemItems(); // リストを再描画
     });
 
@@ -141,7 +174,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        // 同じtargetKanjiとtextの組み合わせは追加しない
+        // 同じtargetKanjiとtextの組み合わせは追加しない（手動追加のみ）
         const exists = problemItems.some(item =>
             item.targetKanji === targetKanji && item.text === text && item.type === 'manual'
         );
@@ -164,7 +197,7 @@ document.addEventListener('DOMContentLoaded', () => {
         manualYomiInput.value = '';
 
         testOutputDiv.innerHTML = '<p class="placeholder-text">問題にする漢字を選択し、「テストを生成」ボタンを押してください。</p>';
-        printTestBtn.disabled = true;
+        updateGenerateButtonState(); // ボタン状態を更新
         renderProblemItems(); // リストを再描画
     });
 
@@ -177,6 +210,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (selectedItemIds.length === 0) {
             testOutputDiv.innerHTML = '<p class="placeholder-text">問題にする漢字を選択してください。</p>';
             printTestBtn.disabled = true;
+            downloadPdfBtn.disabled = true;
             return;
         }
 
@@ -194,8 +228,10 @@ document.addEventListener('DOMContentLoaded', () => {
             answerContent += '<h3>■ 読み問題 解答</h3>\n';
             selectedItems.forEach((item, index) => {
                 // 問題文中のtargetKanjiを強調表示（下線）
+                // 正規表現の特殊文字をエスケープ
+                const escapedTargetKanji = item.targetKanji.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
                 const problemSentence = item.text.replace(
-                    new RegExp(item.targetKanji, 'g'),
+                    new RegExp(escapedTargetKanji, 'g'),
                     `<u>${item.targetKanji}</u>`
                 );
                 testContent += `${index + 1}. ${problemSentence} （　　　　　　　　　　）\n`;
@@ -212,8 +248,9 @@ document.addEventListener('DOMContentLoaded', () => {
             selectedItems.forEach((item, index) => {
                 const yomiForProblem = item.yomi ? `「${item.yomi}」` : '【読み】'; // 読みがあれば使用、なければ汎用
                 // 問題文中のtargetKanjiを空欄（下線）に置き換え
+                const escapedTargetKanji = item.targetKanji.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
                 const problemSentence = item.text.replace(
-                    new RegExp(item.targetKanji, 'g'),
+                    new RegExp(escapedTargetKanji, 'g'),
                     `（　　　　　　　　）`
                 );
                 testContent += `${index + 1}. ${problemSentence} (${yomiForProblem}と読む漢字を書きなさい。)\n`;
@@ -224,16 +261,75 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // 全体の解答欄を追加
-        testContent += '<div style="page-break-before: always;"></div>'; // 印刷時の改ページ
+        // PDF生成時はpage-break-beforeが効かない場合があるため、html2canvasで全体をキャプチャする
+        // 印刷時にのみ改ページを挿入するよう、別途処理する
         testContent += answerContent;
 
         testOutputDiv.innerHTML = testContent;
-        printTestBtn.disabled = false; // テストが生成されたら印刷ボタンを有効化
+        updateGenerateButtonState(); // ボタン状態を更新
     });
 
     // 印刷ボタンのクリックイベント
     printTestBtn.addEventListener('click', () => {
+        // 印刷前に解答部分に改ページを挿入するダミー要素を作成・挿入
+        const breakElement = document.createElement('div');
+        breakElement.style.pageBreakBefore = 'always';
+        breakElement.id = 'print-page-break';
+        // test-outputの最後に追加することで、解答部分の前に改ページが挿入される
+        testOutputDiv.appendChild(breakElement);
+
         window.print(); // ブラウザの印刷ダイアログを表示
+
+        // 印刷後にダミー要素を削除
+        if (testOutputDiv.contains(breakElement)) {
+            testOutputDiv.removeChild(breakElement);
+        }
+    });
+
+    // PDFダウンロードボタンのクリックイベント
+    downloadPdfBtn.addEventListener('click', () => {
+        // PDF化したい要素を取得
+        const element = testOutputDiv;
+
+        // html2canvasで要素をCanvasに変換
+        html2canvas(element, {
+            scale: 2, // 解像度を上げる (Retinaディスプレイ対応)
+            useCORS: true, // クロスオリジン画像を扱う場合 (CDNからの画像を読み込む場合などに必要)
+            logging: false, // デバッグログを非表示
+            windowWidth: element.scrollWidth, // キャプチャする幅
+            windowHeight: element.scrollHeight + 100 // 要素の高さに合わせて余裕を持たせる
+        }).then(canvas => {
+            const imgData = canvas.toDataURL('image/png'); // CanvasをPNG画像データURIに変換
+            const { jsPDF } = window.jspdf; // jsPDFオブジェクトを取得
+            const pdf = new jsPDF('p', 'mm', 'a4'); // 'p': 縦向き, 'mm': ミリメートル, 'a4': A4サイズ
+
+            const imgWidth = 210; // A4幅 (mm)
+            const pageHeight = 297; // A4高さ (mm)
+            // 画像のアスペクト比を保ったまま、A4幅に合わせた高さを計算
+            const imgHeight = (canvas.height * imgWidth) / canvas.width;
+            let heightLeft = imgHeight; // 残りの画像高さ
+
+            let position = 0; // 現在のY座標
+
+            // ページ分割してPDFに追加
+            // 最初のページ
+            pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+            heightLeft -= pageHeight;
+
+            // 残りの部分を新しいページに追加
+            while (heightLeft >= 0) {
+                position = heightLeft - imgHeight; // 新しいページのY座標を計算
+                pdf.addPage(); // 新しいページを追加
+                pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+                heightLeft -= pageHeight;
+            }
+
+            pdf.save('漢字テスト.pdf'); // PDFファイルをダウンロード
+        }).catch(error => {
+            console.error("PDF生成中にエラーが発生しました:", error);
+            // ユーザーにエラーを通知 (alert()の代わりに簡易的なメッセージ表示)
+            testOutputDiv.innerHTML = `<p class="placeholder-text" style="color: red;">PDF生成に失敗しました。詳細についてはブラウザのコンソールをご確認ください。<br>エラー: ${error.message}</p>`;
+        });
     });
 
     // 初期状態のセットアップ

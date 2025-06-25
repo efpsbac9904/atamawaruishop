@@ -4,9 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>漢字テスト作成ツール</title>
+    <!-- style.css を読み込み -->
     <link rel="stylesheet" href="style.css">
-    <!-- Lucide Icons を読み込み -->
+    <!-- Lucide Icons を読み込み (アイコン表示用) -->
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <!-- jsPDF ライブラリを読み込み (PDF生成用) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <!-- html2canvas ライブラリを読み込み (HTML要素を画像化してPDFに含めるため) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </head>
 <body>
     <div class="container">
@@ -74,16 +79,23 @@
             <div id="test-output" class="test-output-area">
                 <p class="placeholder-text">問題文を入力して漢字を抽出するか、手動で問題を追加してください。</p>
             </div>
-            <button id="print-test-btn" class="primary-btn" disabled>
-                <i data-lucide="printer"></i> テストを印刷
-            </button>
+            <div class="button-group">
+                <button id="print-test-btn" class="primary-btn" disabled>
+                    <i data-lucide="printer"></i> テストを印刷
+                </button>
+                <button id="download-pdf-btn" class="secondary-btn" disabled>
+                    <i data-lucide="download"></i> PDFダウンロード
+                </button>
+            </div>
         </div>
     </div>
 
+    <!-- script.js を読み込み (主要なスクリプト) -->
     <script src="script.js"></script>
     <script>
-        // Lucide Icons をページに表示
+        // Lucide Icons をページに表示するために初期化
         lucide.createIcons();
     </script>
 </body>
 </html>
+

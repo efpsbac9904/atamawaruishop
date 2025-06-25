@@ -1,29 +1,31 @@
 body {
-    font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; /* Inter フォントを優先 */
-    line-height: 1.8; /* 行間を少し広げて読みやすく */
-    color: #333;
-    background-color: #f0f2f5; /* 背景色をより柔らかく */
+    /* フォント設定: Inter を優先し、一般的なSans-serifフォールバック */
+    font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    line-height: 1.8; /* 行間を広げて読みやすく */
+    color: #333; /* 基本テキスト色 */
+    background-color: #f0f2f5; /* 背景色 */
     margin: 0;
     padding: 20px;
     display: flex;
-    justify-content: center;
-    align-items: flex-start;
-    min-height: 100vh;
+    justify-content: center; /* コンテンツを水平中央に配置 */
+    align-items: flex-start; /* コンテンツを上揃え */
+    min-height: 100vh; /* 最小ビューポート高さを確保 */
     box-sizing: border-box; /* paddingがwidthに影響しないように */
 }
 
 .container {
-    background: #fff;
+    background: #fff; /* コンテナの背景色 */
     padding: 30px;
-    border-radius: 12px; /* 角をより丸く */
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1); /* シャドウを強調 */
-    max-width: 900px;
-    width: 100%;
+    border-radius: 12px; /* 角を丸く */
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1); /* 影 */
+    max-width: 900px; /* 最大幅 */
+    width: 100%; /* 幅を100%に設定 */
     display: flex;
-    flex-direction: column;
+    flex-direction: column; /* 要素を縦に並べる */
     gap: 25px; /* セクション間のスペース */
 }
 
+/* 各セクションのカードスタイル */
 .card {
     background: #fff;
     border-radius: 10px;
@@ -33,14 +35,14 @@ body {
 }
 
 h1, h2 {
-    color: #2c3e50; /* 見出しの色を濃く */
+    color: #2c3e50; /* 見出しの色 */
     text-align: center;
     margin-bottom: 25px;
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 12px; /* アイコンとテキストの間のスペース */
-    font-weight: 700; /* 太字に */
+    font-weight: 700; /* 太字 */
 }
 
 h2 {
@@ -50,7 +52,7 @@ h2 {
 }
 
 label {
-    display: block;
+    display: block; /* ブロック要素として表示 */
     margin-bottom: 8px;
     font-weight: bold;
     color: #555;
@@ -58,16 +60,16 @@ label {
 }
 
 textarea, input[type="text"] {
-    width: calc(100% - 22px); /* パディング考慮 */
+    width: calc(100% - 22px); /* パディングとボーダーを考慮した幅 */
     padding: 11px;
     margin-bottom: 15px;
     border: 1px solid #ccc;
-    border-radius: 6px; /* 角を丸く */
+    border-radius: 6px;
     font-size: 1rem;
-    min-height: 100px; /* textareaの最小高さを調整 */
-    resize: vertical;
+    min-height: 100px; /* textareaの最小高さを設定 */
+    resize: vertical; /* 縦方向のみリサイズ可能 */
     box-sizing: border-box; /* パディングとボーダーをwidthに含める */
-    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease; /* フォーカス時のアニメーション */
 }
 
 input[type="text"] {
@@ -76,74 +78,83 @@ input[type="text"] {
 }
 
 textarea:focus, input[type="text"]:focus {
-    border-color: #007bff;
-    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
-    outline: none;
+    border-color: #007bff; /* フォーカス時のボーダー色 */
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25); /* フォーカス時のシャドウ */
+    outline: none; /* デフォルトのアウトラインを削除 */
+}
+
+/* ボタンのグループ化 (印刷・PDFダウンロードボタン用) */
+.button-group {
+    display: flex;
+    justify-content: center; /* ボタンを中央に配置 */
+    gap: 15px; /* ボタン間のスペース */
+    margin-top: 20px;
+    flex-wrap: wrap; /* 小さい画面でボタンを折り返す */
 }
 
 button {
-    padding: 12px 25px; /* パディングを調整 */
+    padding: 12px 25px;
     border: none;
     border-radius: 6px;
     cursor: pointer;
     font-size: 1rem;
     font-weight: 600;
-    transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.2s ease;
+    transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.2s ease; /* ホバー・クリック時のアニメーション */
     display: flex;
     align-items: center;
     gap: 8px;
     justify-content: center;
     width: auto;
-    margin-top: 10px; /* ボタンの上に少しスペース */
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); /* ボタンの影 */
 }
 
 button:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+    transform: translateY(-1px); /* 少し上に移動 */
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15); /* 影を強調 */
 }
 
 button:active {
-    transform: translateY(0);
+    transform: translateY(0); /* クリック時に元の位置に戻る */
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .primary-btn {
-    background-color: #007bff;
+    background-color: #007bff; /* プライマリボタンの色 */
     color: white;
 }
 
 .primary-btn:hover {
-    background-color: #0056b3;
+    background-color: #0056b3; /* ホバー時の色 */
 }
 
 .secondary-btn {
-    background-color: #6c757d;
+    background-color: #6c757d; /* セカンダリボタンの色 */
     color: white;
 }
 
 .secondary-btn:hover {
-    background-color: #5a6268;
+    background-color: #5a6268; /* ホバー時の色 */
 }
 
 button:disabled {
-    background-color: #cccccc;
-    cursor: not-allowed;
-    transform: none;
+    background-color: #cccccc; /* 無効時の色 */
+    cursor: not-allowed; /* カーソル変更 */
+    transform: none; /* アニメーション無効化 */
     box-shadow: none;
 }
 
 .kanji-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); /* アイテム幅を少し広げ、読み入力欄に対応 */
-    gap: 15px; /* ギャップを調整 */
+    /* 150pxを最小幅とし、利用可能なスペースに合わせて自動調整 */
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 15px;
     margin-bottom: 20px;
     padding: 15px;
     border: 1px solid #e0e0e0;
     border-radius: 8px;
     background-color: #fcfcfc;
-    max-height: 400px; /* スクロール可能にする */
-    overflow-y: auto;
+    max-height: 400px; /* 高さを制限しスクロール可能にする */
+    overflow-y: auto; /* 縦方向のみスクロールバー表示 */
 }
 
 .kanji-item {
@@ -151,7 +162,7 @@ button:disabled {
     flex-direction: column; /* チェックボックスと読み入力欄を縦に並べる */
     align-items: flex-start; /* 左寄せ */
     gap: 8px;
-    background-color: #e8f5fd; /* 背景色を調整 */
+    background-color: #e8f5fd;
     padding: 12px 15px;
     border-radius: 8px;
     border: 1px solid #b3e0ff;
@@ -198,15 +209,15 @@ button:disabled {
 .test-output-area {
     border: 1px solid #ddd;
     padding: 25px; /* パディングを増やす */
-    min-height: 400px; /* プレビューエリアの高さを確保 */
+    min-height: 400px; /* プレビューエリアの最小高さ */
     background-color: #fff;
     border-radius: 8px;
     white-space: pre-wrap; /* 改行を保持 */
-    font-size: 1.15rem; /* フォントサイズを調整 */
+    font-size: 1.15rem; /* フォントサイズ調整 */
     line-height: 2.2; /* 行間を広げて読みやすく */
     margin-bottom: 25px;
-    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05); /* 内部シャドウで深みを出す */
-    color: #212529; /* テキストの色を濃く */
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05); /* 内部シャドウ */
+    color: #212529; /* テキストの色 */
 }
 
 .test-output-area h2, .test-output-area h3 {
@@ -219,7 +230,7 @@ button:disabled {
 
 .test-output-area h3 {
     font-size: 1.25rem;
-    border-bottom: 2px solid #007bff;
+    border-bottom: 2px solid #007bff; /* 下線 */
     padding-bottom: 5px;
     margin-top: 30px;
 }
@@ -249,7 +260,7 @@ button:disabled {
     display: flex;
     align-items: center;
     cursor: pointer;
-    font-weight: normal;
+    font-weight: normal; /* デフォルトのフォントウェイト */
     color: #333;
     margin-bottom: 0;
 }
@@ -266,12 +277,12 @@ button:disabled {
 /* 印刷用スタイル */
 @media print {
     body {
-        background-color: #fff;
+        background-color: #fff; /* 印刷時は白背景 */
         margin: 0;
         padding: 0;
     }
     .container {
-        box-shadow: none;
+        box-shadow: none; /* 影を非表示 */
         padding: 0;
         margin: 0;
         max-width: none;
@@ -281,8 +292,8 @@ button:disabled {
     .manual-add-section,
     .test-type-selection,
     .kanji-selection-section,
-    button {
-        display: none; /* 印刷時には非表示 */
+    .button-group { /* ボタン全体を非表示 */
+        display: none;
     }
     .test-preview-section {
         width: 100%;
@@ -334,7 +345,7 @@ button:disabled {
         font-size: 1.3rem;
     }
     textarea, input[type="text"] {
-        width: calc(100% - 20px);
+        width: calc(100% - 20px); /* モバイルでの幅調整 */
     }
     button {
         width: 100%; /* モバイルではボタンをフル幅に */
@@ -362,6 +373,10 @@ button:disabled {
     .radio-group {
         flex-direction: column; /* ラジオボタンを縦に並べる */
         align-items: flex-start;
+    }
+    .button-group {
+        flex-direction: column; /* モバイルではボタンを縦に並べる */
+        gap: 10px;
     }
 }
 
