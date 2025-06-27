@@ -1,7 +1,6 @@
 <!DOCTYPE html>
-<html lang="ja">
-<head>
-    <meta charset="UTF-8">
+<html lang="ja"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>頭悪いショップ | リンク集</title>
     <style>
@@ -17,6 +16,7 @@
             color: white;
             padding: 10px 0;
             text-align: center;
+            position: relative; /* 通知アイコンの配置用にpositionを追加 */
         }
         .container {
             max-width: 600px;
@@ -51,12 +51,32 @@
             display: block;
             margin: 10px 0;
         }
+        /* 通知アイコンのスタイル */
+        .notification-icon {
+            position: absolute;
+            top: 50%;
+            right: 20px;
+            transform: translateY(-50%);
+            cursor: pointer;
+        }
+        .notification-icon svg {
+            width: 24px;
+            height: 24px;
+            fill: none;
+            stroke: #ffffff; /* アイコンの色を白に変更 */
+            stroke-width: 1.5;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
     </style>
 </head>
 <body>
     <header>
         <h1>頭悪いショップ | リンク集</h1>
-頭が悪くたって、勉強はできる!
+        頭が悪くたって、勉強はできる!
+        <a href="#" class="notification-icon">
+             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-bell-icon lucide-bell"><path d="M10.268 21a2 2 0 0 0 3.464 0"/><path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326"/></svg>
+        </a>
     </header>
     <div class="container">
         <div class="link-category">
@@ -77,6 +97,11 @@
                             BBS(掲示板)
                     </a>
                 </li>
+                 <li>
+                   <a href="https://study.atamawaruishop.site/Testmaker" target="_blank">
+                            漢字テスト生成サイト
+                    </a>
+                </li>
                    <li>
                    <a href="https://study.atamawaruishop.site/bbs/Test/Index.html" target="_blank">
                             掲示板(ベータ版)
@@ -88,7 +113,7 @@
             <h2>その他の頭悪いショップサイト</h2>
             <ul>
                 <li>
-                    <a href="https://gf365.atamawaruishop.site" target="_blank">
+                    <a href="https://gf365.atamawaruishop.site/" target="_blank">
                                            あほAI(現在開発中)
                     </a>
                 </li>
@@ -100,5 +125,6 @@
             </ul>
         </div>
     </div>
-</body>
-</html>
+
+
+</body></html>
