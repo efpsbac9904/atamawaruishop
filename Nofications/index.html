@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>通知履歴</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Interフォントを読み込み */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6; /* Tailwind gray-100 */
+            display: flex;
+            justify-content: center;
+            align-items: flex-start; /* 上寄せに変更 */
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .container {
+            background-color: #ffffff; /* 白 */
+            padding: 2.5rem; /* p-10 */
+            border-radius: 0.75rem; /* rounded-xl */
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); /* shadow-lg */
+            max-width: 800px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem; /* gap-8 */
+        }
+        .notification-card {
+            background-color: #f9fafb; /* Tailwind gray-50 */
+            padding: 1.25rem; /* p-5 */
+            border-radius: 0.5rem; /* rounded-lg */
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); /* shadow-sm */
+            border-left: 5px solid;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+        .notification-card.success { border-color: #10b981; /* emerald-500 */ }
+        .notification-card.info { border-color: #3b82f6; /* blue-500 */ }
+        .notification-card.warning { border-color: #f59e0b; /* amber-500 */ }
+        .notification-card.error { border-color: #ef4444; /* red-500 */ }
+
+        .notification-content {
+            flex-grow: 1;
+        }
+        .notification-card-title {
+            font-weight: 600; /* font-semibold */
+            font-size: 1.125rem; /* text-lg */
+            margin-bottom: 0.5rem;
+            color: #1f2937; /* gray-900 */
+        }
+        .notification-card-message {
+            font-size: 0.95rem;
+            color: #4b5563; /* gray-600 */
+            margin-bottom: 0.5rem;
+        }
+        .notification-card-timestamp {
+            font-size: 0.75rem; /* text-xs */
+            color: #6b7280; /* gray-500 */
+        }
+
+        /* モバイル対応 */
+        @media (max-width: 640px) {
+            body {
+                padding: 10px;
+            }
+            .container {
+                padding: 1.5rem;
+                gap: 1.5rem;
+            }
+            .notification-card {
+                flex-direction: column;
+                align-items: stretch;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 flex justify-center items-start min-h-screen p-5">
+    <div class="container">
+        <h1 class="text-3xl font-bold text-gray-800 text-center mb-6">通知履歴</h1>
+
+        <!-- 通知履歴の表示セクション -->
+        <div class="notification-history-section">
+            <h2 class="text-2xl font-semibold text-gray-700 mb-4">過去の通知</h2>
+            <div id="notificationList" class="flex flex-col gap-4">
+                <!-- ここに通知カードを直接記述します -->
+
+                <div class="notification-card info">
+                    <div class="notification-content">
+                        <div class="notification-card-title">新機能のお知らせ</div>
+                        <div class="notification-card-message">ダッシュボードに新しい分析ツールが追加されました。</div>
+                        <div class="notification-card-timestamp">2025/06/28 10:30:00</div>
+                    </div>
+                </div>
+
+                <div class="notification-card success">
+                    <div class="notification-content">
+                        <div class="notification-card-title">設定が保存されました</div>
+                        <div class="notification-card-message">あなたのプロファイル設定が正常に更新されました。</div>
+                        <div class="notification-card-timestamp">2025/06/27 15:00:00</div>
+                    </div>
+                </div>
+
+                <div class="notification-card warning">
+                    <div class="notification-content">
+                        <div class="notification-card-title">ストレージ容量の警告</div>
+                        <div class="notification-card-message">クラウドストレージの残量が少なくなっています。</div>
+                        <div class="notification-card-timestamp">2025/06/26 09:45:00</div>
+                    </div>
+                </div>
+
+                <div class="notification-card error">
+                    <div class="notification-content">
+                        <div class="notification-card-title">ログインエラー</div>
+                        <div class="notification-card-message">認証情報が無効です。再度お試しください。</div>
+                        <div class="notification-card-timestamp">2025/06/25 22:10:00</div>
+                    </div>
+                </div>
+
+                <!-- 必要に応じて、ここにさらに通知カードを追加してください -->
+
+                <p id="noNotificationsMessage" class="text-gray-500 text-center" style="display: none;">通知はありません。</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // このスクリプトは、通知の表示ロジックは持ちません。
+        // 通知はHTMLに直接記述されています。
+        // 今後、通知をプログラム的に・管理したい場合は、JavaScriptコードを追加する必要があります。
+
+        // HTMLに通知がない場合にのみ「通知はありません」メッセージを表示する簡単なチェック
+        document.addEventListener('DOMContentLoaded', () => {
+            const notificationListDiv = document.getElementById('notificationList');
+            const noNotificationsMessage = document.getElementById('noNotificationsMessage');
+            // 'notification-card' クラスを持つ要素があるか確認
+            const hasNotifications = notificationListDiv.querySelector('.notification-card');
+
+            if (!hasNotifications) {
+                noNotificationsMessage.style.display = 'block';
+            } else {
+                noNotificationsMessage.style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html>
