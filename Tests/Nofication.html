@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ブラウザ通知サンプル</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Interフォントを適用 */
+        body {
+            font-family: "Inter", sans-serif;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-purple-400 to-blue-600 min-h-screen flex items-center justify-center p-4">
+
+    <div class="bg-white p-8 rounded-lg shadow-2xl max-w-md w-full text-center">
+        <h1 class="text-3xl font-bold text-gray-800 mb-6">ブラウザ通知デモ</h1>
+        <p class="text-gray-600 mb-8">
+            下のボタンをクリックして、通知の許可を求め、デスクトップ通知を試してみてください。
+            <br>
+            ※通知はブラウザがアクティブな場合にのみ表示されます。
+        </p>
+
+        <button id="requestPermissionBtn"
+                class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg shadow-lg transform transition duration-300 hover:scale-105 focus:outline-none focus:ring-4 focus:ring-blue-300 mb-4 w-full">
+            通知の許可を要求
+        </button>
+
+        <button id="showNotificationBtn"
+                class="bg-green-500 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg shadow-lg transform transition duration-300 hover:scale-105 focus:outline-none focus:ring-4 focus:ring-green-300 w-full">
+            通知を表示
+        </button>
+
+        <div id="messageBox" class="mt-8 p-4 rounded-lg bg-gray-100 text-gray-700 hidden">
+            <!-- メッセージが表示される場所 -->
+        </div>
+    </div>
+
+    <script>
+        // メッセージボックス要素を取得
+        const messageBox = document.getElementById('messageBox');
+
+        // メッセージを表示する関数
+        function showMessage(message, type = 'info') {
+            messageBox.textContent = message;
+            messageBox.className = `mt-8 p-4 rounded-lg text-white ${
+                type === 'error' ? 'bg-red-500' : type === 'success' ? 'bg-green-500' : 'bg-blue-500'
+            }`;
+            messageBox.classList.remove('hidden');
+        }
+
+        // 通知の許可を要求するボタン
+        document.getElementById('requestPermissionBtn').addEventListener('click', async () => {
+            // ブラウザがNotification APIをサポートしているか確認
+            if (!("Notification" in window)) {
+                showMessage("このブラウザはデスクトップ通知をサポートしていません。", 'error');
+                return;
+            }
+
+            try {
+                // 通知の許可を要求
+                const permission = await Notification.requestPermission();
+
+                if (permission === "granted") {
+                    showMessage("通知が許可されました！", 'success');
+                } else if (permission === "denied") {
+                    showMessage("通知が拒否されました。ブラウザの設定から許可してください。", 'error');
+                } else { // "default" の場合（ユーザーがまだ選択していないか、プロンプトを閉じた場合）
+                    showMessage("通知の許可が保留中または拒否されました。", 'info');
+                }
+            } catch (error) {
+                console.error("通知許可の要求中にエラーが発生しました:", error);
+                showMessage("通知許可の要求中にエラーが発生しました。", 'error');
+            }
+        });
+
+        // 通知を表示するボタン
+        document.getElementById('showNotificationBtn').addEventListener('click', () => {
+            // 現在の通知の許可状態を確認
+            if (Notification.permission === "granted") {
+                // 許可されている場合、通知を作成して表示
+                new Notification("新しいお知らせです！", {
+                    body: "これはサンプルのデスクトップ通知です。",
+                    icon: "https://placehold.co/64x64/FF69B4/FFFFFF?text=🔔", // 通知アイコン
+                    silent: false // 音を鳴らすかどうか
+                });
+                showMessage("通知が表示されました！（ブラウザの設定によっては音やバイブレーションも）", 'success');
+            } else if (Notification.permission === "denied") {
+                // 拒否されている場合
+                showMessage("通知が拒否されています。先に「通知の許可を要求」ボタンをクリックしてください。", 'error');
+            } else { // "default" の場合（まだ許可を求めていない）
+                showMessage("通知の許可がまだありません。先に「通知の許可を要求」ボタンをクリックしてください。", 'info');
+            }
+        });
+
+        // ページロード時の初期メッセージ
+        window.onload = () => {
+            if (!("Notification" in window)) {
+                showMessage("このブラウザはデスクトップ通知をサポートしていません。", 'error');
+                document.getElementById('requestPermissionBtn').disabled = true;
+                document.getElementById('showNotificationBtn').disabled = true;
+            } else if (Notification.permission === "granted") {
+                showMessage("通知はすでに許可されています。", 'success');
+            } else if (Notification.permission === "denied") {
+                showMessage("通知は拒否されています。ブラウザの設定を確認してください。", 'error');
+            } else {
+                showMessage("通知の許可を要求してください。", 'info');
+            }
+        };
+
+    </script>
+</body>
+</html>
