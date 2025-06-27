@@ -1,152 +1,130 @@
 <!DOCTYPE html>
-<html lang="ja">
-<head>
-    <meta charset="UTF-8">
+<html lang="ja"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>通知履歴</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>頭悪いショップ | リンク集</title>
     <style>
-        /* Interフォントを読み込み */
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
         body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f3f4f6; /* Tailwind gray-100 */
-            display: flex;
-            justify-content: center;
-            align-items: flex-start; /* 上寄せに変更 */
-            min-height: 100vh;
+            font-family: Arial, sans-serif;
             margin: 0;
-            padding: 20px;
-            box-sizing: border-box;
+            padding: 0;
+            background-color: #ffffff;
+            color: #333;
+        }
+        header {
+            background: #007BFF;
+            color: white;
+            padding: 10px 0;
+            text-align: center;
+            position: relative; /* 通知アイコンの配置用にpositionを追加 */
         }
         .container {
-            background-color: #ffffff; /* 白 */
-            padding: 2.5rem; /* p-10 */
-            border-radius: 0.75rem; /* rounded-xl */
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); /* shadow-lg */
-            max-width: 800px;
-            width: 100%;
-            display: flex;
-            flex-direction: column;
-            gap: 2rem; /* gap-8 */
+            max-width: 600px;
+            margin: 20px auto;
+            padding: 10px;
         }
-        .notification-card {
-            background-color: #f9fafb; /* Tailwind gray-50 */
-            padding: 1.25rem; /* p-5 */
-            border-radius: 0.5rem; /* rounded-lg */
-            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); /* shadow-sm */
-            border-left: 5px solid;
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
+        .link-category {
+            margin-bottom: 20px;
         }
-        .notification-card.success { border-color: #10b981; /* emerald-500 */ }
-        .notification-card.info { border-color: #3b82f6; /* blue-500 */ }
-        .notification-card.warning { border-color: #f59e0b; /* amber-500 */ }
-        .notification-card.error { border-color: #ef4444; /* red-500 */ }
-
-        .notification-content {
-            flex-grow: 1;
+        .link-category h2 {
+            font-size: 18px;
+            color: #007BFF;
+            margin-bottom: 10px;
         }
-        .notification-card-title {
-            font-weight: 600; /* font-semibold */
-            font-size: 1.125rem; /* text-lg */
-            margin-bottom: 0.5rem;
-            color: #1f2937; /* gray-900 */
+        ul {
+            list-style: none;
+            padding: 0;
         }
-        .notification-card-message {
-            font-size: 0.95rem;
-            color: #4b5563; /* gray-600 */
-            margin-bottom: 0.5rem;
+        ul li {
+            margin: 10px 0;
         }
-        .notification-card-timestamp {
-            font-size: 0.75rem; /* text-xs */
-            color: #6b7280; /* gray-500 */
+        a {
+            color: #007BFF;
+            text-decoration: none;
         }
-
-        /* モバイル対応 */
-        @media (max-width: 640px) {
-            body {
-                padding: 10px;
-            }
-            .container {
-                padding: 1.5rem;
-                gap: 1.5rem;
-            }
-            .notification-card {
-                flex-direction: column;
-                align-items: stretch;
-            }
+        a:hover {
+            text-decoration: underline;
+        }
+        img {
+            max-width: 100%;
+            height: auto;
+            display: block;
+            margin: 10px 0;
+        }
+        /* 通知アイコンのスタイル */
+        .notification-icon {
+            position: absolute;
+            top: 50%;
+            right: 20px;
+            transform: translateY(-50%);
+            cursor: pointer;
+        }
+        .notification-icon svg {
+            width: 24px;
+            height: 24px;
+            fill: none;
+            stroke: #ffffff; /* アイコンの色を白に変更 */
+            stroke-width: 1.5;
+            stroke-linecap: round;
+            stroke-linejoin: round;
         }
     </style>
 </head>
-<body class="bg-gray-100 flex justify-center items-start min-h-screen p-5">
+<body>
+    <header>
+        <h1>頭悪いショップ | リンク集</h1>
+        頭が悪くたって、勉強はできる!
+        <a href="/Nofications" class="notification-icon">
+             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-bell-icon lucide-bell"><path d="M10.268 21a2 2 0 0 0 3.464 0"/><path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326"/></svg>
+        </a>
+    </header>
     <div class="container">
-        <h1 class="text-3xl font-bold text-gray-800 text-center mb-6">通知履歴</h1>
-
-        <!-- 通知履歴の表示セクション -->
-        <div class="notification-history-section">
-            <h2 class="text-2xl font-semibold text-gray-700 mb-4">過去の通知</h2>
-            <div id="notificationList" class="flex flex-col gap-4">
-                <!-- ここに通知カードを直接記述します -->
-
-                <div class="notification-card info">
-                    <div class="notification-content">
-                        <div class="notification-card-title">新機能のお知らせ</div>
-                        <div class="notification-card-message">ダッシュボードに新しい分析ツールが追加されました。</div>
-                        <div class="notification-card-timestamp">2025/06/28 10:30:00</div>
-                    </div>
-                </div>
-
-                <div class="notification-card success">
-                    <div class="notification-content">
-                        <div class="notification-card-title">設定が保存されました</div>
-                        <div class="notification-card-message">あなたのプロファイル設定が正常に更新されました。</div>
-                        <div class="notification-card-timestamp">2025/06/27 15:00:00</div>
-                    </div>
-                </div>
-
-                <div class="notification-card warning">
-                    <div class="notification-content">
-                        <div class="notification-card-title">ストレージ容量の警告</div>
-                        <div class="notification-card-message">クラウドストレージの残量が少なくなっています。</div>
-                        <div class="notification-card-timestamp">2025/06/26 09:45:00</div>
-                    </div>
-                </div>
-
-                <div class="notification-card error">
-                    <div class="notification-content">
-                        <div class="notification-card-title">ログインエラー</div>
-                        <div class="notification-card-message">認証情報が無効です。再度お試しください。</div>
-                        <div class="notification-card-timestamp">2025/06/25 22:10:00</div>
-                    </div>
-                </div>
-
-                <!-- 必要に応じて、ここにさらに通知カードを追加してください -->
-
-                <p id="noNotificationsMessage" class="text-gray-500 text-center" style="display: none;">通知はありません。</p>
-            </div>
+        <div class="link-category">
+            <h2>勉強関連サイト</h2>
+            <ul>
+                <li>
+                   <a href="https://study.atamawaruishop.site/Bunseki" target="_blank">
+                        学習記録分析
+                    </a>
+                </li>
+                <li>
+                    <a href="https://study.atamawaruishop.site/ToDoList" target="_blank">
+                            やることリスト
+                    </a>
+                </li>
+                <li>
+                   <a href="https://study.atamawaruishop.site/bbs" target="_blank">
+                            BBS(掲示板)
+                    </a>
+                </li>
+                   <li>
+                   <a href="https://study.atamawaruishop.site/bbs/Test/Index.html" target="_blank">
+                            掲示板(ベータ版)
+                    </a>
+                </li>
+                 <li>
+                   <a href="https://study.atamawaruishop.site/Testmaker" target="_blank">
+                           漢字テスト生成サイト
+                    </a>
+                </li>
+            </ul>
+        </div>
+        <div class="link-category">
+            <h2>その他の頭悪いショップサイト</h2>
+            <ul>
+                <li>
+                    <a href="https://gf365.atamawaruishop.site/" target="_blank">
+                                           あほAI(現在開発中)
+                    </a>
+                </li>
+                <li>
+                    <a href="https://study.atamawaruishop.site/school/" target="_blank">
+                                        チョーバカ高等学校　公式 ?
+                    </a>
+                </li>
+            </ul>
         </div>
     </div>
 
-    <script>
-        // このスクリプトは、通知の表示ロジックは持ちません。
-        // 通知はHTMLに直接記述されています。
-        // 今後、通知をプログラム的に・管理したい場合は、JavaScriptコードを追加する必要があります。
 
-        // HTMLに通知がない場合にのみ「通知はありません」メッセージを表示する簡単なチェック
-        document.addEventListener('DOMContentLoaded', () => {
-            const notificationListDiv = document.getElementById('notificationList');
-            const noNotificationsMessage = document.getElementById('noNotificationsMessage');
-            // 'notification-card' クラスを持つ要素があるか確認
-            const hasNotifications = notificationListDiv.querySelector('.notification-card');
-
-            if (!hasNotifications) {
-                noNotificationsMessage.style.display = 'block';
-            } else {
-                noNotificationsMessage.style.display = 'none';
-            }
-        });
-    </script>
-</body>
-</html>
+</body></html>
