@@ -49,12 +49,10 @@ document.addEventListener('DOMContentLoaded', () => {
         testBody.appendChild(section);
         lucide.createIcons();
         
-        // 大問クリックで選択
         section.addEventListener('click', () => {
             selectSection(section);
         });
 
-        // 削除ボタンのイベントリスナー
         section.querySelector('.delete-btn').addEventListener('click', (e) => {
             e.stopPropagation();
             if (confirm('この大問を削除しますか？')) {
@@ -88,36 +86,28 @@ document.addEventListener('DOMContentLoaded', () => {
         questionsContainer.appendChild(question);
         lucide.createIcons();
 
-        // テキストエリアの自動リサイズ
         const textarea = question.querySelector('textarea');
         textarea.addEventListener('input', autoResizeTextarea);
 
-        // 削除ボタンのイベントリスナー
         question.querySelector('.delete-btn').addEventListener('click', (e) => {
             e.stopPropagation();
             question.remove();
-            // 小問番号を更新
             updateQuestionNumbers(questionsContainer);
         });
     });
 
-    // 大問を選択する関数
     function selectSection(section) {
-        // 他の全てのsectionからselectedクラスを削除
         document.querySelectorAll('.section').forEach(s => s.classList.remove('selected'));
-        // クリックされたsectionにselectedクラスを追加
         section.classList.add('selected');
         selectedSection = section;
         addQuestionBtn.disabled = false;
     }
 
-    // テキストエリアを内容に応じて自動リサイズする関数
     function autoResizeTextarea() {
         this.style.height = 'auto';
         this.style.height = this.scrollHeight + 'px';
     }
     
-    // 小問番号を更新する関数
     function updateQuestionNumbers(container) {
         const items = container.querySelectorAll('.question-item');
         items.forEach((item, index) => {
@@ -125,13 +115,19 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // --- ここからが修正箇所 ---
     // PDFとして保存
     savePdfBtn.addEventListener('click', () => {
-        // 選択状態を解除してから保存
-        if(selectedSection) {
+        // 0. PDFに出力したくない要素をすべて取得
+        const deleteButtons = document.querySelectorAll('.delete-btn');
+
+        // 1. PDF生成前に、編集用のUIを一時的に非表示にする
+        deleteButtons.forEach(btn => btn.style.display = 'none');
+        if (selectedSection) {
             selectedSection.classList.remove('selected');
         }
         
+        // 2. PDFを生成
         const element = document.getElementById('test-sheet');
         const opt = {
             margin:       0,
@@ -142,10 +138,12 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         html2pdf().set(opt).from(element).save().then(() => {
-            // PDF保存後に選択状態を復元
-            if(selectedSection) {
+            // 3. PDF生成が終わったら、非表示にしたUIを元に戻す
+            deleteButtons.forEach(btn => btn.style.display = 'flex'); // 元のdisplayプロパティに戻す
+            if (selectedSection) {
                 selectedSection.classList.add('selected');
             }
         });
     });
+    // --- ここまでが修正箇所 ---
 });
