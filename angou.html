@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>秘密のXOR暗号化ツール</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* ここにカスタムスタイルを書いていくよ！ */
+        body {
+            font-family: 'Inter', sans-serif; /* フォントは「Inter」を使うよ */
+            background-color: #f0f4f8; /* 背景はちょっと薄めのグレーにしてみた */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh; /* 画面いっぱいに広がるようにするよ */
+            margin: 0;
+            padding: 20px; /* ちょっと余白もつけて見やすくね */
+            box-sizing: border-box;
+        }
+        /* テキストエリアと入力欄の基本スタイル */
+        textarea, input[type="text"] {
+            /* Tailwindのクラスを使って、パディング、ボーダー、角丸、フォーカス時のスタイルを設定 */
+            @apply p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500;
+        }
+        /* ボタンの基本スタイル */
+        button {
+            /* パディング、角丸、太字、影、アニメーションを設定 */
+            @apply px-6 py-3 rounded-lg font-semibold shadow-md transition-all duration-200 ease-in-out;
+        }
+        /* ボタンにマウスが乗った時のアニメーション */
+        button:hover {
+            @apply transform -translate-y-0.5; /* ちょっと上に浮き上がるようにするよ */
+        }
+        /* コピーメッセージのスタイル */
+        .copy-message {
+            @apply text-sm text-green-600 mt-2 text-center opacity-0 transition-opacity duration-300;
+        }
+        .copy-message.show {
+            @apply opacity-100;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen p-4">
+    <div class="bg-white p-8 rounded-xl shadow-2xl w-full max-w-2xl border border-gray-200">
+        <h1 class="text-4xl font-bold text-center text-gray-800 mb-8">秘密のXOR暗号化ツール</h1>
+
+        <div class="mb-6">
+            <label for="inputText" class="block text-gray-700 text-lg font-medium mb-2">元の文章:</label>
+            <textarea id="inputText" rows="6" class="w-full text-gray-800 bg-gray-50"></textarea>
+        </div>
+
+        <div class="mb-8">
+            <label for="keyword" class="block text-gray-700 text-lg font-medium mb-2">キーワード:</label>
+            <input type="text" id="keyword" class="w-full text-gray-800 bg-gray-50" placeholder="秘密のキーワードを入力">
+        </div>
+
+        <div class="flex flex-col sm:flex-row justify-center gap-4 mb-8">
+            <button id="encryptBtn" class="bg-blue-600 text-white hover:bg-blue-700">暗号化！</button>
+            <button id="decryptBtn" class="bg-green-600 text-white hover:bg-green-700">復号！</button>
+        </div>
+
+        <div>
+            <div class="flex justify-between items-center mb-2">
+                <label for="resultText" class="block text-gray-700 text-lg font-medium">結果:</label>
+                <!-- コピーボタンを追加！ -->
+                <button id="copyBtn" class="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-base hover:bg-gray-300 transition-colors duration-200">コピー</button>
+            </div>
+            <textarea id="resultText" rows="6" class="w-full text-gray-800 bg-gray-50" readonly></textarea>
+            <!-- コピー成功メッセージを表示する場所 -->
+            <p id="copyMessage" class="copy-message">コピーしました！</p>
+        </div>
+    </div>
+
+    <script>
+        // ここからJavaScriptのコードだよ！
+
+        /**
+         * XOR暗号でテキストを暗号化/復号化する関数
+         * 日本語を含むあらゆるUnicode文字に対応するよ！
+         * @param {string} text - 暗号化または復号化したい元の文章
+         * @param {string} keyword - 暗号化/復号化に使うキーワード
+         * @returns {string} 暗号化または復号化された文章
+         */
+        function xorCipher(text, keyword) {
+            let result = ''; // 結果を格納する変数
+            // キーワードが空の場合は何もしない
+            if (!keyword) {
+                return text;
+            }
+
+            // キーワードを繰り返して使うためのインデックス
+            let keyIndex = 0;
+
+            // 入力されたテキストの各文字をループで処理する
+            for (let i = 0; i < text.length; i++) {
+                // 現在の文字のUnicodeコードポイントを取得
+                let charCode = text.charCodeAt(i);
+                // キーワードの現在の文字のUnicodeコードポイントを取得（繰り返し使う）
+                let keyCharCode = keyword.charCodeAt(keyIndex % keyword.length);
+
+                // XOR演算で文字コードを変換
+                // 同じキーでXORすると元に戻るのが特徴だよ！
+                let transformedChar = charCode ^ keyCharCode;
+
+                // 変換された文字を結果に追加
+                result += String.fromCharCode(transformedChar);
+
+                // キーワードのインデックスを次に進める
+                keyIndex++;
+            }
+            return result; // 変換された文章を返す
+        }
+
+        // HTML要素をJavaScriptで取得するよ
+        const inputText = document.getElementById('inputText'); // 元の文章のテキストエリア
+        const keywordInput = document.getElementById('keyword'); // キーワードの入力欄
+        const encryptBtn = document.getElementById('encryptBtn'); // 暗号化ボタン
+        const decryptBtn = document.getElementById('decryptBtn'); // 復号ボタン
+        const resultText = document.getElementById('resultText'); // 結果表示のテキストエリア
+        const copyBtn = document.getElementById('copyBtn'); // コピーボタン
+        const copyMessage = document.getElementById('copyMessage'); // コピー成功メッセージ
+
+        // 暗号化ボタンがクリックされた時の処理
+        encryptBtn.addEventListener('click', () => {
+            const text = inputText.value; // 入力された元の文章を取得
+            const keyword = keywordInput.value; // 入力されたキーワードを取得
+
+            // キーワードが空だったら警告メッセージを出すよ
+            if (!keyword) {
+                resultText.value = "キーワードを入力してください！";
+                // メッセージを非表示にする
+                copyMessage.classList.remove('show');
+                return; // ここで処理を中断
+            }
+
+            const encrypted = xorCipher(text, keyword); // XOR暗号関数を呼び出す
+            resultText.value = encrypted; // 結果を表示エリアにセット
+            // メッセージを非表示にする
+            copyMessage.classList.remove('show');
+        });
+
+        // 復号ボタンがクリックされた時の処理
+        decryptBtn.addEventListener('click', () => {
+            // 復号したいテキストは、入力テキストエリアから取得するよ
+            const text = inputText.value;
+            const keyword = keywordInput.value; // 入力されたキーワードを取得
+
+            // キーワードが空だったら警告メッセージを出すよ
+            if (!keyword) {
+                resultText.value = "キーワードを入力してください！";
+                // メッセージを非表示にする
+                copyMessage.classList.remove('show');
+                return; // ここで処理を中断
+            }
+
+            const decrypted = xorCipher(text, keyword); // XOR暗号関数を呼び出す（暗号化と同じ関数でOK！）
+            resultText.value = decrypted; // 結果を表示エリアにセット
+            // メッセージを非表示にする
+            copyMessage.classList.remove('show');
+        });
+
+        // コピーボタンがクリックされた時の処理
+        copyBtn.addEventListener('click', () => {
+            // 結果テキストエリアのテキストを選択
+            resultText.select();
+            // モバイルデバイスで選択範囲を広げるために、selectionStartとselectionEndを設定
+            resultText.setSelectionRange(0, 99999); // iOS対応
+
+            try {
+                // クリップボードにコピー
+                document.execCommand('copy');
+                // コピー成功メッセージを表示
+                copyMessage.classList.add('show');
+                // 2秒後にメッセージを非表示にする
+                setTimeout(() => {
+                    copyMessage.classList.remove('show');
+                }, 2000);
+            } catch (err) {
+                console.error('コピーに失敗しました:', err);
+                // 失敗した場合はアラートなどでユーザーに通知することもできるけど、今回はコンソールに出力
+            }
+        });
+    </script>
+</body>
+</html>
