@@ -52,8 +52,23 @@ document.addEventListener('DOMContentLoaded', () => {
         testBody.appendChild(section);
         lucide.createIcons();
         questions.forEach(qText => createQuestion(section, qText));
-        section.addEventListener('click', (e) => { if(e.target.classList.contains('section')) selectSection(section); });
-        section.querySelector('.delete-btn').addEventListener('click', (e) => { e.stopPropagation(); if (confirm('この大問を削除しますか？')) { if(selectedSection === section) { selectedSection = null; addQuestionBtn.disabled = true; } section.remove(); } });
+        
+        // ★★★★★ 修正箇所 ★★★★★
+        // 大問エリアのどこをクリックしても選択されるように修正
+        section.addEventListener('click', () => {
+            selectSection(section);
+        });
+        
+        section.querySelector('.delete-btn').addEventListener('click', (e) => { 
+            e.stopPropagation(); // 大問選択イベントを発火させない
+            if (confirm('この大問を削除しますか？')) { 
+                if(selectedSection === section) { 
+                    selectedSection = null; 
+                    addQuestionBtn.disabled = true; 
+                } 
+                section.remove(); 
+            } 
+        });
         selectSection(section);
         return section;
     }
@@ -64,7 +79,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const questionItem = document.createElement('div');
         questionItem.className = 'question-item';
         
-        // --- 表示用のdivと編集用のtextareaを管理 ---
         const contentDiv = document.createElement('div');
         contentDiv.className = 'question-content';
         contentDiv.textContent = text;
@@ -74,23 +88,27 @@ document.addEventListener('DOMContentLoaded', () => {
         questionItem.innerHTML += `<div class="delete-btn" title="小問を削除"><i data-lucide="trash-2" style="width:14px; height:14px;"></i></div>`;
         
         questionsContainer.appendChild(questionItem);
-        renderMathInElement(contentDiv, katexOptions); // KaTeXでレンダリング
+        renderMathInElement(contentDiv, katexOptions);
         lucide.createIcons();
 
-        // --- クリックで編集モードに切り替える ---
-        questionItem.querySelector('.question-content').addEventListener('click', (e) => {
-            switchToEditMode(e.target);
+        contentDiv.addEventListener('click', (e) => {
+            e.stopPropagation(); // 大問選択イベントが重複しないようにする
+            switchToEditMode(e.currentTarget);
         });
         
-        questionItem.querySelector('.delete-btn').addEventListener('click', (e) => { e.stopPropagation(); questionItem.remove(); updateQuestionNumbers(questionsContainer); });
+        questionItem.querySelector('.delete-btn').addEventListener('click', (e) => { 
+            e.stopPropagation(); 
+            questionItem.remove(); 
+            updateQuestionNumbers(questionsContainer); 
+        });
     }
 
     function switchToEditMode(div) {
-        if (div.tagName === 'TEXTAREA') return; // すでに編集モードなら何もしない
+        if (div.tagName === 'TEXTAREA') return;
         const text = div.textContent;
         const textarea = document.createElement('textarea');
         textarea.value = text;
-        textarea.className = 'question-text'; // 既存のスタイルを流用
+        textarea.className = 'question-text';
         autoResizeTextarea.call(textarea);
 
         div.replaceWith(textarea);
@@ -112,24 +130,37 @@ document.addEventListener('DOMContentLoaded', () => {
         div.textContent = text;
 
         textarea.replaceWith(div);
-        renderMathInElement(div, katexOptions); // 再レンダリング
+        renderMathInElement(div, katexOptions);
 
-        // イベントリスナーを再設定
-        div.addEventListener('click', (e) => switchToEditMode(e.target));
+        div.addEventListener('click', (e) => {
+            e.stopPropagation();
+            switchToEditMode(e.currentTarget);
+        });
     }
 
-    function selectSection(section) { /* ... 変更なし ... */ }
-    function autoResizeTextarea() { /* ... 変更なし ... */ }
-    function updateQuestionNumbers(container) { /* ... 変更なし ... */ }
+    function selectSection(section) {
+        document.querySelectorAll('.section').forEach(s => s.classList.remove('selected'));
+        section.classList.add('selected');
+        selectedSection = section;
+        addQuestionBtn.disabled = false;
+    }
 
-    // ===============================================
-    // データ収集/構築 (LaTeX対応)
-    // ===============================================
+    function autoResizeTextarea() {
+        this.style.height = 'auto';
+        this.style.height = this.scrollHeight + 'px';
+    }
+
+    function updateQuestionNumbers(container) {
+        const items = container.querySelectorAll('.question-item');
+        items.forEach((item, index) => {
+            item.querySelector('.q-number').textContent = `(${index + 1})`;
+        });
+    }
+
     function collectDataFromPage() {
         const data = { subject: subjectInput.value, title: testTitleInput.value, orientation: document.querySelector('input[name="orientation"]:checked').value, sections: [] };
         document.querySelectorAll('.section').forEach(sectionEl => {
             const sectionData = { title: sectionEl.querySelector('.section-title').value, questions: [] };
-            // .question-contentのtextContentを読めば、元のLaTeX文字列が取得できる
             sectionEl.querySelectorAll('.question-content').forEach(qEl => sectionData.questions.push(qEl.textContent));
             data.sections.push(sectionData);
         });
@@ -158,11 +189,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
     
-    // 以下、インポート/エクスポート/PDF保存のロジックは変更なし
-    /* ... (前回のコードと同じなので省略) ... */
-    // ===============================================
-    // エクスポート機能
-    // ===============================================
     exportJsonBtn.addEventListener('click', () => {
         const data = collectDataFromPage();
         const jsonString = JSON.stringify(data, null, 2);
@@ -204,9 +230,6 @@ document.addEventListener('DOMContentLoaded', () => {
         URL.revokeObjectURL(url);
     }
 
-    // ===============================================
-    // インポート機能
-    // ===============================================
     importBtn.addEventListener('click', () => importFileInput.click());
 
     importFileInput.addEventListener('change', (event) => {
@@ -257,9 +280,6 @@ document.addEventListener('DOMContentLoaded', () => {
         return data;
     }
     
-    // ===============================================
-    // PDF保存機能
-    // ===============================================
     savePdfBtn.addEventListener('click', () => {
         const activeTextarea = document.querySelector('.question-text');
         if (activeTextarea) {
