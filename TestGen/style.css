@@ -1,6 +1,250 @@
-/* --- 以下のコードをstyle.cssの末尾に追記 --- */
+:root {
+    --primary-color: #4a90e2;
+    --border-color: #ddd;
+    --bg-color: #f9f9f9;
+    --text-color: #333;
+    --paper-bg: #fff;
+    --shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
 
-/* 問題文の表示/編集エリアのスタイル */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', Meiryo, sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    font-size: 16px;
+}
+
+.container {
+    display: flex;
+    height: 100vh;
+}
+
+/* Sidebar */
+.sidebar {
+    width: 320px;
+    background-color: var(--paper-bg);
+    border-right: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    padding: 20px;
+    overflow-y: auto;
+}
+
+.sidebar-header {
+    margin-bottom: 2rem;
+}
+
+.sidebar-header h1 {
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.controls h2 {
+    font-size: 1.1rem;
+    margin-top: 1.5rem;
+    margin-bottom: 0.8rem;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 0.5rem;
+}
+
+.form-group {
+    margin-bottom: 1rem;
+}
+
+.form-group label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+}
+
+.form-group input[type="text"] {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    font-size: 1rem;
+}
+
+.radio-group {
+    display: flex;
+    gap: 1rem;
+}
+
+.button-group {
+    margin-top: 1rem;
+}
+
+.button-group .description {
+    font-size: 0.8rem;
+    color: #666;
+    margin: 0.5rem 0 1rem 0;
+}
+
+.btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    width: 100%;
+    padding: 10px;
+    font-size: 1rem;
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.btn:hover {
+    background-color: #357abd;
+}
+
+.btn:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+}
+
+.sidebar-footer {
+    margin-top: auto;
+    text-align: center;
+    font-size: 0.8rem;
+    color: #999;
+    padding-top: 1rem;
+}
+
+
+/* Preview Area */
+.preview-container {
+    flex: 1;
+    padding: 30px;
+    overflow-y: auto;
+    display: flex;
+    justify-content: center;
+}
+
+.test-sheet {
+    background-color: var(--paper-bg);
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border-color);
+    overflow: hidden;
+}
+
+.test-sheet.portrait {
+    width: 210mm;
+    min-height: 297mm;
+    padding: 20mm;
+}
+
+.test-sheet.landscape {
+    width: 297mm;
+    min-height: 210mm;
+    padding: 15mm;
+}
+
+.test-header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.test-header h1 {
+    font-size: 2rem;
+    font-weight: bold;
+}
+
+.test-header h2 {
+    font-size: 1.5rem;
+    margin-top: 0.5rem;
+}
+
+.test-header .info {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 2rem;
+    gap: 1.5rem;
+}
+
+#test-body {
+    padding-top: 1rem;
+}
+
+/* Dynamic Content Styling */
+.section {
+    margin-bottom: 2rem;
+    padding: 1rem;
+    border: 1px solid transparent;
+    border-radius: 5px;
+    position: relative;
+}
+
+.section.selected {
+    border-color: var(--primary-color);
+    background-color: #eaf2fa;
+}
+
+.section-title {
+    width: 100%;
+    border: none;
+    background: transparent;
+    font-size: 1.2rem;
+    font-weight: bold;
+    padding: 5px;
+    margin-bottom: 1rem;
+}
+
+.question-item {
+    display: flex;
+    align-items: flex-start;
+    margin-left: 2rem;
+    position: relative;
+}
+
+.question-item .q-number {
+    margin-right: 0.5em;
+    padding-top: 5px; /* 表示位置を調整 */
+}
+
+/* 編集中のテキストエリア */
+.question-text {
+    flex: 1;
+    border: 1px solid #ccc;
+    background: #fff;
+    font-size: 1rem;
+    padding: 5px;
+    resize: vertical;
+    font-family: inherit;
+    line-height: 1.6;
+    border-radius: 3px;
+}
+
+.delete-btn {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    cursor: pointer;
+    color: #999;
+    background: white;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.delete-btn:hover {
+    color: #e74c3c;
+}
+
+/* --- LaTeX対応のスタイル --- */
+/* 問題文の表示エリアのスタイル */
 .question-content {
     flex: 1;
     padding: 5px;
@@ -8,6 +252,7 @@
     border-radius: 3px;
     line-height: 1.6;
     min-height: 28px; /* 1行分の高さを確保 */
+    cursor: text;
 }
 
 .question-content:hover {
