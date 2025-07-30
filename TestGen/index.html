@@ -4,13 +4,19 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>テスト問題作成ツール</title>
+    
+    <!-- KaTeX ライブラリの読み込み -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" xintegrity="sha384-n8MVd4RsNIU0KOVEMckMnHllPN8yXe9z1rLevnxGFb1pcrNHClAtsFHpdmfMynHa" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" xintegrity="sha384-XjKyOOlGwcjNTAIQHIpgOno0Hl1YQqzUOEleOLALmuqehneUG+vnGctmUb0ZY0l8" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" xintegrity="sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05" crossorigin="anonymous"></script>
+
     <link rel="stylesheet" href="style.css">
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 </head>
 <body>
+    <!-- bodyの内容は変更なし -->
     <div class="container">
-        <!-- 操作パネル -->
         <aside class="sidebar">
             <header class="sidebar-header">
                 <h1>テスト作成</h1>
@@ -52,7 +58,6 @@
                     </button>
                 </div>
 
-                <!-- ファイル操作セクションを更新 -->
                 <div class="controls">
                     <h2>ファイル操作</h2>
                     <div class="button-group">
@@ -68,18 +73,16 @@
                             <i data-lucide="upload"></i>インポート
                         </button>
                          <p class="description">ファイルからテスト内容を読み込みます。</p>
-                        <input type="file" id="import-file-input" accept=".testdata,.csv,.json" style="display: none;">
+                        <input type="file" id="import-file-input" accept=".testdata,.csv" style="display: none;">
                     </div>
                 </div>
-
             </div>
 
             <footer class="sidebar-footer">
-                <p>Web制作ai &copy; 2025</p>
+                <p>efpsbac9904 &copy; 2025</p>
             </footer>
         </aside>
 
-        <!-- プレビューエリア -->
         <main class="preview-container">
             <div id="test-sheet" class="test-sheet portrait">
                 <header class="test-header">
@@ -93,7 +96,6 @@
                     </div>
                 </header>
                 <div id="test-body">
-                    <!-- 問題はここに動的に追加されます -->
                 </div>
             </div>
         </main>
