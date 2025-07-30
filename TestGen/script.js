@@ -53,14 +53,12 @@ document.addEventListener('DOMContentLoaded', () => {
         lucide.createIcons();
         questions.forEach(qText => createQuestion(section, qText));
         
-        // ★★★★★ 修正箇所 ★★★★★
-        // 大問エリアのどこをクリックしても選択されるように修正
         section.addEventListener('click', () => {
             selectSection(section);
         });
         
         section.querySelector('.delete-btn').addEventListener('click', (e) => { 
-            e.stopPropagation(); // 大問選択イベントを発火させない
+            e.stopPropagation();
             if (confirm('この大問を削除しますか？')) { 
                 if(selectedSection === section) { 
                     selectedSection = null; 
@@ -78,25 +76,39 @@ document.addEventListener('DOMContentLoaded', () => {
         const questionCount = questionsContainer.children.length + 1;
         const questionItem = document.createElement('div');
         questionItem.className = 'question-item';
-        
+
+        // 各パーツをプログラムで生成
+        const qNumberSpan = document.createElement('span');
+        qNumberSpan.className = 'q-number';
+        qNumberSpan.textContent = `(${questionCount})`;
+
         const contentDiv = document.createElement('div');
         contentDiv.className = 'question-content';
         contentDiv.textContent = text;
-        
-        questionItem.innerHTML = `<span class="q-number">(${questionCount})</span>`;
+
+        const deleteBtnDiv = document.createElement('div');
+        deleteBtnDiv.className = 'delete-btn';
+        deleteBtnDiv.title = '小問を削除';
+        deleteBtnDiv.innerHTML = `<i data-lucide="trash-2" style="width:14px; height:14px;"></i>`;
+
+        // 生成したパーツを順番に追加
+        questionItem.appendChild(qNumberSpan);
         questionItem.appendChild(contentDiv);
-        questionItem.innerHTML += `<div class="delete-btn" title="小問を削除"><i data-lucide="trash-2" style="width:14px; height:14px;"></i></div>`;
+        questionItem.appendChild(deleteBtnDiv);
         
         questionsContainer.appendChild(questionItem);
+        
+        // DOMに追加された要素に対して処理を実行
         renderMathInElement(contentDiv, katexOptions);
         lucide.createIcons();
 
+        // 正しい要素にイベントリスナーを追加
         contentDiv.addEventListener('click', (e) => {
-            e.stopPropagation(); // 大問選択イベントが重複しないようにする
+            e.stopPropagation();
             switchToEditMode(e.currentTarget);
         });
         
-        questionItem.querySelector('.delete-btn').addEventListener('click', (e) => { 
+        deleteBtnDiv.addEventListener('click', (e) => { 
             e.stopPropagation(); 
             questionItem.remove(); 
             updateQuestionNumbers(questionsContainer); 
