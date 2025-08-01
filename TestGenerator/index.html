@@ -15,25 +15,7 @@
 </head>
 <body>
     <div class="container">
-        <!-- プレビューエリア (左側) -->
-        <main class="preview-container">
-            <div id="test-sheet" class="test-sheet portrait">
-                <header class="test-header">
-                    <h1 id="preview-subject">科目</h1>
-                    <h2 id="preview-test-title">テスト名</h2>
-                    <div class="info">
-                        <span>年</span>
-                        <span>組</span>
-                        <span>番</span>
-                        <span>氏名:</span>
-                    </div>
-                </header>
-                <div id="test-body">
-                </div>
-            </div>
-        </main>
-
-        <!-- 操作パネル (右側) -->
+        <!-- 操作パネル (左側) -->
         <aside class="sidebar">
             <header class="sidebar-header">
                 <h1>テスト作成</h1>
@@ -99,11 +81,29 @@
                 <p>efpsbac9904 &copy; 2025</p>
             </footer>
         </aside>
+
+        <!-- プレビューエリア (右側) -->
+        <main class="preview-container">
+            <div id="test-sheet" class="test-sheet portrait">
+                <header class="test-header">
+                    <h1 id="preview-subject">科目</h1>
+                    <h2 id="preview-test-title">テスト名</h2>
+                    <div class="info">
+                        <span>年</span>
+                        <span>組</span>
+                        <span>番</span>
+                        <span>氏名:</span>
+                    </div>
+                </header>
+                <div id="test-body">
+                </div>
+            </div>
+        </main>
     </div>
 
     <!-- サイドバー表示切り替えボタン -->
     <button id="toggle-sidebar-btn" class="sidebar-toggle-btn">
-        <i data-lucide="panel-right-close"></i>
+        <i data-lucide="panel-left-close"></i>
     </button>
 
     <script src="script.js"></script>
