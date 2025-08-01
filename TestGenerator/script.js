@@ -17,10 +17,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const exportCsvBtn = document.getElementById('export-csv-btn');
     const importBtn = document.getElementById('import-btn');
     const importFileInput = document.getElementById('import-file-input');
-    // --- 新しい要素 ---
     const toggleSidebarBtn = document.getElementById('toggle-sidebar-btn');
     const body = document.body;
-
 
     let sectionCounter = 0;
     let selectedSection = null;
@@ -46,22 +44,21 @@ document.addEventListener('DOMContentLoaded', () => {
     function updateToggleButtonIcon() {
         const icon = toggleSidebarBtn.querySelector('i');
         if (body.classList.contains('sidebar-hidden')) {
-            icon.setAttribute('data-lucide', 'panel-right-open');
+            icon.setAttribute('data-lucide', 'panel-left-open');
         } else {
-            icon.setAttribute('data-lucide', 'panel-right-close');
+            icon.setAttribute('data-lucide', 'panel-left-close');
         }
         lucide.createIcons();
     }
 
-    // 画面ロード時にモバイルサイズならサイドバーを隠す
     if (window.innerWidth <= 768) {
         body.classList.add('sidebar-hidden');
     }
-    updateToggleButtonIcon(); // 初期アイコンを設定
+    updateToggleButtonIcon();
 
 
     // ===============================================
-    // 以下、既存のロジック (変更なし)
+    // 問題作成ロジック
     // ===============================================
     addSectionBtn.addEventListener('click', () => createSection());
     addQuestionBtn.addEventListener('click', () => {
