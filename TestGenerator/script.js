@@ -17,8 +17,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const exportCsvBtn = document.getElementById('export-csv-btn');
     const importBtn = document.getElementById('import-btn');
     const importFileInput = document.getElementById('import-file-input');
-    const toggleSidebarBtn = document.getElementById('toggle-sidebar-btn');
-    const body = document.body;
 
     let sectionCounter = 0;
     let selectedSection = null;
@@ -33,33 +31,6 @@ document.addEventListener('DOMContentLoaded', () => {
         throwOnError: false
     };
 
-    // ===============================================
-    // サイドバー制御
-    // ===============================================
-    toggleSidebarBtn.addEventListener('click', () => {
-        body.classList.toggle('sidebar-hidden');
-        updateToggleButtonIcon();
-    });
-
-    function updateToggleButtonIcon() {
-        const icon = toggleSidebarBtn.querySelector('i');
-        if (body.classList.contains('sidebar-hidden')) {
-            icon.setAttribute('data-lucide', 'panel-left-open');
-        } else {
-            icon.setAttribute('data-lucide', 'panel-left-close');
-        }
-        lucide.createIcons();
-    }
-
-    if (window.innerWidth <= 768) {
-        body.classList.add('sidebar-hidden');
-    }
-    updateToggleButtonIcon();
-
-
-    // ===============================================
-    // 問題作成ロジック
-    // ===============================================
     addSectionBtn.addEventListener('click', () => createSection());
     addQuestionBtn.addEventListener('click', () => {
         if (!selectedSection) {
@@ -310,7 +281,9 @@ document.addEventListener('DOMContentLoaded', () => {
         return data;
     }
     
+    // ★★★★★ 修正箇所 ★★★★★
     savePdfBtn.addEventListener('click', () => {
+        // もし編集中のテキストボックスがあれば、強制的に表示モードに戻す
         const activeTextarea = document.querySelector('.question-text');
         if (activeTextarea) {
             switchToDisplayMode(activeTextarea);
