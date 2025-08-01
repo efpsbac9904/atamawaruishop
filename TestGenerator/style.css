@@ -135,7 +135,7 @@ body {
     background-color: var(--paper-bg);
     box-shadow: var(--shadow);
     border: 1px solid var(--border-color);
-    overflow: hidden;
+    overflow: visible; /* 内容がはみ出ても表示されるようにする */
 }
 
 .test-sheet.portrait {
@@ -176,7 +176,14 @@ body {
     padding-top: 1rem;
 }
 
+/* --- ここからが修正・追加箇所 --- */
+
 /* Dynamic Content Styling */
+.section, .question-item {
+    page-break-inside: avoid; /* PDF生成時にこの要素内で改ページさせない */
+    break-inside: avoid; /* 新しい仕様への対応 */
+}
+
 .section {
     margin-bottom: 2rem;
     padding: 1rem;
@@ -209,20 +216,21 @@ body {
 
 .question-item .q-number {
     margin-right: 0.5em;
-    padding-top: 5px; /* 表示位置を調整 */
+    padding-top: 5px;
 }
 
-/* 編集中のテキストエリア */
+/* 編集中のテキストエリアのサイズを調整 */
 .question-text {
     flex: 1;
     border: 1px solid #ccc;
     background: #fff;
     font-size: 1rem;
-    padding: 5px;
+    padding: 8px;
     resize: vertical;
     font-family: inherit;
     line-height: 1.6;
     border-radius: 3px;
+    min-height: 80px; /* テキストボックスの最小の高さを設定 */
 }
 
 .delete-btn {
@@ -243,15 +251,14 @@ body {
     color: #e74c3c;
 }
 
-/* --- LaTeX対応のスタイル --- */
-/* 問題文の表示エリアのスタイル */
+/* LaTeX対応のスタイル */
 .question-content {
     flex: 1;
-    padding: 5px;
+    padding: 8px;
     border: 1px solid transparent;
     border-radius: 3px;
     line-height: 1.6;
-    min-height: 28px; /* 1行分の高さを確保 */
+    min-height: 38px;
     cursor: text;
 }
 
@@ -260,8 +267,7 @@ body {
     background-color: #f9f9f9;
 }
 
-/* KaTeXの数式とテキストの縦位置を揃える */
 .katex {
-    font-size: 1.1em; /* 数式のサイズを少し大きく */
+    font-size: 1.1em;
     vertical-align: middle;
 }
