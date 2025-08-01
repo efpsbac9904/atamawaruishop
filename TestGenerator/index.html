@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>テスト問題作成ツール</title>
     
+    <!-- KaTeX ライブラリの読み込み -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" xintegrity="sha384-n8MVd4RsNIU0KOVEMckMnHllPN8yXe9z1rLevnxGFb1pcrNHClAtsFHpdmfMynHa" crossorigin="anonymous">
     <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" xintegrity="sha384-XjKyOOlGwcjNTAIQHIpgOno0Hl1YQqzUOEleOLALmuqehneUG+vnGctmUb0ZY0l8" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" xintegrity="sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05" crossorigin="anonymous"></script>
@@ -14,8 +15,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 </head>
 <body>
+    <!-- bodyの内容は変更なし -->
     <div class="container">
-        <!-- 操作パネル (左側) -->
         <aside class="sidebar">
             <header class="sidebar-header">
                 <h1>テスト作成</h1>
@@ -82,7 +83,6 @@
             </footer>
         </aside>
 
-        <!-- プレビューエリア (右側) -->
         <main class="preview-container">
             <div id="test-sheet" class="test-sheet portrait">
                 <header class="test-header">
@@ -100,11 +100,6 @@
             </div>
         </main>
     </div>
-
-    <!-- サイドバー表示切り替えボタン -->
-    <button id="toggle-sidebar-btn" class="sidebar-toggle-btn">
-        <i data-lucide="panel-left-close"></i>
-    </button>
 
     <script src="script.js"></script>
 </body>
