@@ -21,7 +21,6 @@ document.addEventListener('DOMContentLoaded', () => {
     let sectionCounter = 0;
     let selectedSection = null;
 
-    // --- KaTeXのレンダリング設定 ---
     const katexOptions = {
         delimiters: [
             {left: '$$', right: '$$', display: true},
@@ -32,9 +31,6 @@ document.addEventListener('DOMContentLoaded', () => {
         throwOnError: false
     };
 
-    // ===============================================
-    // 問題作成ロジック (LaTeX対応)
-    // ===============================================
     addSectionBtn.addEventListener('click', () => createSection());
     addQuestionBtn.addEventListener('click', () => {
         if (!selectedSection) {
@@ -53,10 +49,7 @@ document.addEventListener('DOMContentLoaded', () => {
         lucide.createIcons();
         questions.forEach(qText => createQuestion(section, qText));
         
-        section.addEventListener('click', () => {
-            selectSection(section);
-        });
-        
+        section.addEventListener('click', () => selectSection(section));
         section.querySelector('.delete-btn').addEventListener('click', (e) => { 
             e.stopPropagation();
             if (confirm('この大問を削除しますか？')) { 
@@ -77,7 +70,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const questionItem = document.createElement('div');
         questionItem.className = 'question-item';
 
-        // 各パーツをプログラムで生成
         const qNumberSpan = document.createElement('span');
         qNumberSpan.className = 'q-number';
         qNumberSpan.textContent = `(${questionCount})`;
@@ -91,18 +83,15 @@ document.addEventListener('DOMContentLoaded', () => {
         deleteBtnDiv.title = '小問を削除';
         deleteBtnDiv.innerHTML = `<i data-lucide="trash-2" style="width:14px; height:14px;"></i>`;
 
-        // 生成したパーツを順番に追加
         questionItem.appendChild(qNumberSpan);
         questionItem.appendChild(contentDiv);
         questionItem.appendChild(deleteBtnDiv);
         
         questionsContainer.appendChild(questionItem);
         
-        // DOMに追加された要素に対して処理を実行
         renderMathInElement(contentDiv, katexOptions);
         lucide.createIcons();
 
-        // 正しい要素にイベントリスナーを追加
         contentDiv.addEventListener('click', (e) => {
             e.stopPropagation();
             switchToEditMode(e.currentTarget);
@@ -292,7 +281,9 @@ document.addEventListener('DOMContentLoaded', () => {
         return data;
     }
     
+    // ★★★★★ 修正箇所 ★★★★★
     savePdfBtn.addEventListener('click', () => {
+        // もし編集中のテキストボックスがあれば、強制的に表示モードに戻す
         const activeTextarea = document.querySelector('.question-text');
         if (activeTextarea) {
             switchToDisplayMode(activeTextarea);
@@ -303,7 +294,13 @@ document.addEventListener('DOMContentLoaded', () => {
         if (selectedSection) { selectedSection.classList.remove('selected'); }
         
         const element = document.getElementById('test-sheet');
-        const opt = { margin: 0, filename: `${subjectInput.value || 'テスト'}_${testTitleInput.value || '問題'}.pdf`, image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2, useCORS: true, letterRendering: true }, jsPDF: { unit: 'mm', format: 'a4', orientation: document.querySelector('input[name="orientation"]:checked').value } };
+        const opt = { 
+            margin: 0, 
+            filename: `${subjectInput.value || 'テスト'}_${testTitleInput.value || '問題'}.pdf`, 
+            image: { type: 'jpeg', quality: 0.98 }, 
+            html2canvas: { scale: 2, useCORS: true, letterRendering: true }, 
+            jsPDF: { unit: 'mm', format: 'a4', orientation: document.querySelector('input[name="orientation"]:checked').value } 
+        };
 
         html2pdf().set(opt).from(element).save().then(() => {
             deleteButtons.forEach(btn => btn.style.display = 'flex');
