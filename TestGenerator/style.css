@@ -1,11 +1,10 @@
 :root {
     --primary-color: #4a90e2;
     --border-color: #ddd;
-    --bg-color: #f0f4f8;
+    --bg-color: #f9f9f9;
     --text-color: #333;
     --paper-bg: #fff;
     --shadow: 0 4px 6px rgba(0,0,0,0.1);
-    --sidebar-width: 320px;
 }
 
 * {
@@ -19,7 +18,6 @@ body {
     background-color: var(--bg-color);
     color: var(--text-color);
     font-size: 16px;
-    overflow-x: hidden;
 }
 
 .container {
@@ -27,35 +25,104 @@ body {
     height: 100vh;
 }
 
-/* Sidebar (左側) */
+/* Sidebar */
 .sidebar {
-    width: var(--sidebar-width);
+    width: 320px;
     background-color: var(--paper-bg);
     border-right: 1px solid var(--border-color);
     display: flex;
     flex-direction: column;
     padding: 20px;
     overflow-y: auto;
-    transition: transform 0.3s ease-in-out, min-width 0.3s ease-in-out;
-    flex-shrink: 0;
-    z-index: 100;
 }
 
-.sidebar-header { margin-bottom: 2rem; }
-.sidebar-header h1 { font-size: 1.5rem; margin-bottom: 1rem; }
-.controls h2 { font-size: 1.1rem; margin-top: 1.5rem; margin-bottom: 0.8rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; }
-.form-group { margin-bottom: 1rem; }
-.form-group label { display: flex; align-items: center; gap: 0.5rem; font-weight: bold; margin-bottom: 0.5rem; }
-.form-group input[type="text"] { width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; font-size: 1rem; }
-.radio-group { display: flex; gap: 1rem; }
-.button-group { margin-top: 1rem; }
-.button-group .description { font-size: 0.8rem; color: #666; margin: 0.5rem 0 1rem 0; }
-.btn { display: flex; align-items: center; justify-content: center; gap: 0.5rem; width: 100%; padding: 10px; font-size: 1rem; background-color: var(--primary-color); color: white; border: none; border-radius: 5px; cursor: pointer; transition: background-color 0.3s; }
-.btn:hover { background-color: #357abd; }
-.btn:disabled { background-color: #ccc; cursor: not-allowed; }
-.sidebar-footer { margin-top: auto; text-align: center; font-size: 0.8rem; color: #999; padding-top: 1rem; }
+.sidebar-header {
+    margin-bottom: 2rem;
+}
 
-/* Preview Area (右側) */
+.sidebar-header h1 {
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.controls h2 {
+    font-size: 1.1rem;
+    margin-top: 1.5rem;
+    margin-bottom: 0.8rem;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 0.5rem;
+}
+
+.form-group {
+    margin-bottom: 1rem;
+}
+
+.form-group label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+}
+
+.form-group input[type="text"] {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    font-size: 1rem;
+}
+
+.radio-group {
+    display: flex;
+    gap: 1rem;
+}
+
+.button-group {
+    margin-top: 1rem;
+}
+
+.button-group .description {
+    font-size: 0.8rem;
+    color: #666;
+    margin: 0.5rem 0 1rem 0;
+}
+
+.btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    width: 100%;
+    padding: 10px;
+    font-size: 1rem;
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.btn:hover {
+    background-color: #357abd;
+}
+
+.btn:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+}
+
+.sidebar-footer {
+    margin-top: auto;
+    text-align: center;
+    font-size: 0.8rem;
+    color: #999;
+    padding-top: 1rem;
+}
+
+
+/* Preview Area */
 .preview-container {
     flex: 1;
     padding: 30px;
@@ -68,93 +135,139 @@ body {
     background-color: var(--paper-bg);
     box-shadow: var(--shadow);
     border: 1px solid var(--border-color);
-    overflow: visible;
+    overflow: visible; /* 内容がはみ出ても表示されるようにする */
 }
-.test-sheet.portrait { width: 210mm; min-height: 297mm; padding: 20mm; }
-.test-sheet.landscape { width: 297mm; min-height: 210mm; padding: 15mm; }
-.test-header { text-align: center; margin-bottom: 2rem; }
-.test-header h1 { font-size: 2rem; font-weight: bold; }
-.test-header h2 { font-size: 1.5rem; margin-top: 0.5rem; }
-.test-header .info { display: flex; justify-content: flex-end; margin-top: 2rem; gap: 1.5rem; }
-#test-body { padding-top: 1rem; }
 
-/* 問題のスタイル */
-.section, .question-item { page-break-inside: avoid; break-inside: avoid; }
-.section { margin-bottom: 2rem; padding: 1rem; border: 1px solid transparent; border-radius: 5px; position: relative; }
-.section.selected { border-color: var(--primary-color); background-color: #eaf2fa; }
-.section-title { width: 100%; border: none; background: transparent; font-size: 1.2rem; font-weight: bold; padding: 5px; margin-bottom: 1rem; }
-.question-item { display: flex; align-items: flex-start; margin-left: 2rem; position: relative; }
-.question-item .q-number { margin-right: 0.5em; padding-top: 8px; }
-.question-text { flex: 1; border: 1px solid #ccc; background: #fff; font-size: 1rem; padding: 8px; resize: vertical; font-family: inherit; line-height: 1.6; border-radius: 3px; min-height: 80px; }
-.delete-btn { position: absolute; top: 5px; right: 5px; cursor: pointer; color: #999; background: white; border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; }
-.delete-btn:hover { color: #e74c3c; }
-.question-content { flex: 1; padding: 8px; border: 1px solid transparent; border-radius: 3px; line-height: 1.6; min-height: 38px; cursor: text; }
-.question-content:hover { border-color: #ccc; background-color: #f9f9f9; }
-.katex { font-size: 1.1em; vertical-align: middle; }
+.test-sheet.portrait {
+    width: 210mm;
+    min-height: 297mm;
+    padding: 20mm;
+}
 
-/* サイドバー折りたたみ機能 */
-.sidebar-toggle-btn {
-    position: fixed;
-    top: 20px;
-    left: var(--sidebar-width);
-    z-index: 1001;
-    background-color: var(--primary-color);
-    color: white;
+.test-sheet.landscape {
+    width: 297mm;
+    min-height: 210mm;
+    padding: 15mm;
+}
+
+.test-header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.test-header h1 {
+    font-size: 2rem;
+    font-weight: bold;
+}
+
+.test-header h2 {
+    font-size: 1.5rem;
+    margin-top: 0.5rem;
+}
+
+.test-header .info {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 2rem;
+    gap: 1.5rem;
+}
+
+#test-body {
+    padding-top: 1rem;
+}
+
+/* --- ここからが修正・追加箇所 --- */
+
+/* Dynamic Content Styling */
+.section, .question-item {
+    page-break-inside: avoid; /* PDF生成時にこの要素内で改ページさせない */
+    break-inside: avoid; /* 新しい仕様への対応 */
+}
+
+.section {
+    margin-bottom: 2rem;
+    padding: 1rem;
+    border: 1px solid transparent;
+    border-radius: 5px;
+    position: relative;
+}
+
+.section.selected {
+    border-color: var(--primary-color);
+    background-color: #eaf2fa;
+}
+
+.section-title {
+    width: 100%;
     border: none;
-    width: 40px;
-    height: 40px;
-    border-radius: 0 50% 50% 0;
+    background: transparent;
+    font-size: 1.2rem;
+    font-weight: bold;
+    padding: 5px;
+    margin-bottom: 1rem;
+}
+
+.question-item {
+    display: flex;
+    align-items: flex-start;
+    margin-left: 2rem;
+    position: relative;
+}
+
+.question-item .q-number {
+    margin-right: 0.5em;
+    padding-top: 5px;
+}
+
+/* 編集中のテキストエリアのサイズを調整 */
+.question-text {
+    flex: 1;
+    border: 1px solid #ccc;
+    background: #fff;
+    font-size: 1rem;
+    padding: 8px;
+    resize: vertical;
+    font-family: inherit;
+    line-height: 1.6;
+    border-radius: 3px;
+    min-height: 80px; /* テキストボックスの最小の高さを設定 */
+}
+
+.delete-btn {
+    position: absolute;
+    top: 5px;
+    right: 5px;
     cursor: pointer;
-    transition: left 0.3s ease-in-out, background-color 0.3s;
+    color: #999;
+    background: white;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 2px 2px 5px rgba(0,0,0,0.1);
 }
-.sidebar-toggle-btn:hover {
-    background-color: #357abd;
-}
-
-body.sidebar-hidden .sidebar {
-    transform: translateX(-100%);
-    min-width: 0;
-    width: 0;
-    padding-left: 0;
-    padding-right: 0;
-    border: none;
-}
-body.sidebar-hidden .sidebar-toggle-btn {
-    left: 0;
+.delete-btn:hover {
+    color: #e74c3c;
 }
 
-/* レスポンシブ対応 (モバイル) */
-@media (max-width: 768px) {
-    .sidebar {
-        position: fixed;
-        top: 0;
-        left: 0;
-        height: 100%;
-        transform: translateX(-100%); /* 初期状態は非表示 */
-        box-shadow: 4px 0 15px rgba(0,0,0,0.2);
-    }
-    body:not(.sidebar-hidden) .sidebar {
-        transform: translateX(0);
-    }
-    .preview-container {
-        padding: 15px;
-        width: 100%;
-    }
-    .test-sheet {
-        width: 100%;
-        min-height: auto;
-        padding: 15mm 10mm;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        border: 1px solid var(--border-color);
-    }
-    .sidebar-toggle-btn {
-        left: 0;
-    }
-    body:not(.sidebar-hidden) .sidebar-toggle-btn {
-        left: var(--sidebar-width);
-    }
+/* LaTeX対応のスタイル */
+.question-content {
+    flex: 1;
+    padding: 8px;
+    border: 1px solid transparent;
+    border-radius: 3px;
+    line-height: 1.6;
+    min-height: 38px;
+    cursor: text;
+}
+
+.question-content:hover {
+    border-color: #ccc;
+    background-color: #f9f9f9;
+}
+
+.katex {
+    font-size: 1.1em;
+    vertical-align: middle;
 }
