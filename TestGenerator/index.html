@@ -14,7 +14,11 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 </head>
 <body>
+    <!-- ★★★★★ オーバーレイを追加 ★★★★★ -->
+    <div class="overlay"></div>
+
     <div class="container">
+        <!-- 操作パネル (左側) -->
         <aside class="sidebar">
             <header class="sidebar-header">
                 <h1>テスト作成</h1>
@@ -82,10 +86,11 @@
             </div>
 
             <footer class="sidebar-footer">
-                <p>efpsbac9904 &copy; 2025</p>
+                <p>頭悪いショップ &copy; 2025</p>
             </footer>
         </aside>
 
+        <!-- プレビューエリア (右側) -->
         <main class="preview-container">
             <div id="test-sheet" class="test-sheet portrait">
                 <header class="test-header">
@@ -104,6 +109,7 @@
         </main>
     </div>
 
+    <!-- サイドバー表示切り替えボタン -->
     <button id="toggle-sidebar-btn" class="sidebar-toggle-btn">
         <i data-lucide="panel-left-close"></i>
     </button>
