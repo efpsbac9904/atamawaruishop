@@ -14,23 +14,92 @@ document.addEventListener('DOMContentLoaded', () => {
     const orientationRadios = document.querySelectorAll('input[name="orientation"]');
     const testSheet = document.getElementById('test-sheet');
     const exportJsonBtn = document.getElementById('export-json-btn');
-    const exportCsvBtn = document.getElementById('export-csv-btn');
     const importBtn = document.getElementById('import-btn');
     const importFileInput = document.getElementById('import-file-input');
+    const toggleSidebarBtn = document.getElementById('toggle-sidebar-btn');
+    const body = document.body;
+    // --- 新しい要素 ---
+    const copyCsvBtn = document.getElementById('copy-csv-btn');
+    const pasteCsvBtn = document.getElementById('paste-csv-btn');
+
 
     let sectionCounter = 0;
     let selectedSection = null;
 
-    const katexOptions = {
-        delimiters: [
-            {left: '$$', right: '$$', display: true},
-            {left: '$', right: '$', display: false},
-            {left: '\\(', right: '\\)', display: false},
-            {left: '\\[', right: '\\]', display: true}
-        ],
-        throwOnError: false
-    };
+    const katexOptions = { /* ... 変更なし ... */ delimiters: [ {left: '$$', right: '$$', display: true}, {left: '$', right: '$', display: false}, {left: '\\(', right: '\\)', display: false}, {left: '\\[', right: '\\]', display: true} ], throwOnError: false };
 
+    // ===============================================
+    // サイドバー制御
+    // ===============================================
+    toggleSidebarBtn.addEventListener('click', () => {
+        body.classList.toggle('sidebar-hidden');
+        updateToggleButtonIcon();
+    });
+
+    function updateToggleButtonIcon() {
+        const icon = toggleSidebarBtn.querySelector('i');
+        if (body.classList.contains('sidebar-hidden')) {
+            icon.setAttribute('data-lucide', 'panel-left-open');
+        } else {
+            icon.setAttribute('data-lucide', 'panel-left-close');
+        }
+        lucide.createIcons();
+    }
+
+    if (window.innerWidth <= 768) {
+        body.classList.add('sidebar-hidden');
+    }
+    updateToggleButtonIcon();
+    
+    // ===============================================
+    // ★★★★★ クリップボード機能 ★★★★★
+    // ===============================================
+    copyCsvBtn.addEventListener('click', () => {
+        try {
+            const data = collectDataFromPage();
+            const csvString = convertToCsv(data);
+
+            navigator.clipboard.writeText(csvString).then(() => {
+                // 成功時のフィードバック
+                const originalText = copyCsvBtn.innerHTML;
+                copyCsvBtn.innerHTML = `<i data-lucide="check"></i>コピーしました!`;
+                lucide.createIcons();
+                setTimeout(() => {
+                    copyCsvBtn.innerHTML = originalText;
+                    lucide.createIcons();
+                }, 2000);
+            }, () => {
+                alert('クリップボードへのコピーに失敗しました。');
+            });
+        } catch (error) {
+            alert('データの変換に失敗しました。');
+            console.error(error);
+        }
+    });
+
+    pasteCsvBtn.addEventListener('click', () => {
+        navigator.clipboard.readText().then(text => {
+            if (!text) {
+                alert('クリップボードが空です。');
+                return;
+            }
+            try {
+                const data = parseCsv(text);
+                buildTestFromData(data);
+            } catch (error) {
+                alert('クリップボードのデータ形式が正しくありません。');
+                console.error(error);
+            }
+        }).catch(err => {
+            alert('クリップボードの読み取りに失敗しました。ブラウザの権限を確認してください。');
+            console.error('Clipboard read failed: ', err);
+        });
+    });
+
+
+    // ===============================================
+    // 問題作成ロジック (変更なし)
+    // ===============================================
     addSectionBtn.addEventListener('click', () => createSection());
     addQuestionBtn.addEventListener('click', () => {
         if (!selectedSection) {
@@ -190,6 +259,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
     
+    // ===============================================
+    // ファイル入出力 (エクスポート先をJSONのみに変更)
+    // ===============================================
     exportJsonBtn.addEventListener('click', () => {
         const data = collectDataFromPage();
         const jsonString = JSON.stringify(data, null, 2);
@@ -197,29 +269,6 @@ document.addEventListener('DOMContentLoaded', () => {
         downloadBlob(blob, `${data.subject || '無題'}.testdata`);
     });
 
-    exportCsvBtn.addEventListener('click', () => {
-        const data = collectDataFromPage();
-        const csvString = convertToCsv(data);
-        const bom = new Uint8Array([0xEF, 0xBB, 0xBF]);
-        const blob = new Blob([bom, csvString], { type: 'text/csv;charset=utf-8;' });
-        downloadBlob(blob, `${data.subject || '無題'}.csv`);
-    });
-
-    function convertToCsv(data) {
-        const rows = [];
-        const escapeCsv = (str) => `"${(str || '').replace(/"/g, '""')}"`;
-        rows.push(['meta', 'subject', data.subject]);
-        rows.push(['meta', 'title', data.title]);
-        rows.push(['meta', 'orientation', data.orientation]);
-        data.sections.forEach(section => {
-            rows.push(['section', section.title]);
-            section.questions.forEach(question => {
-                rows.push(['question', question]);
-            });
-        });
-        return rows.map(row => row.map(escapeCsv).join(',')).join('\n');
-    }
-    
     function downloadBlob(blob, filename) {
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -255,13 +304,29 @@ document.addEventListener('DOMContentLoaded', () => {
         event.target.value = ''; 
     });
 
+    function convertToCsv(data) {
+        const rows = [];
+        const escapeCsv = (str) => `"${(str || '').replace(/"/g, '""')}"`;
+        rows.push(['meta', 'subject', data.subject]);
+        rows.push(['meta', 'title', data.title]);
+        rows.push(['meta', 'orientation', data.orientation]);
+        data.sections.forEach(section => {
+            rows.push(['section', section.title]);
+            section.questions.forEach(question => {
+                rows.push(['question', question]);
+            });
+        });
+        return rows.map(row => row.map(escapeCsv).join(',')).join('\n');
+    }
+
     function parseCsv(csvText) {
         const data = { subject: '', title: '', orientation: 'portrait', sections: [] };
         let currentSection = null;
         const lines = csvText.split('\n');
         lines.forEach(line => {
             if (!line.trim()) return;
-            const columns = line.match(/(".*?"|[^",]+)(?=\s*,|\s*$)/g).map(col => col.replace(/^"|"$/g, '').replace(/""/g, '"'));
+            // 修正：より堅牢なCSVパース
+            const columns = (line.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g) || []).map(col => col.replace(/^"|"$/g, '').replace(/""/g, '"'));
             const type = columns[0], value1 = columns[1], value2 = columns[2];
             switch(type) {
                 case 'meta':
@@ -281,9 +346,10 @@ document.addEventListener('DOMContentLoaded', () => {
         return data;
     }
     
-    // ★★★★★ 修正箇所 ★★★★★
+    // ===============================================
+    // PDF保存機能 (変更なし)
+    // ===============================================
     savePdfBtn.addEventListener('click', () => {
-        // もし編集中のテキストボックスがあれば、強制的に表示モードに戻す
         const activeTextarea = document.querySelector('.question-text');
         if (activeTextarea) {
             switchToDisplayMode(activeTextarea);
@@ -308,3 +374,4 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 });
+
