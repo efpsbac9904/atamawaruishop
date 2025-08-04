@@ -18,15 +18,21 @@ document.addEventListener('DOMContentLoaded', () => {
     const importFileInput = document.getElementById('import-file-input');
     const toggleSidebarBtn = document.getElementById('toggle-sidebar-btn');
     const body = document.body;
-    // --- 新しい要素 ---
     const copyCsvBtn = document.getElementById('copy-csv-btn');
     const pasteCsvBtn = document.getElementById('paste-csv-btn');
-
 
     let sectionCounter = 0;
     let selectedSection = null;
 
-    const katexOptions = { /* ... 変更なし ... */ delimiters: [ {left: '$$', right: '$$', display: true}, {left: '$', right: '$', display: false}, {left: '\\(', right: '\\)', display: false}, {left: '\\[', right: '\\]', display: true} ], throwOnError: false };
+    const katexOptions = {
+        delimiters: [
+            {left: '$$', right: '$$', display: true},
+            {left: '$', right: '$', display: false},
+            {left: '\\(', right: '\\)', display: false},
+            {left: '\\[', right: '\\]', display: true}
+        ],
+        throwOnError: false
+    };
 
     // ===============================================
     // サイドバー制御
@@ -50,9 +56,9 @@ document.addEventListener('DOMContentLoaded', () => {
         body.classList.add('sidebar-hidden');
     }
     updateToggleButtonIcon();
-    
+
     // ===============================================
-    // ★★★★★ クリップボード機能 ★★★★★
+    // クリップボード機能
     // ===============================================
     copyCsvBtn.addEventListener('click', () => {
         try {
@@ -60,7 +66,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const csvString = convertToCsv(data);
 
             navigator.clipboard.writeText(csvString).then(() => {
-                // 成功時のフィードバック
                 const originalText = copyCsvBtn.innerHTML;
                 copyCsvBtn.innerHTML = `<i data-lucide="check"></i>コピーしました!`;
                 lucide.createIcons();
@@ -96,9 +101,8 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-
     // ===============================================
-    // 問題作成ロジック (変更なし)
+    // 問題作成ロジック
     // ===============================================
     addSectionBtn.addEventListener('click', () => createSection());
     addQuestionBtn.addEventListener('click', () => {
@@ -260,7 +264,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     // ===============================================
-    // ファイル入出力 (エクスポート先をJSONのみに変更)
+    // ファイル入出力
     // ===============================================
     exportJsonBtn.addEventListener('click', () => {
         const data = collectDataFromPage();
@@ -325,7 +329,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const lines = csvText.split('\n');
         lines.forEach(line => {
             if (!line.trim()) return;
-            // 修正：より堅牢なCSVパース
             const columns = (line.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g) || []).map(col => col.replace(/^"|"$/g, '').replace(/""/g, '"'));
             const type = columns[0], value1 = columns[1], value2 = columns[2];
             switch(type) {
@@ -347,7 +350,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     // ===============================================
-    // PDF保存機能 (変更なし)
+    // PDF保存機能
     // ===============================================
     savePdfBtn.addEventListener('click', () => {
         const activeTextarea = document.querySelector('.question-text');
