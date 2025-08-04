@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>テスト問題作成ツール</title>
     
-    <!-- KaTeX ライブラリの読み込み -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" xintegrity="sha384-n8MVd4RsNIU0KOVEMckMnHllPN8yXe9z1rLevnxGFb1pcrNHClAtsFHpdmfMynHa" crossorigin="anonymous">
     <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" xintegrity="sha384-XjKyOOlGwcjNTAIQHIpgOno0Hl1YQqzUOEleOLALmuqehneUG+vnGctmUb0ZY0l8" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" xintegrity="sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05" crossorigin="anonymous"></script>
@@ -15,7 +14,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 </head>
 <body>
-    <!-- bodyの内容は変更なし -->
     <div class="container">
         <aside class="sidebar">
             <header class="sidebar-header">
@@ -59,20 +57,25 @@
                 </div>
 
                 <div class="controls">
-                    <h2>ファイル操作</h2>
+                    <h2>データ操作</h2>
                     <div class="button-group">
+                        <button id="copy-csv-btn" class="btn">
+                            <i data-lucide="copy"></i>CSVをクリップボードにコピー
+                        </button>
+                         <p class="description">CSVデータをテキストとしてコピーします。</p>
+                        <button id="paste-csv-btn" class="btn">
+                            <i data-lucide="clipboard-paste"></i>クリップボードから貼り付け
+                        </button>
+                         <p class="description">コピーしたデータを読み込みます。</p>
+                        <hr style="margin: 2rem 0;">
                         <button id="export-json-btn" class="btn">
-                            <i data-lucide="download"></i>エクスポート (.testdata)
+                            <i data-lucide="download"></i>ファイルにエクスポート
                         </button>
-                         <p class="description">JSON形式で保存します。</p>
-                        <button id="export-csv-btn" class="btn">
-                            <i data-lucide="download"></i>エクスポート (.csv)
-                        </button>
-                         <p class="description">CSV形式で保存します。Excelで編集可能です。</p>
+                         <p class="description">JSON形式(.testdata)で保存します。</p>
                         <button id="import-btn" class="btn">
-                            <i data-lucide="upload"></i>インポート
+                            <i data-lucide="upload"></i>ファイルからインポート
                         </button>
-                         <p class="description">ファイルからテスト内容を読み込みます。</p>
+                         <p class="description">ファイル(.testdata, .csv)を読み込みます。</p>
                         <input type="file" id="import-file-input" accept=".testdata,.csv" style="display: none;">
                     </div>
                 </div>
@@ -101,6 +104,11 @@
         </main>
     </div>
 
+    <button id="toggle-sidebar-btn" class="sidebar-toggle-btn">
+        <i data-lucide="panel-left-close"></i>
+    </button>
+
     <script src="script.js"></script>
 </body>
 </html>
+
