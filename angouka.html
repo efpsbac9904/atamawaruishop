@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ファイル対応XOR暗号化ツール</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f4f8;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .container {
+            @apply bg-white p-8 rounded-xl shadow-2xl w-full max-w-2xl border border-gray-200;
+        }
+        label {
+            @apply block text-gray-700 text-lg font-medium mb-2;
+        }
+        input[type="text"], input[type="file"] {
+            @apply p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-full bg-gray-50;
+        }
+        button {
+            @apply px-6 py-3 rounded-lg font-semibold shadow-md transition-all duration-200 ease-in-out;
+        }
+        button:hover {
+            @apply transform -translate-y-0.5;
+        }
+        .info-box {
+            @apply bg-blue-100 border border-blue-200 text-blue-700 p-4 rounded-lg mt-4;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen p-4">
+    <div class="container">
+        <h1 class="text-4xl font-bold text-center text-gray-800 mb-8">ファイル対応XOR暗号化ツール</h1>
+
+        <div class="mb-6">
+            <label for="fileInput">ファイルを選択:</label>
+            <input type="file" id="fileInput" class="p-2"/>
+        </div>
+
+        <div class="mb-8">
+            <label for="keyword">キーワード:</label>
+            <input type="text" id="keyword" placeholder="秘密のキーワードを入力">
+        </div>
+
+        <div class="flex flex-col sm:flex-row justify-center gap-4 mb-8">
+            <button id="encryptBtn" class="bg-blue-600 text-white hover:bg-blue-700">暗号化！</button>
+            <button id="decryptBtn" class="bg-green-600 text-white hover:bg-green-700">復号！</button>
+        </div>
+
+        <div id="result" class="hidden">
+            <p class="text-gray-700 text-lg font-medium mb-2">完了しました！</p>
+            <a id="downloadLink" class="bg-indigo-600 text-white hover:bg-indigo-700 font-semibold py-3 px-6 rounded-lg shadow-md transition-all duration-200 ease-in-out text-center inline-block">ダウンロード</a>
+        </div>
+
+        <div id="infoBox" class="info-box hidden">
+            <p id="infoText"></p>
+        </div>
+    </div>
+
+    <script>
+        // XOR暗号化/復号化のメイン関数
+        function xorCipher(data, keyword) {
+            const keyBytes = new TextEncoder().encode(keyword); // キーワードをバイト配列に変換
+            const result = new Uint8Array(data.length);
+
+            for (let i = 0; i < data.length; i++) {
+                // ファイルのバイトと、キーワードのバイトをXORする
+                result[i] = data[i] ^ keyBytes[i % keyBytes.length];
+            }
+            return result;
+        }
+
+        // DOM要素の取得
+        const fileInput = document.getElementById('fileInput');
+        const keywordInput = document.getElementById('keyword');
+        const encryptBtn = document.getElementById('encryptBtn');
+        const decryptBtn = document.getElementById('decryptBtn');
+        const resultDiv = document.getElementById('result');
+        const downloadLink = document.getElementById('downloadLink');
+        const infoBox = document.getElementById('infoBox');
+        const infoText = document.getElementById('infoText');
+
+        // ファイルを処理する共通のロジック
+        function processFile(isEncrypt) {
+            const file = fileInput.files[0];
+            const keyword = keywordInput.value;
+
+            // ファイルとキーワードが入力されているかチェック
+            if (!file || !keyword) {
+                infoBox.classList.remove('hidden');
+                infoText.textContent = 'ファイルとキーワードを入力してください！';
+                return;
+            }
+
+            infoBox.classList.add('hidden');
+            resultDiv.classList.add('hidden');
+
+            const reader = new FileReader();
+
+            // ファイル読み込みが完了したときの処理
+            reader.onload = function(e) {
+                const fileData = new Uint8Array(e.target.result);
+                const transformedData = xorCipher(fileData, keyword);
+
+                // ダウンロード用ファイル名とMIMEタイプを設定
+                const originalFileName = file.name;
+                let newFileName;
+                if (isEncrypt) {
+                    newFileName = originalFileName + '.xor'; // 暗号化されたファイルには拡張子を追加
+                } else {
+                    // 拡張子を削除して元のファイル名に戻す
+                    newFileName = originalFileName.endsWith('.xor') ? originalFileName.slice(0, -4) : originalFileName;
+                }
+
+                // 新しいファイル（Blob）を作成
+                const blob = new Blob([transformedData], { type: 'application/octet-stream' });
+                const url = URL.createObjectURL(blob);
+
+                // ダウンロードリンクを設定して表示
+                downloadLink.href = url;
+                downloadLink.download = newFileName;
+                resultDiv.classList.remove('hidden');
+            };
+
+            // ファイルをArrayBufferとして読み込む
+            reader.readAsArrayBuffer(file);
+        }
+
+        // 暗号化ボタンのクリックイベント
+        encryptBtn.addEventListener('click', () => processFile(true));
+        // 復号ボタンのクリックイベント
+        decryptBtn.addEventListener('click', () => processFile(false));
+    </script>
+</body>
+</html>
