@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minecraft サーバー計画表</title>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <style>
+        :root {
+            --bg-color: #1a1a2e; /* 濃い背景 */
+            --card-bg: #2c2c44;  /* カード背景 */
+            --text-color: #e4e4f0; /* 明るいテキスト */
+            --accent-color: #4CAF50; /* マインクラフトを意識した緑系のアクセント */
+            --font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: var(--font-family);
+            margin: 0;
+            padding: 20px;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #242438; /* コンテナの背景を少し明るく */
+            border-radius: 12px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.4);
+        }
+
+        h1 {
+            text-align: center;
+            color: var(--accent-color);
+            margin-bottom: 25px;
+        }
+
+        h2 {
+            border-bottom: 2px solid var(--card-bg);
+            padding-bottom: 10px;
+            margin-top: 30px;
+        }
+
+        /* --- スケジュールリストのスタイリング --- */
+        #schedule-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .schedule-item {
+            background-color: var(--card-bg);
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center; /* 中央揃え */
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            border-left: 5px solid var(--accent-color); /* アクセント */
+        }
+
+        /* アイコン用のスタイル */
+        .icon-indicator {
+            margin-right: 15px;
+            line-height: 0; 
+        }
+
+        .icon-indicator svg {
+            width: 24px;
+            height: 24px;
+            color: var(--accent-color);
+        }
+
+        .details {
+            flex-grow: 1;
+        }
+        
+        .top-line {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            margin-bottom: 4px;
+        }
+
+        .datetime {
+            font-weight: bold;
+            font-size: 1.2em;
+            color: var(--text-color); 
+        }
+
+        .meta-info {
+            font-size: 0.85em;
+            color: #8888aa;
+            display: flex;
+            gap: 10px; /* ワールドとエディションの間にスペース */
+        }
+        
+        .meta-info .edition {
+            font-weight: bold;
+            color: #d1953d; /* マインクラフトの土ブロックのような色 */
+        }
+
+        .memo {
+            color: #b0b0c6;
+            font-size: 0.95em;
+        }
+
+        /* モバイル対応 */
+        @media (max-width: 600px) {
+            .container {
+                padding: 15px;
+            }
+            .schedule-item {
+                padding: 10px;
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .icon-indicator {
+                margin-bottom: 10px;
+            }
+            .top-line {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .meta-info {
+                margin-top: 5px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>⛏️ Minecraft サーバー計画</h1>
+        
+        <section id="schedule-list-section">
+            <h2>今後のサーバー起動スケジュール</h2>
+            <ul id="schedule-list">
+                </ul>
+        </section>
+    </div>
+
+    <script>
+        // ==========================================================
+        // 🚨 管理者の方へ: スケジュールを更新する場合は、以下の配列を編集してください。
+        // 'date'、'time'、'edition'、'world' は必須です。
+        // ==========================================================
+
+        const RAW_SCHEDULES_DATA = [
+            { date: '2025-10-17', time: '15:45', edition: 'Geyser', world: '', memo: '新しい鉱石の探索。ネザーへ！' },
+            // 今後のスケジュールをここに追加・編集してください
+        ];
+
+        // ==========================================================
+        // これより下のコードは、通常編集する必要はありません。
+        // ==========================================================
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const scheduleList = document.getElementById('schedule-list');
+            
+            // スケジュールを日付と時刻でソートし、過去の予定を除外する
+            function getFutureSchedules() {
+                const now = new Date();
+                
+                // 日付と時刻でソート
+                const sortedSchedules = RAW_SCHEDULES_DATA.sort((a, b) => {
+                    const dateA = new Date(`${a.date}T${a.time}:00`);
+                    const dateB = new Date(`${b.date}T${b.time}:00`);
+                    return dateA - dateB;
+                });
+
+                // 現在時刻より後の予定のみをフィルタリング
+                return sortedSchedules.filter(schedule => {
+                    const scheduleDateTime = new Date(`${schedule.date}T${schedule.time}:00`);
+                    return scheduleDateTime > now;
+                });
+            }
+
+            // スケジュールリストをHTMLに描画
+            function renderSchedules() {
+                const futureSchedules = getFutureSchedules();
+                scheduleList.innerHTML = ''; // リストをクリア
+
+                if (futureSchedules.length === 0) {
+                    scheduleList.innerHTML = '<li style="text-align: center; color: #b0b0c6;">予定されている起動スケジュールはありません。管理者による更新をお待ちください。</li>';
+                    return;
+                }
+
+                futureSchedules.forEach(schedule => {
+                    const listItem = document.createElement('li');
+                    listItem.className = 'schedule-item';
+                    
+                    const itemHTML = `
+                        <div class="icon-indicator">
+                            <i data-lucide="calendar-check"></i>
+                        </div>
+                        <div class="details">
+                            <div class="top-line">
+                                <div class="datetime">${schedule.date} ${schedule.time} から</div>
+                                <div class="meta-info">
+                                    <span class="edition"><strong>${schedule.edition || '未定'}</strong></span>
+                                    <span>ワールド: ${schedule.world || '未定'}</span>
+                                </div>
+                            </div>
+                            <div class="memo">${schedule.memo || 'メモなし'}</div>
+                        </div>
+                    `;
+                    listItem.innerHTML = itemHTML;
+                    scheduleList.appendChild(listItem);
+                });
+
+                // Lucide Icons の描画
+                lucide.createIcons();
+            }
+
+            // 初期ロード
+            renderSchedules();
+        });
+    </script>
+    
+    <script>
+        // Lucide Icons の最終描画
+        lucide.createIcons(); 
+    </script>
+</body>
+</html>
