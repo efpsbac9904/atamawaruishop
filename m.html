@@ -57,7 +57,7 @@
 
     <div class="chime-card w-full max-w-md rounded-3xl p-8 text-center">
         <!-- Header -->
-        <div class="mb-8">
+        <div class="mb-6">
             <div class="inline-flex items-center justify-center w-16 h-16 bg-blue-100 rounded-full mb-4">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
@@ -67,17 +67,30 @@
             <p class="text-gray-500 text-sm mt-1">チャイムを鳴らして人を呼びます</p>
         </div>
 
-        <!-- File Upload Section -->
-        <div class="mb-8 p-4 border-2 border-dashed border-gray-200 rounded-2xl bg-gray-50/50">
-            <label class="block text-sm font-medium text-gray-600 mb-2">音声ファイルを選択 (.wav)</label>
-            <input type="file" id="audioUpload" accept="audio/wav" class="block w-full text-sm text-gray-500
-                file:mr-4 file:py-2 file:px-4
-                file:rounded-full file:border-0
-                file:text-sm file:font-semibold
-                file:bg-blue-50 file:text-blue-700
-                hover:file:bg-blue-100 cursor-pointer
-            "/>
-            <p id="fileNameDisplay" class="mt-2 text-xs text-gray-400 italic">ファイルが選択されていません</p>
+        <!-- Setup Section -->
+        <div class="space-y-4 mb-8">
+            <!-- URL Input -->
+            <div class="p-4 border border-gray-100 rounded-2xl bg-white/50 shadow-sm">
+                <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 text-left">URLから読み込む</label>
+                <div class="flex gap-2">
+                    <input type="text" id="urlInput" placeholder="https://example.com/chime.wav" class="flex-1 text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white">
+                    <button id="loadUrlBtn" class="bg-blue-500 hover:bg-blue-600 text-white text-xs font-bold px-4 py-2 rounded-lg transition-colors">読込</button>
+                </div>
+            </div>
+
+            <!-- File Upload -->
+            <div class="p-4 border-2 border-dashed border-gray-200 rounded-2xl bg-gray-50/50">
+                <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 text-left">ファイルを選択</label>
+                <input type="file" id="audioUpload" accept="audio/wav" class="block w-full text-xs text-gray-500
+                    file:mr-4 file:py-1.5 file:px-3
+                    file:rounded-full file:border-0
+                    file:text-xs file:font-semibold
+                    file:bg-blue-50 file:text-blue-700
+                    hover:file:bg-blue-100 cursor-pointer
+                "/>
+            </div>
+            
+            <p id="fileNameDisplay" class="text-xs text-gray-400 italic">設定されていません</p>
         </div>
 
         <!-- Main Button -->
@@ -94,7 +107,7 @@
         </div>
 
         <!-- Reset Storage -->
-        <button id="clearBtn" class="mt-8 text-xs text-gray-400 hover:text-red-400 transition-colors underline">保存された音声を消去</button>
+        <button id="clearBtn" class="mt-8 text-xs text-gray-400 hover:text-red-400 transition-colors underline">設定をリセット</button>
 
         <!-- Custom Notification UI -->
         <div id="toast" class="fixed bottom-8 left-1/2 -translate-x-1/2 bg-gray-800 text-white px-6 py-3 rounded-full text-sm opacity-0 transition-opacity pointer-events-none z-50">
@@ -104,6 +117,8 @@
 
     <script>
         const audioUpload = document.getElementById('audioUpload');
+        const urlInput = document.getElementById('urlInput');
+        const loadUrlBtn = document.getElementById('loadUrlBtn');
         const playBtn = document.getElementById('playBtn');
         const fileNameDisplay = document.getElementById('fileNameDisplay');
         const statusIndicator = document.getElementById('statusIndicator');
@@ -115,22 +130,25 @@
         let audioBuffer = null;
 
         const STORAGE_KEY = 'saved_chime_data';
+        const STORAGE_TYPE = 'saved_chime_type'; // 'base64' or 'url'
         const NAME_KEY = 'saved_chime_name';
 
-        // ページ読み込み時に保存された音声があるかチェック
+        // ページ読み込み時の処理
         window.addEventListener('load', async () => {
             const savedData = localStorage.getItem(STORAGE_KEY);
+            const savedType = localStorage.getItem(STORAGE_TYPE);
             const savedName = localStorage.getItem(NAME_KEY);
 
             if (savedData && savedName) {
                 fileNameDisplay.textContent = `${savedName} (保存済み)`;
-                statusText.textContent = '保存された音声を読み込み中...';
+                statusText.textContent = '読み込み中...';
                 
                 try {
-                    // Base64からArrayBufferへ変換
+                    // 保存形式に合わせてフェッチ
                     const response = await fetch(savedData);
                     const arrayBuffer = await response.arrayBuffer();
                     await setupAudio(arrayBuffer);
+                    if (savedType === 'url') urlInput.value = savedData;
                 } catch (err) {
                     console.error("Storage load error:", err);
                     statusText.textContent = '保存データの読み込みに失敗しました';
@@ -138,7 +156,7 @@
             }
         });
 
-        // AudioContextとBufferのセットアップ共通処理
+        // AudioContextセットアップ
         async function setupAudio(arrayBuffer) {
             if (!audioContext) {
                 audioContext = new (window.AudioContext || window.webkitAudioContext)();
@@ -151,7 +169,34 @@
             statusText.className = 'text-green-600 font-medium';
         }
 
-        // 音声ファイルの新規アップロード処理
+        // URLから読み込む処理
+        loadUrlBtn.addEventListener('click', async () => {
+            const url = urlInput.value.trim();
+            if (!url) return;
+
+            statusText.textContent = 'URLから読み込み中...';
+            try {
+                const response = await fetch(url);
+                if (!response.ok) throw new Error('Network response was not ok');
+                const arrayBuffer = await response.arrayBuffer();
+                
+                await setupAudio(arrayBuffer);
+                
+                // localStorageへURLを保存
+                localStorage.setItem(STORAGE_KEY, url);
+                localStorage.setItem(STORAGE_TYPE, 'url');
+                localStorage.setItem(NAME_KEY, url.split('/').pop() || 'URL音声');
+                
+                fileNameDisplay.textContent = url.split('/').pop() || 'URL音声';
+                showToast("URLを保存しました");
+            } catch (err) {
+                console.error("URL load error:", err);
+                statusText.textContent = 'URLからの読み込みに失敗しました(CORS設定などを確認してください)';
+                showToast("エラー: URLを読み込めません");
+            }
+        });
+
+        // ファイルアップロード処理
         audioUpload.addEventListener('change', async (e) => {
             const file = e.target.files[0];
             if (!file) return;
@@ -162,15 +207,14 @@
             try {
                 const arrayBuffer = await file.arrayBuffer();
                 
-                // localStorageへ保存 (Base64形式)
                 const reader = new FileReader();
                 reader.onload = (event) => {
                     try {
                         localStorage.setItem(STORAGE_KEY, event.target.result);
+                        localStorage.setItem(STORAGE_TYPE, 'base64');
                         localStorage.setItem(NAME_KEY, file.name);
                     } catch (e) {
-                        console.warn("localStorage quota exceeded. File might be too large.");
-                        showToast("ファイルが大きすぎるため、次回用の保存はできませんでした。");
+                        showToast("ファイルが大きすぎるため保存できませんでした");
                     }
                 };
                 reader.readAsDataURL(file);
@@ -178,47 +222,31 @@
                 await setupAudio(arrayBuffer);
                 
             } catch (err) {
-                console.error("Audio decoding error:", err);
                 showToast("音声ファイルの読み込みに失敗しました");
-                playBtn.disabled = true;
-                playBtn.classList.remove('pulse-animation');
             }
         });
 
-        // 再生ボタンのクリックイベント
         playBtn.addEventListener('click', () => {
             if (!audioBuffer || !audioContext) return;
-
             const source = audioContext.createBufferSource();
             source.buffer = audioBuffer;
             source.connect(audioContext.destination);
-            
-            if (audioContext.state === 'suspended') {
-                audioContext.resume();
-            }
-
+            if (audioContext.state === 'suspended') audioContext.resume();
             source.start(0);
             showToast("呼び出し中...");
-            
             playBtn.classList.add('ring-4', 'ring-blue-300');
-            setTimeout(() => {
-                playBtn.classList.remove('ring-4', 'ring-blue-300');
-            }, 200);
+            setTimeout(() => playBtn.classList.remove('ring-4', 'ring-blue-300'), 200);
         });
 
-        // 保存データの消去
         clearBtn.addEventListener('click', () => {
-            localStorage.removeItem(STORAGE_KEY);
-            localStorage.removeItem(NAME_KEY);
-            location.reload(); // 状態をリセットするためにリロード
+            localStorage.clear();
+            location.reload();
         });
 
         function showToast(message) {
             toast.textContent = message;
             toast.classList.replace('opacity-0', 'opacity-100');
-            setTimeout(() => {
-                toast.classList.replace('opacity-100', 'opacity-0');
-            }, 2000);
+            setTimeout(() => toast.classList.replace('opacity-100', 'opacity-0'), 2000);
         }
     </script>
 </body>
