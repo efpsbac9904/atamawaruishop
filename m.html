@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chime Call System</title>
+    <title>Dynamic Multi-Chime System</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap');
@@ -12,9 +12,6 @@
             font-family: 'Inter', sans-serif;
             background: linear-gradient(135deg, #f0f4f8 0%, #d9e2ec 100%);
             min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
         }
 
         .chime-card {
@@ -27,10 +24,9 @@
         .chime-button {
             transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             position: relative;
-            overflow: hidden;
         }
 
-        .chime-button:active {
+        .chime-button:active:not(:disabled) {
             transform: scale(0.92);
         }
 
@@ -40,7 +36,7 @@
 
         @keyframes pulse {
             0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4); }
-            70% { box-shadow: 0 0 0 20px rgba(59, 130, 246, 0); }
+            70% { box-shadow: 0 0 0 15px rgba(59, 130, 246, 0); }
             100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
         }
 
@@ -49,65 +45,58 @@
             height: 8px;
             border-radius: 50%;
             display: inline-block;
-            margin-right: 6px;
+            margin-right: 4px;
+        }
+
+        .add-slot-card {
+            border: 2px dashed rgba(59, 130, 246, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .add-slot-card:hover {
+            border-color: rgba(59, 130, 246, 0.6);
+            background: rgba(255, 255, 255, 0.5);
         }
     </style>
 </head>
-<body class="p-4">
+<body class="p-4 md:p-8 flex items-center justify-center">
 
-    <div class="chime-card w-full max-w-md rounded-3xl p-8 text-center">
+    <div class="chime-card w-full max-w-5xl rounded-3xl p-6 md:p-10">
         <!-- Header -->
-        <div class="mb-6">
-            <div class="inline-flex items-center justify-center w-16 h-16 bg-blue-100 rounded-full mb-4">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                </svg>
-            </div>
-            <h1 class="text-2xl font-bold text-gray-800">Call System</h1>
-            <p class="text-gray-500 text-sm mt-1">チャイムを鳴らして人を呼びます</p>
-        </div>
-
-        <!-- Setup Section -->
-        <div class="space-y-4 mb-8">
-            <!-- URL Input -->
-            <div class="p-4 border border-gray-100 rounded-2xl bg-white/50 shadow-sm">
-                <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 text-left">URLから読み込む</label>
-                <div class="flex gap-2">
-                    <input type="text" id="urlInput" placeholder="https://example.com/chime.wav" class="flex-1 text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white">
-                    <button id="loadUrlBtn" class="bg-blue-500 hover:bg-blue-600 text-white text-xs font-bold px-4 py-2 rounded-lg transition-colors">読込</button>
+        <div class="flex flex-col md:flex-row md:items-center justify-between mb-10 gap-4">
+            <div class="flex items-center gap-4">
+                <div class="inline-flex items-center justify-center w-12 h-12 bg-blue-100 rounded-2xl shadow-inner">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-800 tracking-tight">Multi-Chime System</h1>
+                    <p class="text-gray-500 text-xs">スロットを自由に追加してカスタマイズできます</p>
                 </div>
             </div>
-
-            <!-- File Upload -->
-            <div class="p-4 border-2 border-dashed border-gray-200 rounded-2xl bg-gray-50/50">
-                <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 text-left">ファイルを選択</label>
-                <input type="file" id="audioUpload" accept="audio/wav" class="block w-full text-xs text-gray-500
-                    file:mr-4 file:py-1.5 file:px-3
-                    file:rounded-full file:border-0
-                    file:text-xs file:font-semibold
-                    file:bg-blue-50 file:text-blue-700
-                    hover:file:bg-blue-100 cursor-pointer
-                "/>
+            <div class="flex gap-3">
+                <button id="clearAllBtn" class="text-xs text-gray-400 hover:text-red-500 transition-colors flex items-center gap-1">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                    全リセット
+                </button>
             </div>
-            
-            <p id="fileNameDisplay" class="text-xs text-gray-400 italic">設定されていません</p>
         </div>
 
-        <!-- Main Button -->
-        <div class="flex flex-col items-center">
-            <button id="playBtn" disabled class="chime-button w-40 h-40 rounded-full bg-blue-600 text-white flex flex-col items-center justify-center shadow-lg disabled:bg-gray-300 disabled:cursor-not-allowed">
-                <span class="text-lg font-semibold mb-1">CALL</span>
-                <span class="text-xs opacity-80">呼び出し</span>
+        <!-- Chime Buttons Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="chimeGrid">
+            <!-- Chime slots will be injected here -->
+            
+            <!-- Add Button Slot -->
+            <button id="addSlotBtn" class="add-slot-card rounded-3xl p-5 flex flex-col items-center justify-center gap-3 text-blue-500 min-h-[300px]">
+                <div class="w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M12 4v16m8-8H4" />
+                    </svg>
+                </div>
+                <span class="font-semibold text-sm">スロットを追加</span>
             </button>
-            
-            <div id="statusIndicator" class="mt-6 text-sm text-gray-400 flex items-center">
-                <span class="status-dot bg-gray-300"></span>
-                <span id="statusText">待機中</span>
-            </div>
         </div>
-
-        <!-- Reset Storage -->
-        <button id="clearBtn" class="mt-8 text-xs text-gray-400 hover:text-red-400 transition-colors underline">設定をリセット</button>
 
         <!-- Custom Notification UI -->
         <div id="toast" class="fixed bottom-8 left-1/2 -translate-x-1/2 bg-gray-800 text-white px-6 py-3 rounded-full text-sm opacity-0 transition-opacity pointer-events-none z-50">
@@ -115,139 +104,265 @@
         </div>
     </div>
 
+    <!-- Hidden audio inputs -->
+    <input type="file" id="hiddenFileInput" accept="audio/wav" class="hidden">
+
     <script>
-        const audioUpload = document.getElementById('audioUpload');
-        const urlInput = document.getElementById('urlInput');
-        const loadUrlBtn = document.getElementById('loadUrlBtn');
-        const playBtn = document.getElementById('playBtn');
-        const fileNameDisplay = document.getElementById('fileNameDisplay');
-        const statusIndicator = document.getElementById('statusIndicator');
-        const statusText = document.getElementById('statusText');
+        const chimeGrid = document.getElementById('chimeGrid');
+        const addSlotBtn = document.getElementById('addSlotBtn');
+        const hiddenFileInput = document.getElementById('hiddenFileInput');
         const toast = document.getElementById('toast');
-        const clearBtn = document.getElementById('clearBtn');
+        const clearAllBtn = document.getElementById('clearAllBtn');
         
         let audioContext = null;
-        let audioBuffer = null;
+        let slots = []; // 現在のスロットID配列
+        const chimes = {}; // 音声データ保持用
 
-        const STORAGE_KEY = 'saved_chime_data';
-        const STORAGE_TYPE = 'saved_chime_type'; // 'base64' or 'url'
-        const NAME_KEY = 'saved_chime_name';
+        // 初期化
+        async function init() {
+            // 保存されたスロットリストを取得
+            const savedSlots = localStorage.getItem('chime_slots_list');
+            if (savedSlots) {
+                slots = JSON.parse(savedSlots);
+            } else {
+                slots = [Date.now()]; // 初期状態で1つ追加
+            }
 
-        // ページ読み込み時の処理
-        window.addEventListener('load', async () => {
-            const savedData = localStorage.getItem(STORAGE_KEY);
-            const savedType = localStorage.getItem(STORAGE_TYPE);
-            const savedName = localStorage.getItem(NAME_KEY);
+            slots.forEach(id => {
+                createChimeElement(id);
+                loadSavedSlot(id);
+            });
+            saveSlotsList();
+        }
 
-            if (savedData && savedName) {
-                fileNameDisplay.textContent = `${savedName} (保存済み)`;
-                statusText.textContent = '読み込み中...';
-                
-                try {
-                    // 保存形式に合わせてフェッチ
-                    const response = await fetch(savedData);
-                    const arrayBuffer = await response.arrayBuffer();
-                    await setupAudio(arrayBuffer);
-                    if (savedType === 'url') urlInput.value = savedData;
-                } catch (err) {
-                    console.error("Storage load error:", err);
-                    statusText.textContent = '保存データの読み込みに失敗しました';
+        // スロットのHTMLを生成して追加
+        function createChimeElement(id) {
+            const slotHtml = `
+                <div class="bg-white/60 rounded-3xl p-5 border border-white shadow-sm flex flex-col gap-4 animate-fade-in" id="slot-${id}">
+                    <div class="flex justify-between items-start">
+                        <div class="flex-1 mr-2">
+                            <input type="text" value="新しいチャイム" 
+                                class="bg-transparent font-semibold text-gray-700 w-full border-b border-transparent hover:border-gray-200 focus:border-blue-400 focus:outline-none transition-colors"
+                                id="name-${id}" onchange="saveName(${id})">
+                        </div>
+                        <div class="flex flex-col items-end gap-1">
+                            <button onclick="deleteSlot(${id})" class="text-gray-300 hover:text-red-400 transition-colors p-1">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                            <div class="flex items-center text-[10px] text-gray-400" id="status-${id}">
+                                <span class="status-dot bg-gray-300"></span>
+                                <span>未設定</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-col items-center justify-center py-2">
+                        <button id="playBtn-${id}" disabled onclick="playChime(${id})"
+                            class="chime-button w-28 h-28 rounded-full bg-blue-500 text-white flex flex-col items-center justify-center shadow-md disabled:bg-gray-200 disabled:cursor-not-allowed">
+                            <span class="text-xs font-bold">CALL</span>
+                        </button>
+                    </div>
+
+                    <div class="space-y-2">
+                        <div class="flex gap-1">
+                            <input type="text" id="urlInput-${id}" placeholder="URLから読込" 
+                                class="flex-1 text-[10px] border border-gray-200 rounded-lg px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-blue-400">
+                            <button onclick="loadFromUrl(${id})" class="bg-gray-700 text-white text-[10px] px-2 rounded-lg hover:bg-black transition-colors">読込</button>
+                        </div>
+                        <button onclick="triggerFileInput(${id})" class="w-full text-[10px] py-1.5 border border-blue-200 text-blue-600 rounded-lg hover:bg-blue-50 transition-colors">
+                            ファイルを選択
+                        </button>
+                    </div>
+                </div>
+            `;
+            // Addボタンの前に挿入
+            addSlotBtn.insertAdjacentHTML('beforebegin', slotHtml);
+        }
+
+        // スロット追加ボタン
+        addSlotBtn.onclick = () => {
+            const newId = Date.now();
+            slots.push(newId);
+            createChimeElement(newId);
+            saveSlotsList();
+            showToast("スロットを追加しました");
+        };
+
+        // スロット削除
+        window.deleteSlot = function(id) {
+            if (confirm("このチャイムを削除しますか？")) {
+                const index = slots.indexOf(id);
+                if (index > -1) {
+                    slots.splice(index, 1);
+                    document.getElementById(`slot-${id}`).remove();
+                    
+                    // localStorageのデータも掃除
+                    localStorage.removeItem(`chime_data_${id}`);
+                    localStorage.removeItem(`chime_name_${id}`);
+                    localStorage.removeItem(`chime_type_${id}`);
+                    delete chimes[id];
+                    
+                    saveSlotsList();
                 }
             }
-        });
+        };
 
-        // AudioContextセットアップ
-        async function setupAudio(arrayBuffer) {
+        // リストの状態を保存
+        function saveSlotsList() {
+            localStorage.setItem('chime_slots_list', JSON.stringify(slots));
+        }
+
+        // --- 共通の音声ロジック ---
+
+        async function loadSavedSlot(id) {
+            const savedData = localStorage.getItem(`chime_data_${id}`);
+            const savedName = localStorage.getItem(`chime_name_${id}`);
+            const savedType = localStorage.getItem(`chime_type_${id}`);
+
+            if (savedName) document.getElementById(`name-${id}`).value = savedName;
+
+            if (savedData) {
+                updateStatus(id, '読み込み中...', 'gray');
+                try {
+                    const response = await fetch(savedData);
+                    const arrayBuffer = await response.arrayBuffer();
+                    await setupAudioBuffer(id, arrayBuffer);
+                    if (savedType === 'url') document.getElementById(`urlInput-${id}`).value = savedData;
+                } catch (err) {
+                    updateStatus(id, '読込失敗', 'red');
+                }
+            }
+        }
+
+        function ensureAudioContext() {
             if (!audioContext) {
                 audioContext = new (window.AudioContext || window.webkitAudioContext)();
             }
-            audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
-            playBtn.disabled = false;
-            playBtn.classList.add('pulse-animation');
-            statusIndicator.querySelector('.status-dot').className = 'status-dot bg-green-500 animate-pulse';
-            statusText.textContent = '再生準備完了';
-            statusText.className = 'text-green-600 font-medium';
+            if (audioContext.state === 'suspended') {
+                audioContext.resume();
+            }
         }
 
-        // URLから読み込む処理
-        loadUrlBtn.addEventListener('click', async () => {
-            const url = urlInput.value.trim();
-            if (!url) return;
-
-            statusText.textContent = 'URLから読み込み中...';
+        async function setupAudioBuffer(id, arrayBuffer) {
+            ensureAudioContext();
             try {
-                const response = await fetch(url);
-                if (!response.ok) throw new Error('Network response was not ok');
-                const arrayBuffer = await response.arrayBuffer();
+                const decodedBuffer = await audioContext.decodeAudioData(arrayBuffer);
+                chimes[id] = decodedBuffer;
                 
-                await setupAudio(arrayBuffer);
-                
-                // localStorageへURLを保存
-                localStorage.setItem(STORAGE_KEY, url);
-                localStorage.setItem(STORAGE_TYPE, 'url');
-                localStorage.setItem(NAME_KEY, url.split('/').pop() || 'URL音声');
-                
-                fileNameDisplay.textContent = url.split('/').pop() || 'URL音声';
-                showToast("URLを保存しました");
+                const btn = document.getElementById(`playBtn-${id}`);
+                btn.disabled = false;
+                btn.classList.add('pulse-animation');
+                updateStatus(id, '準備完了', 'green');
             } catch (err) {
-                console.error("URL load error:", err);
-                statusText.textContent = 'URLからの読み込みに失敗しました(CORS設定などを確認してください)';
-                showToast("エラー: URLを読み込めません");
+                updateStatus(id, 'エラー', 'red');
+                throw err;
             }
-        });
+        }
 
-        // ファイルアップロード処理
-        audioUpload.addEventListener('change', async (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
-
-            fileNameDisplay.textContent = file.name;
-            statusText.textContent = '読み込み中...';
+        function updateStatus(id, text, color) {
+            const statusDiv = document.getElementById(`status-${id}`);
+            if (!statusDiv) return;
+            const dot = statusDiv.querySelector('.status-dot');
+            const label = statusDiv.querySelector('span:last-child');
             
+            const colorMap = {
+                gray: 'bg-gray-300',
+                green: 'bg-green-500 animate-pulse',
+                red: 'bg-red-500',
+                blue: 'bg-blue-500'
+            };
+            
+            dot.className = `status-dot ${colorMap[color] || 'bg-gray-300'}`;
+            label.textContent = text;
+            if (color === 'green') label.classList.add('text-green-600', 'font-medium');
+            else label.classList.remove('text-green-600', 'font-medium');
+        }
+
+        let currentActiveSlot = null;
+        function triggerFileInput(id) {
+            currentActiveSlot = id;
+            hiddenFileInput.click();
+        }
+
+        hiddenFileInput.onchange = async (e) => {
+            const file = e.target.files[0];
+            const id = currentActiveSlot;
+            if (!file || id === null) return;
+
+            updateStatus(id, '処理中...', 'blue');
             try {
                 const arrayBuffer = await file.arrayBuffer();
+                await setupAudioBuffer(id, arrayBuffer);
                 
                 const reader = new FileReader();
                 reader.onload = (event) => {
-                    try {
-                        localStorage.setItem(STORAGE_KEY, event.target.result);
-                        localStorage.setItem(STORAGE_TYPE, 'base64');
-                        localStorage.setItem(NAME_KEY, file.name);
-                    } catch (e) {
-                        showToast("ファイルが大きすぎるため保存できませんでした");
-                    }
+                    localStorage.setItem(`chime_data_${id}`, event.target.result);
+                    localStorage.setItem(`chime_type_${id}`, 'base64');
+                    showToast("音声を保存しました");
                 };
                 reader.readAsDataURL(file);
-
-                await setupAudio(arrayBuffer);
-                
             } catch (err) {
-                showToast("音声ファイルの読み込みに失敗しました");
+                showToast("ファイルの読み込みに失敗しました");
             }
-        });
+        };
 
-        playBtn.addEventListener('click', () => {
-            if (!audioBuffer || !audioContext) return;
+        async function loadFromUrl(id) {
+            const url = document.getElementById(`urlInput-${id}`).value.trim();
+            if (!url) return;
+
+            updateStatus(id, '通信中...', 'blue');
+            try {
+                const response = await fetch(url);
+                const arrayBuffer = await response.arrayBuffer();
+                await setupAudioBuffer(id, arrayBuffer);
+                
+                localStorage.setItem(`chime_data_${id}`, url);
+                localStorage.setItem(`chime_type_${id}`, 'url');
+                showToast("URLを登録しました");
+            } catch (err) {
+                updateStatus(id, 'URLエラー', 'red');
+                showToast("URLの読み込みに失敗しました");
+            }
+        }
+
+        window.saveName = function(id) {
+            const name = document.getElementById(`name-${id}`).value;
+            localStorage.setItem(`chime_name_${id}`, name);
+        };
+
+        window.playChime = function(id) {
+            if (!chimes[id]) return;
+            ensureAudioContext();
+            
             const source = audioContext.createBufferSource();
-            source.buffer = audioBuffer;
+            source.buffer = chimes[id];
             source.connect(audioContext.destination);
-            if (audioContext.state === 'suspended') audioContext.resume();
             source.start(0);
-            showToast("呼び出し中...");
-            playBtn.classList.add('ring-4', 'ring-blue-300');
-            setTimeout(() => playBtn.classList.remove('ring-4', 'ring-blue-300'), 200);
-        });
 
-        clearBtn.addEventListener('click', () => {
-            localStorage.clear();
-            location.reload();
-        });
+            const name = document.getElementById(`name-${id}`).value;
+            showToast(`${name} を鳴らしました`);
+
+            const btn = document.getElementById(`playBtn-${id}`);
+            btn.classList.add('ring-4', 'ring-blue-200');
+            setTimeout(() => btn.classList.remove('ring-4', 'ring-blue-200'), 200);
+        };
+
+        clearAllBtn.onclick = () => {
+            if (confirm("すべての設定とスロットをリセットしますか？")) {
+                localStorage.clear();
+                location.reload();
+            }
+        };
 
         function showToast(message) {
             toast.textContent = message;
             toast.classList.replace('opacity-0', 'opacity-100');
             setTimeout(() => toast.classList.replace('opacity-100', 'opacity-0'), 2000);
         }
+
+        init();
     </script>
 </body>
 </html>
