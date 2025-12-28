@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>My Local AI - Proxy Fix</title>
+    <title>My Local AI - Final Fix</title>
     <style>
         :root { --p: #007aff; --bg: #ffffff; --ai-bg: #f2f2f7; }
         * { box-sizing: border-box; }
@@ -26,7 +26,7 @@
 <div id="status">ステータス: 待機中</div>
 
 <div id="chat">
-    <div class="msg ai">Hugging Faceへの直接アクセスを避けて、jsDelivrプロキシ経由でロードする設定にしたよ！これで通るはず。</div>
+    <div class="msg ai">401も404も出さないように、接続設定を極限までシンプルにしたよ。これで試して！</div>
 </div>
 
 <div class="input-area">
@@ -37,18 +37,13 @@
 <script type="module">
     import { pipeline, env } from 'https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.2';
     
-    // 全ての環境設定を固定
+    // 1. 基本設定をクリア
     env.allowLocalModels = false;
     env.useBrowserCache = true;
 
-    // 401対策の真打ち：Hugging Faceのサイトを直接叩かず、CDN経由で取得する
-    // jsDelivrのHugging Faceプロキシサービスを利用
-    env.remoteHost = 'https://cdn.jsdelivr.net/gh/xenova/transformers.js-models@main/';
-    env.remotePathTemplate = '{model}/'; 
-
-    // 元のHugging Faceリポジトリをバイパスするための個別設定
-    // 取得先を jsDelivr 上の xenova 済みモデルに変更
-    const MODEL_ID = 'Xenova/SmolLM-135M-Instruct';
+    // 2. 接続先をHugging Faceの標準に戻すが、パス解決を最も標準的な形に強制
+    env.remoteHost = 'https://huggingface.co';
+    env.remotePathTemplate = '{model}/resolve/{revision}/';
 
     const status = document.getElementById('status');
     const chat = document.getElementById('chat');
@@ -73,28 +68,29 @@
     btn.onclick = async () => {
         if (!generator) {
             btn.disabled = true;
-            status.innerText = "ロード開始 (via jsDelivr)...";
+            status.innerText = "ロード開始...";
             try {
-                // pipeline の実行。env.remoteHost が優先されるはず
-                generator = await pipeline('text-generation', MODEL_ID, {
+                // 3. pipeline作成時に、fetchの挙動を直接書き換える
+                // credentials: 'omit' を「確実に」実行するために引数を調整
+                generator = await pipeline('text-generation', 'Xenova/SmolLM-135M-Instruct', {
                     progress_callback: (p) => {
                         if (p.status === 'progress') status.innerText = `DL中: ${Math.round(p.progress)}%`;
-                    },
-                    // fetchオプションも念のため維持
-                    fetch_options: {
-                        credentials: 'omit',
-                        mode: 'cors'
                     }
                 });
+                
                 status.innerText = "準備完了！";
                 btn.innerText = "送信";
                 btn.disabled = false;
                 input.disabled = false;
             } catch (e) {
+                console.error("Error Details:", e);
                 status.innerText = "エラー: " + e.message;
-                console.error("詳細:", e);
                 btn.disabled = false;
-                addChat("これでも401が出る場合、ブラウザ拡張機能が通信を書き換えてる可能性が高いよ。シークレットモード＋拡張機能オフを試して！", "ai");
+                
+                // 401がしつこい場合の最終手段をチャットで提示
+                if (e.message.includes('Unauthorized')) {
+                    addChat("どうしても拒否されちゃうね… ブラウザの設定で『サードパーティCookieのブロック』をオフにするか、別のブラウザ（Edgeとか）で一度試してみて！", "ai");
+                }
             }
         } else {
             const val = input.value.trim();
@@ -115,6 +111,19 @@
                 aiMsg.innerText = "生成エラー。";
             }
         }
+    };
+
+    // 4. 【重要】グローバルのfetchをハックして、Hugging Faceへのリクエストから認証情報を強制削除
+    const originalFetch = window.fetch;
+    window.fetch = function() {
+        if (arguments[0] && typeof arguments[0] === 'string' && arguments[0].includes('huggingface.co')) {
+            if (arguments[1]) {
+                arguments[1].credentials = 'omit';
+            } else {
+                arguments[1] = { credentials: 'omit' };
+            }
+        }
+        return originalFetch.apply(this, arguments);
     };
 </script>
 
