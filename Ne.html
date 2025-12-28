@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>NEON BOUNCE - Levels</title>
+    <title>NEON BOUNCE - LocalStorage</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body {
@@ -58,45 +58,47 @@
         <div class="p-6 flex justify-between items-start">
             <div class="flex gap-6">
                 <div>
-                    <div class="text-xs uppercase tracking-widest text-blue-400 font-bold">Level</div>
-                    <div id="level-display" class="text-3xl font-black text-white">1</div>
+                    <div class="text-[10px] uppercase tracking-widest text-blue-400 font-bold">Level</div>
+                    <div id="level-display" class="text-3xl font-black">1</div>
                 </div>
                 <div>
-                    <div class="text-xs uppercase tracking-widest text-yellow-400 font-bold">Score</div>
-                    <div id="score" class="text-3xl font-black">0</div>
-                </div>
-                <div>
-                    <div class="text-xs uppercase tracking-widest text-pink-500 font-bold">Combo</div>
-                    <div id="combo" class="text-3xl font-black">x1</div>
+                    <div class="text-[10px] uppercase tracking-widest text-yellow-400 font-bold">Score</div>
+                    <div id="score-display" class="text-3xl font-black">0</div>
                 </div>
             </div>
             <button id="settings-toggle" class="interactive p-2 bg-gray-800 rounded-lg hover:bg-gray-700 transition">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+                ⚙️
             </button>
         </div>
 
         <!-- Level Up Overlay -->
-        <div id="level-up-text" class="absolute inset-0 flex items-center justify-center pointer-events-none hidden">
+        <div id="level-up-overlay" class="absolute inset-0 flex items-center justify-center hidden">
             <h2 class="text-6xl font-black italic text-yellow-400 level-up-anim">LEVEL UP!</h2>
         </div>
 
         <!-- Start Screen -->
-        <div id="start-screen" class="absolute inset-0 flex flex-col items-center justify-center bg-black/60 interactive">
-            <h1 class="text-6xl font-black italic tracking-tighter text-transparent bg-clip-text bg-gradient-to-br from-blue-400 via-purple-500 to-pink-500 mb-4">
+        <div id="start-screen" class="absolute inset-0 flex flex-col items-center justify-center bg-black/70 interactive">
+            <h1 class="text-6xl font-black italic tracking-tighter text-transparent bg-clip-text bg-gradient-to-br from-cyan-400 via-purple-500 to-fuchsia-500 mb-2">
                 NEON BOUNCE
             </h1>
-            <p class="mb-8 text-gray-400 text-center">5体倒すごとにレベルアップ！<br>スピードと数に耐えられるか？</p>
-            <button id="start-btn" class="px-12 py-4 bg-white text-black font-bold rounded-full hover:scale-110 transition-transform">
-                START
+            <div class="mb-8 text-gray-400 text-center">
+                <p>自己ベスト: <span id="best-display" class="text-white font-bold">LV.1 / 0 pts</span></p>
+            </div>
+            <button id="start-btn" class="px-12 py-4 bg-white text-black font-black rounded-full hover:scale-110 transition-transform">
+                START GAME
             </button>
         </div>
 
         <!-- Game Over Screen -->
         <div id="game-over" class="absolute inset-0 flex flex-col items-center justify-center bg-black/90 hidden interactive">
-            <h2 class="text-4xl font-bold text-pink-500 mb-2 font-mono">CRASHED</h2>
-            <div class="text-gray-400 mb-1">FINAL LEVEL: <span id="final-level">1</span></div>
-            <div id="final-score" class="text-7xl font-black mb-8">0</div>
-            <button id="restart-btn" class="px-12 py-4 border-2 border-white rounded-full font-bold hover:bg-white hover:text-black transition">
+            <h2 class="text-4xl font-black text-pink-500 mb-2 font-mono">CRASHED!</h2>
+            <div id="final-score" class="text-7xl font-black mb-4">0</div>
+            <div id="new-record" class="hidden mb-6 px-4 py-1 bg-yellow-400 text-black font-bold rounded animate-bounce">NEW RECORD!</div>
+            <div class="text-gray-400 mb-10 text-sm text-center">
+                今回の記録: <span id="current-result">LV.1 / 0 pts</span><br>
+                自己ベスト: <span id="best-result">LV.1 / 0 pts</span>
+            </div>
+            <button id="restart-btn" class="px-12 py-4 border-2 border-white rounded-full font-black hover:bg-white hover:text-black transition">
                 RETRY
             </button>
         </div>
@@ -107,83 +109,81 @@
                 <h3 class="font-bold text-xl">Config</h3>
                 <button id="settings-close" class="text-gray-400">✕</button>
             </div>
-            
             <div class="space-y-4">
                 <div>
-                    <label class="text-xs text-gray-400 uppercase font-bold block mb-1">Base Enemy Speed</label>
-                    <input type="range" id="param-enemy-speed" min="0.5" max="3" step="0.1" value="1.2" class="w-full">
+                    <label class="text-[10px] text-gray-400 uppercase font-bold block mb-1">Enemy Speed</label>
+                    <input type="range" id="param-speed" min="0.5" max="3" step="0.1" value="1.2" class="w-full">
                 </div>
                 <div>
-                    <label class="text-xs text-gray-400 uppercase font-bold block mb-1">Base Max Enemies</label>
-                    <input type="range" id="param-max-enemies" min="1" max="15" step="1" value="4" class="w-full">
-                </div>
-                <div>
-                    <label class="text-xs text-gray-400 uppercase font-bold block mb-1">Launch Power</label>
+                    <label class="text-[10px] text-gray-400 uppercase font-bold block mb-1">Launch Power</label>
                     <input type="range" id="param-power" min="0.05" max="0.3" step="0.01" value="0.15" class="w-full">
                 </div>
                 <div>
-                    <label class="text-xs text-gray-400 uppercase font-bold block mb-1">Friction</label>
+                    <label class="text-[10px] text-gray-400 uppercase font-bold block mb-1">Friction</label>
                     <input type="range" id="param-friction" min="0.90" max="0.99" step="0.01" value="0.98" class="w-full">
                 </div>
             </div>
-
-            <div class="mt-auto text-[10px] text-gray-500 text-center">
-                レベルアップするとこれらの値にボーナスが加算されます
+            <div class="mt-auto text-[10px] text-gray-600 text-center">
+                記録はブラウザに保存されるよ。
             </div>
         </div>
-
-        <div id="instructions" class="pointer-events-none">ドラッグして狙いを定め、放して突撃！</div>
     </div>
 
     <script>
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
-        const scoreEl = document.getElementById('score');
-        const comboEl = document.getElementById('combo');
-        const levelDisplay = document.getElementById('level-display');
-        const levelUpText = document.getElementById('level-up-text');
+        
+        // UI Elements
+        const scoreEl = document.getElementById('score-display');
+        const levelEl = document.getElementById('level-display');
         const startScreen = document.getElementById('start-screen');
         const gameOverScreen = document.getElementById('game-over');
+        const bestDisplay = document.getElementById('best-display');
         const finalScoreEl = document.getElementById('final-score');
-        const finalLevelEl = document.getElementById('final-level');
-        const settingsPanel = document.getElementById('settings-panel');
+        const currentResultEl = document.getElementById('current-result');
+        const bestResultEl = document.getElementById('best-result');
+        const newRecordEl = document.getElementById('new-record');
+        const levelUpOverlay = document.getElementById('level-up-overlay');
 
-        // パラメータ
-        const config = {
-            enemySpeed: 1.2,
-            maxEnemies: 4,
-            power: 0.15,
-            friction: 0.98
-        };
-
-        let width, height;
-        let particles = [];
-        let enemies = [];
-        let player = {
-            x: 0, y: 0, r: 16, vx: 0, vy: 0,
-            isDragging: false, dragX: 0, dragY: 0,
-            color: '#00f2ff', glow: '#00f2ff'
-        };
-
-        let score = 0;
-        let combo = 1;
-        let level = 1;
-        let enemiesKilled = 0;
-        const KILLS_PER_LEVEL = 5;
-        let lastHitTime = 0;
+        const config = { speed: 1.2, power: 0.15, friction: 0.98 };
+        let highScore = { score: 0, level: 1 };
         let gameActive = false;
-        let frameCount = 0;
+        let score = 0, level = 1, combo = 1, kills = 0, frameCount = 0;
+        let lastHitTime = 0;
+        let width, height;
+
+        let player = { x: 0, y: 0, r: 16, vx: 0, vy: 0, isDragging: false, dragX: 0, dragY: 0 };
+        let enemies = [], particles = [];
 
         function resize() {
             width = canvas.width = window.innerWidth;
             height = canvas.height = window.innerHeight;
-            if (!gameActive) { player.x = width / 2; player.y = height / 2; }
+            if (!gameActive) { player.x = width/2; player.y = height/2; }
         }
-
         window.addEventListener('resize', resize);
         resize();
 
-        const dist = (x1, y1, x2, y2) => Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
+        // LocalStorage Logic
+        function loadHighScore() {
+            const saved = localStorage.getItem('neon_bounce_v2');
+            if (saved) {
+                highScore = JSON.parse(saved);
+                const text = `LV.${highScore.level} / ${highScore.score.toLocaleString()} pts`;
+                bestDisplay.textContent = text;
+                bestResultEl.textContent = text;
+            }
+        }
+        loadHighScore();
+
+        function saveHighScore() {
+            if (score > highScore.score) {
+                highScore = { score, level };
+                localStorage.setItem('neon_bounce_v2', JSON.stringify(highScore));
+                newRecordEl.classList.remove('hidden');
+            } else {
+                newRecordEl.classList.add('hidden');
+            }
+        }
 
         class Enemy {
             constructor() {
@@ -196,144 +196,96 @@
                 else if (side === 1) { this.x = width + this.r; this.y = Math.random() * height; }
                 else if (side === 2) { this.x = Math.random() * width; this.y = -this.r; }
                 else { this.x = Math.random() * width; this.y = height + this.r; }
-                
                 const angle = Math.atan2(player.y - this.y, player.x - this.x);
-                // レベルに応じてスピードアップ (レベル1ごとに+0.2)
-                const levelBonus = (level - 1) * 0.25;
-                const speed = (0.5 + Math.random()) * (parseFloat(config.enemySpeed) + levelBonus);
-                this.vx = Math.cos(angle) * speed;
-                this.vy = Math.sin(angle) * speed;
+                const s = (0.5 + Math.random()) * (config.speed + (level - 1) * 0.25);
+                this.vx = Math.cos(angle) * s;
+                this.vy = Math.sin(angle) * s;
                 this.color = `hsl(${Math.random() * 60 + 320}, 100%, 60%)`;
             }
-            update() {
-                this.x += this.vx;
-                this.y += this.vy;
-            }
-            draw() {
-                ctx.shadowBlur = 15;
-                ctx.shadowColor = this.color;
-                ctx.fillStyle = this.color;
-                ctx.beginPath();
-                ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.shadowBlur = 0;
-            }
         }
 
-        class Particle {
-            constructor(x, y, color) {
-                this.x = x; this.y = y; this.color = color;
-                const angle = Math.random() * Math.PI * 2;
-                const force = Math.random() * 10;
-                this.vx = Math.cos(angle) * force;
-                this.vy = Math.sin(angle) * force;
-                this.life = 1.0;
-                this.decay = 0.02 + Math.random() * 0.03;
-            }
-            update() {
-                this.x += this.vx; this.y += this.vy;
-                this.vx *= 0.95; this.vy *= 0.95;
-                this.life -= this.decay;
-            }
-            draw() {
-                ctx.globalAlpha = this.life;
-                ctx.fillStyle = this.color;
-                ctx.beginPath();
-                ctx.arc(this.x, this.y, 2.5, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.globalAlpha = 1;
-            }
+        function startGame() {
+            score = 0; level = 1; kills = 0; combo = 1;
+            enemies = []; particles = [];
+            player.vx = 0; player.vy = 0;
+            player.x = width/2; player.y = height/2;
+            gameActive = true;
+            scoreEl.textContent = "0";
+            levelEl.textContent = "1";
+            startScreen.classList.add('hidden');
+            gameOverScreen.classList.add('hidden');
         }
 
-        function createExplosion(x, y, color) {
-            for (let i = 0; i < 20; i++) particles.push(new Particle(x, y, color));
-        }
-
-        function spawnEnemy() {
-            // レベルに応じて最大数アップ (レベル1ごとに+1)
-            const levelBonus = (level - 1);
-            if (enemies.length < parseInt(config.maxEnemies) + levelBonus) {
-                enemies.push(new Enemy());
-            }
+        function endGame() {
+            gameActive = false;
+            saveHighScore();
+            finalScoreEl.textContent = score.toLocaleString();
+            currentResultEl.textContent = `LV.${level} / ${score.toLocaleString()} pts`;
+            loadHighScore(); // 更新されたベストを読み込み
+            gameOverScreen.classList.remove('hidden');
         }
 
         function triggerLevelUp() {
-            level++;
-            enemiesKilled = 0;
-            levelDisplay.textContent = level;
-            
-            // 演出
-            levelUpText.classList.remove('hidden');
-            setTimeout(() => levelUpText.classList.add('hidden'), 1000);
-            
-            // 画面フラッシュ
+            level++; kills = 0;
+            levelEl.textContent = level;
+            levelUpOverlay.classList.remove('hidden');
+            setTimeout(() => levelUpOverlay.classList.add('hidden'), 1000);
             ctx.fillStyle = 'white';
             ctx.fillRect(0, 0, width, height);
         }
 
         function update() {
             if (!gameActive) return;
-
             frameCount++;
-            // レベルが上がるとスポーン頻度も上がる
             const spawnRate = Math.max(15, 40 - (level * 2));
-            if (frameCount % spawnRate === 0) spawnEnemy();
+            if (frameCount % spawnRate === 0) enemies.push(new Enemy());
 
-            player.x += player.vx;
-            player.y += player.vy;
-            player.vx *= parseFloat(config.friction);
-            player.vy *= parseFloat(config.friction);
+            player.x += player.vx; player.y += player.vy;
+            player.vx *= config.friction; player.vy *= config.friction;
 
-            if (player.x < player.r) { player.x = player.r; player.vx *= -0.7; }
-            if (player.x > width - player.r) { player.x = width - player.r; player.vx *= -0.7; }
-            if (player.y < player.r) { player.y = player.r; player.vy *= -0.7; }
-            if (player.y > height - player.r) { player.y = height - player.r; player.vy *= -0.7; }
+            if (player.x < player.r || player.x > width - player.r) player.vx *= -0.7;
+            if (player.y < player.r || player.y > height - player.r) player.vy *= -0.7;
+            player.x = Math.max(player.r, Math.min(width - player.r, player.x));
+            player.y = Math.max(player.r, Math.min(height - player.r, player.y));
 
-            if (Date.now() - lastHitTime > 1500) {
-                combo = 1;
-                comboEl.textContent = `x${combo}`;
-            }
+            if (Date.now() - lastHitTime > 1500) combo = 1;
 
-            enemies.forEach((enemy, index) => {
-                enemy.update();
-                const d = dist(player.x, player.y, enemy.x, enemy.y);
-                
-                if (d < player.r + enemy.r) {
+            enemies.forEach((e, i) => {
+                e.x += e.vx; e.y += e.vy;
+                const d = Math.sqrt((player.x - e.x)**2 + (player.y - e.y)**2);
+                if (d < player.r + e.r) {
                     const speed = Math.sqrt(player.vx**2 + player.vy**2);
                     if (speed > 4) {
-                        createExplosion(enemy.x, enemy.y, enemy.color);
-                        enemies.splice(index, 1);
-                        score += 100 * combo * level; // レベルボーナス
-                        combo++;
-                        enemiesKilled++;
-                        lastHitTime = Date.now();
-                        scoreEl.textContent = score;
-                        comboEl.textContent = `x${combo}`;
-
-                        if (enemiesKilled >= KILLS_PER_LEVEL) {
-                            triggerLevelUp();
+                        for(let j=0; j<15; j++) {
+                            const angle = Math.random() * Math.PI * 2;
+                            const f = Math.random() * 8;
+                            particles.push({x: e.x, y: e.y, vx: Math.cos(angle)*f, vy: Math.sin(angle)*f, life: 1, color: e.color});
                         }
+                        enemies.splice(i, 1);
+                        score += 100 * combo * level;
+                        combo++; kills++;
+                        lastHitTime = Date.now();
+                        scoreEl.textContent = score.toLocaleString();
+                        if (kills >= 5) triggerLevelUp();
                     } else {
                         endGame();
                     }
                 }
-                if (dist(width/2, height/2, enemy.x, enemy.y) > width + 500) enemies.splice(index, 1);
             });
 
             particles.forEach((p, i) => {
-                p.update();
+                p.x += p.vx; p.y += p.vy; p.life -= 0.03;
                 if (p.life <= 0) particles.splice(i, 1);
             });
         }
 
         function draw() {
-            ctx.fillStyle = 'rgba(5, 5, 5, 0.25)';
+            ctx.fillStyle = 'rgba(5, 5, 5, 0.3)';
             ctx.fillRect(0, 0, width, height);
 
             if (player.isDragging) {
                 ctx.setLineDash([8, 4]);
                 ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
-                ctx.lineWidth = 2;
                 ctx.beginPath();
                 ctx.moveTo(player.x, player.y);
                 ctx.lineTo(player.x + (player.x - player.dragX), player.y + (player.y - player.dragY));
@@ -341,93 +293,67 @@
                 ctx.setLineDash([]);
             }
 
-            particles.forEach(p => p.draw());
-            enemies.forEach(e => e.draw());
+            enemies.forEach(e => {
+                ctx.shadowBlur = 15; ctx.shadowColor = e.color;
+                ctx.fillStyle = e.color;
+                ctx.beginPath(); ctx.arc(e.x, e.y, e.r, 0, Math.PI * 2); ctx.fill();
+            });
 
-            ctx.shadowBlur = 20;
-            ctx.shadowColor = player.glow;
-            ctx.fillStyle = player.color;
-            ctx.beginPath();
-            ctx.arc(player.x, player.y, player.r, 0, Math.PI * 2);
-            ctx.fill();
+            particles.forEach(p => {
+                ctx.globalAlpha = p.life; ctx.fillStyle = p.color;
+                ctx.beginPath(); ctx.arc(p.x, p.y, 2, 0, Math.PI * 2); ctx.fill();
+            });
+            ctx.globalAlpha = 1; ctx.shadowBlur = 0;
+
+            ctx.shadowBlur = 20; ctx.shadowColor = '#00f2ff';
+            ctx.fillStyle = '#00f2ff';
+            ctx.beginPath(); ctx.arc(player.x, player.y, player.r, 0, Math.PI * 2); ctx.fill();
             ctx.shadowBlur = 0;
         }
 
         function loop() {
-            update();
-            draw();
-            requestAnimationFrame(loop);
+            update(); draw(); requestAnimationFrame(loop);
         }
 
-        function getCoords(e) {
-            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-            return { x: clientX, y: clientY };
+        // Input
+        function getPos(e) {
+            const t = e.touches ? e.touches[0] : e;
+            return { x: t.clientX, y: t.clientY };
         }
-
-        function handleStart(e) {
+        function startDrag(e) {
             if (!gameActive) return;
-            const pos = getCoords(e);
-            if (dist(pos.x, pos.y, player.x, player.y) < player.r * 5) {
+            const p = getPos(e);
+            if (Math.sqrt((p.x - player.x)**2 + (p.y - player.y)**2) < 80) {
                 player.isDragging = true;
-                player.dragX = pos.x;
-                player.dragY = pos.y;
+                player.dragX = p.x; player.dragY = p.y;
             }
         }
-
-        function handleMove(e) {
+        function moveDrag(e) {
             if (!player.isDragging) return;
-            const pos = getCoords(e);
-            player.dragX = pos.x;
-            player.dragY = pos.y;
+            const p = getPos(e);
+            player.dragX = p.x; player.dragY = p.y;
         }
-
-        function handleEnd() {
+        function endDrag() {
             if (!player.isDragging) return;
-            const dx = player.x - player.dragX;
-            const dy = player.y - player.dragY;
-            const powerMult = parseFloat(config.power);
-            player.vx = dx * powerMult;
-            player.vy = dy * powerMult;
+            player.vx = (player.x - player.dragX) * config.power;
+            player.vy = (player.y - player.dragY) * config.power;
             player.isDragging = false;
         }
 
-        function startGame() {
-            score = 0; combo = 1; level = 1; enemiesKilled = 0;
-            scoreEl.textContent = '0';
-            comboEl.textContent = 'x1';
-            levelDisplay.textContent = '1';
-            enemies = []; particles = [];
-            player.vx = 0; player.vy = 0;
-            player.x = width / 2; player.y = height / 2;
-            gameActive = true;
-            startScreen.classList.add('hidden');
-            gameOverScreen.classList.add('hidden');
-        }
-
-        function endGame() {
-            gameActive = false;
-            finalScoreEl.textContent = score;
-            finalLevelEl.textContent = level;
-            gameOverScreen.classList.remove('hidden');
-        }
-
-        document.getElementById('settings-toggle').onclick = () => settingsPanel.classList.add('open');
-        document.getElementById('settings-close').onclick = () => settingsPanel.classList.remove('open');
-        document.getElementById('param-enemy-speed').oninput = (e) => config.enemySpeed = e.target.value;
-        document.getElementById('param-max-enemies').oninput = (e) => config.maxEnemies = e.target.value;
-        document.getElementById('param-power').oninput = (e) => config.power = e.target.value;
-        document.getElementById('param-friction').oninput = (e) => config.friction = e.target.value;
-
-        canvas.addEventListener('mousedown', handleStart);
-        window.addEventListener('mousemove', handleMove);
-        window.addEventListener('mouseup', handleEnd);
-        canvas.addEventListener('touchstart', handleStart);
-        window.addEventListener('touchmove', handleMove);
-        window.addEventListener('touchend', handleEnd);
+        window.addEventListener('mousedown', startDrag);
+        window.addEventListener('mousemove', moveDrag);
+        window.addEventListener('mouseup', endDrag);
+        window.addEventListener('touchstart', startDrag);
+        window.addEventListener('touchmove', moveDrag);
+        window.addEventListener('touchend', endDrag);
 
         document.getElementById('start-btn').onclick = startGame;
         document.getElementById('restart-btn').onclick = startGame;
+        document.getElementById('settings-toggle').onclick = () => document.getElementById('settings-panel').classList.toggle('open');
+        document.getElementById('settings-close').onclick = () => document.getElementById('settings-panel').classList.remove('open');
+        document.getElementById('param-speed').oninput = (e) => config.speed = parseFloat(e.target.value);
+        document.getElementById('param-power').oninput = (e) => config.power = parseFloat(e.target.value);
+        document.getElementById('param-friction').oninput = (e) => config.friction = parseFloat(e.target.value);
 
         loop();
     </script>
