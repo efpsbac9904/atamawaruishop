@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>My Local AI - SmolLM Ultra Fix</title>
+    <title>My Local AI - Universal Proxy Fix</title>
     <style>
         :root { --p: #007aff; --bg: #ffffff; --ai-bg: #f2f2f7; }
         * { box-sizing: border-box; }
@@ -26,7 +26,7 @@
 <div id="status">ステータス: 待機中</div>
 
 <div id="chat">
-    <div class="msg ai">SmolLM用の認証回避設定を追加したよ。これで「ロード」してみて！</div>
+    <div class="msg ai">ミラーサイト経由 ＋ リファラー隠蔽設定にしたよ。これで「200 OKなのにエラー」を突破しよう！</div>
 </div>
 
 <div class="input-area">
@@ -37,12 +37,12 @@
 <script type="module">
     import { pipeline, env } from 'https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.2';
     
-    // GitHub Pages 環境用の詳細設定
+    // 1. 環境設定の徹底固定
     env.allowLocalModels = false;
     env.useBrowserCache = true; 
 
-    // 通信先を明示的に固定
-    env.remoteHost = 'https://huggingface.co';
+    // ミラーサイトを使いつつ、パス解決を一番シンプルな形に
+    env.remoteHost = 'https://hf-mirror.com';
     env.remotePathTemplate = '{model}/resolve/{revision}/';
 
     const status = document.getElementById('status');
@@ -64,33 +64,34 @@
     btn.onclick = async () => {
         if (!generator) {
             btn.disabled = true;
-            status.innerText = "SmolLM 接続中...";
+            status.innerText = "接続プロキシ経由でロード中...";
             try {
-                // pipelineの引数で直接fetchオプションを渡して、認証ヘッダーを完全に除外する
+                // 2. fetch_options でリファラーを完全に消す (重要)
+                // これにより、Hugging Face/ミラー側が「どのサイトから来たか」でブロックするのを防ぐ
                 generator = await pipeline('text-generation', 'Xenova/SmolLM-135M-Instruct', {
-                    revision: 'main',
                     fetch_options: {
                         credentials: 'omit',
                         mode: 'cors',
-                        headers: {
-                            'Accept': '*/*'
-                        }
+                        referrerPolicy: "no-referrer", // 自分のドメイン情報を送らない
+                        cache: 'default'
                     },
                     progress_callback: (p) => {
                         if (p.status === 'progress') status.innerText = `DL: ${Math.round(p.progress)}%`;
-                        if (p.status === 'done') status.innerText = "モデルを展開中...";
+                        if (p.status === 'done') status.innerText = "準備OK！";
                     }
                 });
                 
-                status.innerText = "SmolLM 準備完了！";
+                status.innerText = "準備完了！";
                 btn.innerText = "送信";
                 btn.disabled = false;
                 input.disabled = false;
             } catch (e) {
-                console.error("Critical Load Error:", e);
+                console.error("Fetch Error:", e);
                 status.innerText = "エラー: " + e.message;
                 btn.disabled = false;
-                addChat("401エラーがしつこいね…。一度ブラウザの『設定』から『サイトデータ』を削除して試すか、別のブラウザで試してみて！", "ai");
+                
+                // 通信エラー時のアドバイス
+                addChat("またエラーだね…。ミラーサイト（hf-mirror.com）がCORSエラーを吐く場合、最後の手段としてモデルファイルを自分のサーバー（GitHub Pages）に直接アップロードして読み込む方法があるよ。それなら絶対に成功する！", "ai");
             }
         } else {
             const val = input.value.trim();
@@ -98,32 +99,23 @@
             input.value = "";
             addChat(val, 'user');
             
-            const aiMsg = addChat("考え中...", "ai");
+            const aiMsg = addChat("...", "ai");
             try {
                 const prompt = `<|im_start|>user\n${val}<|im_end|>\n<|im_start|>assistant\n`;
-                
                 const result = await generator(prompt, { 
-                    max_new_tokens: 150,
+                    max_new_tokens: 100,
                     temperature: 0.6,
                     do_sample: true,
-                    repetition_penalty: 1.2,
-                    stop: ['<|im_end|>', '<|endoftext|>']
+                    stop: ['<|im_end|>']
                 });
                 
                 let response = result[0].generated_text.split('<|im_start|>assistant\n')[1] || result[0].generated_text;
-                response = response.replace('<|im_end|>', '').trim();
-                
-                aiMsg.innerText = response;
+                aiMsg.innerText = response.replace('<|im_end|>', '').trim();
             } catch (e) {
-                aiMsg.innerText = "エラーが発生したよ。";
-                console.error(e);
+                aiMsg.innerText = "生成エラー。";
             }
         }
     };
-
-    input.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter' && !btn.disabled) btn.click();
-    });
 </script>
 
 </body>
