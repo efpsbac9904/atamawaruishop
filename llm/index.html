@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>My Local AI - GitHub Pages Fix</title>
+    <title>My Local AI - SmolLM Edition</title>
     <style>
         :root { --p: #007aff; --bg: #ffffff; --ai-bg: #f2f2f7; }
         * { box-sizing: border-box; }
@@ -26,7 +26,7 @@
 <div id="status">ステータス: 待機中</div>
 
 <div id="chat">
-    <div class="msg ai">GitHub Pagesのカスタムドメイン向けに調整したよ。GPT-2で通信が通るかまずチェックしよう！</div>
+    <div class="msg ai">ロード成功おめでとう！SmolLMモデルに切り替えたよ。もう一度「ロード」して、準備ができたら話しかけてみてね。</div>
 </div>
 
 <div class="input-area">
@@ -35,18 +35,15 @@
 </div>
 
 <script type="module">
-    // ライブラリの読み込み
     import { pipeline, env } from 'https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.2';
     
-    // 1. GitHub Pagesの環境に合わせた厳格な設定
+    // GitHub Pages / カスタムドメイン環境用の最適化設定
     env.allowLocalModels = false;
-    env.useBrowserCache = true; // GitHub Pagesは静的配信なのでキャッシュ利用を推奨
+    env.useBrowserCache = true; 
 
-    // 2. リクエストオプションの強制上書き
-    // カスタムドメインからのリファラーが原因で401/CORSが出るのを防ぐ
     env.remoteModelDefaultOptions = {
-        credentials: 'omit', // 認証Cookieを送らない
-        mode: 'cors',       // CORSモードを明示
+        credentials: 'omit',
+        mode: 'cors',
         headers: {
             'Accept': 'application/json, text/plain, */*'
         }
@@ -71,41 +68,61 @@
     btn.onclick = async () => {
         if (!generator) {
             btn.disabled = true;
-            status.innerText = "ロード開始...";
+            status.innerText = "SmolLM ロード中...";
             try {
-                // まずは最も軽量で通りやすいGPT-2でテスト
-                // これが成功すれば、ネットワーク経路の問題はクリア
-                generator = await pipeline('text-generation', 'Xenova/gpt2', {
+                // 本命の軽量・高性能モデル
+                generator = await pipeline('text-generation', 'Xenova/SmolLM-135M-Instruct', {
                     progress_callback: (p) => {
                         if (p.status === 'progress') status.innerText = `DL: ${Math.round(p.progress)}%`;
+                        if (p.status === 'done') status.innerText = "モデルを展開中...";
                     }
                 });
                 
-                status.innerText = "準備完了！";
+                status.innerText = "SmolLM 準備完了！";
                 btn.innerText = "送信";
                 btn.disabled = false;
                 input.disabled = false;
-                addChat("ロード成功！このドメインでも通信できることが確認できたよ。", "ai");
             } catch (e) {
-                console.error("GitHub Pages Error:", e);
+                console.error("Load Error:", e);
                 status.innerText = "エラー: " + e.message;
                 btn.disabled = false;
-                addChat("エラーだね。GitHub Pagesの『Enforce HTTPS』設定がオンになっているか、リポジトリの設定を確認してみて。", "ai");
+                addChat("モデルのロードでエラーが起きたみたい。リロードしてもう一度試してみて。", "ai");
             }
         } else {
             const val = input.value.trim();
             if (!val) return;
             input.value = "";
             addChat(val, 'user');
-            const aiMsg = addChat("...", "ai");
+            
+            const aiMsg = addChat("考え中...", "ai");
             try {
-                const result = await generator(val, { max_new_tokens: 30 });
-                aiMsg.innerText = result[0].generated_text.replace(val, "").trim();
+                // チャット形式のプロンプトを構成
+                const prompt = `<|im_start|>user\n${val}<|im_end|>\n<|im_start|>assistant\n`;
+                
+                const result = await generator(prompt, { 
+                    max_new_tokens: 150,
+                    temperature: 0.6,
+                    do_sample: true,
+                    repetition_penalty: 1.2,
+                    stop: ['<|im_end|>', '<|endoftext|>']
+                });
+                
+                // プロンプト部分を除去して回答だけを表示
+                let response = result[0].generated_text.split('<|im_start|>assistant\n')[1] || result[0].generated_text;
+                response = response.replace('<|im_end|>', '').trim();
+                
+                aiMsg.innerText = response;
             } catch (e) {
-                aiMsg.innerText = "エラー。";
+                aiMsg.innerText = "ごめん、生成中にエラーが起きちゃった。";
+                console.error(e);
             }
         }
     };
+
+    // エンターキーでも送信できるようにする
+    input.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter' && !btn.disabled) btn.click();
+    });
 </script>
 
 </body>
