@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Infinite Growth Rogue RPG - Offline Earnings</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #1a1a2e;
+            color: #e2e2e2;
+            user-select: none;
+            overflow: hidden;
+        }
+
+        .game-container {
+            max-width: 500px;
+            margin: 0 auto;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background-color: #16213e;
+            border-left: 2px solid #0f3460;
+            border-right: 2px solid #0f3460;
+        }
+
+        .shake {
+            animation: shake 0.2s cubic-bezier(.36,.07,.19,.97) both;
+        }
+
+        @keyframes shake {
+            10%, 90% { transform: translate3d(-1px, 0, 0); }
+            20%, 80% { transform: translate3d(2px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+            40%, 60% { transform: translate3d(4px, 0, 0); }
+        }
+
+        .floating-text {
+            position: absolute;
+            pointer-events: none;
+            animation: floatUp 0.8s ease-out forwards;
+            font-weight: bold;
+            z-index: 50;
+        }
+
+        @keyframes floatUp {
+            0% { transform: translateY(0); opacity: 1; }
+            100% { transform: translateY(-50px); opacity: 0; }
+        }
+
+        .progress-bar {
+            transition: width 0.1s ease;
+        }
+
+        .btn-interact:active {
+            transform: scale(0.95);
+        }
+
+        /* Modal styling for offline results */
+        #offline-modal {
+            background-color: rgba(0,0,0,0.9);
+            z-index: 100;
+        }
+    </style>
+</head>
+<body>
+
+<div class="game-container relative" id="app">
+    <!-- Header -->
+    <div class="p-4 bg-gray-900 border-b-2 border-indigo-500 flex justify-between items-center">
+        <div>
+            <div class="text-xs text-indigo-400 font-bold uppercase tracking-widest">Stage</div>
+            <div class="text-xl font-bold text-white" id="stage-count">1-1</div>
+        </div>
+        <div class="text-right">
+            <div class="text-xs text-yellow-400 font-bold uppercase tracking-widest">Gold</div>
+            <div class="text-xl font-bold text-yellow-200" id="gold-count">0</div>
+        </div>
+    </div>
+
+    <!-- Battle Area -->
+    <div class="flex-grow flex flex-col items-center justify-center relative bg-gradient-to-b from-gray-900 to-indigo-900 overflow-hidden" id="battle-area">
+        <div id="enemy-container" class="relative cursor-pointer flex flex-col items-center btn-interact">
+            <div id="enemy-name" class="mb-4 text-sm font-bold text-gray-300">Preparing...</div>
+            
+            <div id="enemy-visual" class="w-32 h-32 flex items-center justify-center mb-4">
+                <svg id="monster-svg" viewBox="0 0 100 100" class="w-full h-full">
+                    <path id="monster-path" d="M20,80 Q50,20 80,80 Z" fill="#4ade80" stroke="#fff" stroke-width="2"/>
+                    <circle cx="40" cy="55" r="3" fill="#000" />
+                    <circle cx="60" cy="55" r="3" fill="#000" />
+                </svg>
+            </div>
+
+            <div class="w-48 h-4 bg-gray-800 rounded-full border border-gray-600 overflow-hidden shadow-inner">
+                <div id="hp-bar" class="h-full bg-red-500 progress-bar" style="width: 100%"></div>
+            </div>
+            <div id="hp-text" class="text-[10px] mt-1 font-mono tracking-tighter">0 / 0</div>
+        </div>
+    </div>
+
+    <!-- Offline Earnings Modal -->
+    <div id="offline-modal" class="hidden absolute inset-0 flex items-center justify-center p-6">
+        <div class="bg-indigo-900 border-2 border-indigo-400 p-6 rounded-lg shadow-2xl w-full max-w-sm text-center">
+            <h2 class="text-xl font-bold text-yellow-400 mb-2">Welcome Back!</h2>
+            <p id="offline-time" class="text-xs text-indigo-200 mb-4">You were away for 0m 0s</p>
+            <div class="bg-indigo-800 p-4 rounded mb-4">
+                <div class="text-xs text-gray-300">Earnings</div>
+                <div id="offline-gold" class="text-2xl font-bold text-yellow-200">+0 GOLD</div>
+            </div>
+            <button onclick="closeOfflineModal()" class="w-full bg-indigo-500 hover:bg-indigo-400 py-2 rounded font-bold text-white transition-colors">Claim Rewards</button>
+        </div>
+    </div>
+
+    <!-- UI Tabs Area -->
+    <div class="bg-gray-800 p-4 border-t-2 border-indigo-500">
+        <div class="flex mb-4 gap-2">
+            <button onclick="switchTab('stats')" id="tab-stats" class="flex-1 py-1 text-xs bg-indigo-600 text-white rounded font-bold uppercase">Stats</button>
+            <button onclick="switchTab('shop')" id="tab-shop" class="flex-1 py-1 text-xs bg-gray-700 text-gray-300 rounded font-bold uppercase">Shop</button>
+            <button onclick="switchTab('skills')" id="tab-skills" class="flex-1 py-1 text-xs bg-gray-700 text-gray-300 rounded font-bold uppercase">Skills</button>
+            <button onclick="resetGame()" class="px-2 py-1 text-[8px] bg-red-900 text-red-200 rounded">RESET</button>
+        </div>
+
+        <div id="content-stats" class="space-y-3">
+            <div class="flex justify-between items-center text-sm">
+                <span>Atk: <span id="stat-atk" class="text-indigo-300">5</span></span>
+                <span class="text-xs text-gray-400">Lv <span id="val-atk-lv">1</span></span>
+                <button onclick="upgradeStat('atk')" id="btn-upgrade-atk" class="bg-yellow-600 hover:bg-yellow-500 px-3 py-1 rounded text-xs font-bold text-white">Upgrade (10G)</button>
+            </div>
+            <div class="flex justify-between items-center text-sm">
+                <span>Auto DPS: <span id="stat-dps" class="text-green-300">0</span></span>
+                <span class="text-xs text-gray-400">Lv <span id="val-dps-lv">0</span></span>
+                <button onclick="upgradeStat('dps')" id="btn-upgrade-dps" class="bg-yellow-600 hover:bg-yellow-500 px-3 py-1 rounded text-xs font-bold text-white">Upgrade (15G)</button>
+            </div>
+            <div class="flex justify-between items-center text-sm">
+                <span>Crit: <span id="stat-crit" class="text-red-300">5</span>%</span>
+                <span class="text-xs text-gray-400">Lv <span id="val-crit-lv">1</span></span>
+                <button onclick="upgradeStat('crit')" id="btn-upgrade-crit" class="bg-yellow-600 hover:bg-yellow-500 px-3 py-1 rounded text-xs font-bold text-white">Upgrade (50G)</button>
+            </div>
+        </div>
+
+        <div id="content-shop" class="hidden space-y-3">
+            <div class="flex justify-between items-center text-sm border-b border-gray-700 pb-2">
+                <div>
+                    <div class="font-bold">Greedy Sword</div>
+                    <div class="text-[10px] text-gray-400">Gold Earnings +10%</div>
+                </div>
+                <button onclick="buySpecial('gold_boost')" id="btn-special-gold" class="bg-indigo-600 px-3 py-1 rounded text-xs font-bold">Buy (500G)</button>
+            </div>
+        </div>
+
+        <div id="content-skills" class="hidden space-y-3">
+            <div class="flex gap-2">
+                <button id="skill-1" onclick="useSkill(1)" class="flex-1 bg-gray-900 border-2 border-gray-600 p-2 rounded relative opacity-50 cursor-not-allowed overflow-hidden">
+                    <div class="text-[10px] text-blue-400 font-bold">God Speed</div>
+                    <div class="text-[8px] text-gray-500">DPS x3 (10s)</div>
+                    <div id="cooldown-1" class="absolute inset-0 bg-black opacity-0 transition-all"></div>
+                </button>
+                <button id="skill-2" onclick="useSkill(2)" class="flex-1 bg-gray-900 border-2 border-gray-600 p-2 rounded relative opacity-50 cursor-not-allowed overflow-hidden">
+                    <div class="text-[10px] text-red-400 font-bold">Excalibur</div>
+                    <div class="text-[8px] text-gray-500">30% HP Damage</div>
+                    <div id="cooldown-2" class="absolute inset-0 bg-black opacity-0 transition-all"></div>
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="message-box" class="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/80 text-white text-[10px] px-4 py-2 rounded-full opacity-0 transition-opacity pointer-events-none z-50">
+        Saved!
+    </div>
+</div>
+
+<script>
+    // --- Constants ---
+    const SAVE_KEY = "infinite_rogue_rpg_save_v2";
+    const monsterData = [
+        { name: "Slime", color: "#4ade80", d: "M20,80 Q50,20 80,80 Z" },
+        { name: "Goblin", color: "#a3e635", d: "M30,80 L20,60 L50,30 L80,60 L70,80 Z" },
+        { name: "Skeleton", color: "#e2e8f0", d: "M30,80 Q30,40 50,40 Q70,40 70,80 M40,50 L40,60 M60,50 L60,60" },
+        { name: "Demon", color: "#f87171", d: "M20,80 L30,40 L50,10 L70,40 L80,80 L50,60 Z" },
+        { name: "Dragon", color: "#fb923c", d: "M10,80 Q50,0 90,80 L50,60 Z" }
+    ];
+
+    // --- State ---
+    let state = {
+        gold: 0,
+        stage: 1,
+        subStage: 1,
+        stats: {
+            atk: { lv: 1, val: 5, basePrice: 10 },
+            dps: { lv: 0, val: 0, basePrice: 15 },
+            crit: { lv: 1, val: 5, basePrice: 50 }
+        },
+        items: {
+            gold_boost: false
+        },
+        lastSaveTime: Date.now(),
+        enemy: { hp: 10, maxHp: 10 }
+    };
+
+    let runtime = {
+        multipliers: { gold: 1, atk: 1, dps: 1 },
+        skills: {
+            1: { unlocked: false, cooldown: 30000, lastUsed: 0, duration: 10000, reqStage: 5 },
+            2: { unlocked: false, cooldown: 45000, lastUsed: 0, reqStage: 10 }
+        }
+    };
+
+    const el = {
+        gold: document.getElementById('gold-count'),
+        stage: document.getElementById('stage-count'),
+        hpBar: document.getElementById('hp-bar'),
+        hpText: document.getElementById('hp-text'),
+        enemyName: document.getElementById('enemy-name'),
+        enemyContainer: document.getElementById('enemy-container'),
+        monsterPath: document.getElementById('monster-path'),
+        msg: document.getElementById('message-box'),
+        offlineModal: document.getElementById('offline-modal')
+    };
+
+    // --- System Functions ---
+
+    function saveGame() {
+        state.lastSaveTime = Date.now();
+        localStorage.setItem(SAVE_KEY, JSON.stringify(state));
+    }
+
+    function loadGame() {
+        const saved = localStorage.getItem(SAVE_KEY);
+        if (saved) {
+            const parsed = JSON.parse(saved);
+            state = { ...state, ...parsed };
+            // Apply shop item effects
+            if (state.items.gold_boost) {
+                runtime.multipliers.gold = 1.1;
+                const btn = document.getElementById('btn-special-gold');
+                btn.innerText = "Bought";
+                btn.disabled = true;
+                btn.classList.add('bg-gray-500');
+            }
+            
+            // Calculate Offline Earnings
+            calculateOfflineEarnings();
+        }
+    }
+
+    function calculateOfflineEarnings() {
+        const now = Date.now();
+        const diffInSeconds = Math.floor((now - state.lastSaveTime) / 1000);
+        
+        // Only trigger if away for more than 1 minute and have DPS
+        if (diffInSeconds > 60 && state.stats.dps.val > 0) {
+            const dps = state.stats.dps.val * runtime.multipliers.dps;
+            const totalDamage = dps * diffInSeconds;
+            
+            // Simplified logic for how many mobs killed offline
+            // Using current enemy HP as average
+            const avgHp = state.enemy.maxHp || (10 * Math.pow(1.3, state.stage - 1));
+            const kills = Math.floor(totalDamage / avgHp);
+            
+            if (kills > 0) {
+                const rewardPerKill = Math.floor(state.stage * 5 * (1 + state.subStage * 0.2) * runtime.multipliers.gold);
+                const totalGold = kills * rewardPerKill;
+                
+                state.gold += totalGold;
+                
+                // Show Modal
+                document.getElementById('offline-time').innerText = `You were away for ${Math.floor(diffInSeconds/60)}m ${diffInSeconds%60}s`;
+                document.getElementById('offline-gold').innerText = `+${totalGold.toLocaleString()} GOLD`;
+                el.offlineModal.classList.remove('hidden');
+            }
+        }
+    }
+
+    function closeOfflineModal() {
+        el.offlineModal.classList.add('hidden');
+        updateUI();
+    }
+
+    function resetGame() {
+        if (confirm("Reset all progress and start over?")) {
+            localStorage.removeItem(SAVE_KEY);
+            location.reload();
+        }
+    }
+
+    function init() {
+        loadGame();
+        spawnEnemy();
+        updateUI();
+        
+        // Auto DPS Loop (10 ticks per second)
+        setInterval(() => {
+            if (state.stats.dps.val > 0) {
+                applyDamage(state.stats.dps.val * runtime.multipliers.dps / 10, false);
+            }
+            checkSkillUnlocks();
+        }, 100);
+
+        // Auto Save Loop (Every 5 seconds)
+        setInterval(saveGame, 5000);
+
+        el.enemyContainer.addEventListener('click', (e) => {
+            let dmg = state.stats.atk.val * runtime.multipliers.atk;
+            let isCrit = false;
+            if (Math.random() * 100 < state.stats.crit.val) {
+                dmg *= 2;
+                isCrit = true;
+            }
+            applyDamage(dmg, true, e.clientX, e.clientY);
+        });
+    }
+
+    // --- Battle Logic ---
+
+    function applyDamage(amount, fromClick, x, y) {
+        state.enemy.hp -= amount;
+        
+        if (fromClick) {
+            showDamageText(amount, x, y, false);
+            el.enemyContainer.classList.add('shake');
+            setTimeout(() => el.enemyContainer.classList.remove('shake'), 100);
+        }
+
+        if (state.enemy.hp <= 0) {
+            killEnemy();
+        }
+        updateHPBar();
+    }
+
+    function killEnemy() {
+        const reward = Math.floor(state.stage * 5 * (1 + state.subStage * 0.2) * runtime.multipliers.gold);
+        state.gold += reward;
+
+        state.subStage++;
+        if (state.subStage > 10) {
+            state.subStage = 1;
+            state.stage++;
+            saveGame();
+            showMessage(`STAGE ${state.stage} REACHED! AUTO-SAVED`);
+        }
+
+        spawnEnemy();
+        updateUI();
+    }
+
+    function spawnEnemy() {
+        const difficulty = Math.pow(1.3, state.stage - 1) * (1 + state.subStage * 0.1);
+        state.enemy.maxHp = Math.floor(10 * difficulty);
+        state.enemy.hp = state.enemy.maxHp;
+        
+        const m = monsterData[Math.floor(Math.random() * monsterData.length)];
+        el.enemyName.innerText = `${m.name} (Lv.${state.stage})`;
+        el.monsterPath.setAttribute('d', m.d);
+        el.monsterPath.setAttribute('fill', m.color);
+        updateHPBar();
+    }
+
+    function updateHPBar() {
+        const percent = Math.max(0, (state.enemy.hp / state.enemy.maxHp) * 100);
+        el.hpBar.style.width = `${percent}%`;
+        el.hpText.innerText = `${Math.ceil(state.enemy.hp)} / ${state.enemy.maxHp}`;
+    }
+
+    // --- UI/Stats ---
+
+    function upgradeStat(id) {
+        const s = state.stats[id];
+        const cost = Math.floor(s.basePrice * Math.pow(1.5, s.lv));
+        
+        if (state.gold >= cost) {
+            state.gold -= cost;
+            s.lv++;
+            if (id === 'atk') s.val += 2;
+            if (id === 'dps') s.val += 1;
+            if (id === 'crit') s.val += 0.5;
+            updateUI();
+            saveGame();
+        } else {
+            showMessage("Need more Gold!");
+        }
+    }
+
+    function buySpecial(type) {
+        if (type === 'gold_boost' && state.gold >= 500 && !state.items.gold_boost) {
+            state.gold -= 500;
+            state.items.gold_boost = true;
+            runtime.multipliers.gold = 1.1;
+            const btn = document.getElementById('btn-special-gold');
+            btn.innerText = "Bought";
+            btn.disabled = true;
+            btn.classList.add('bg-gray-500');
+            updateUI();
+            saveGame();
+            showMessage("Greed increased!");
+        }
+    }
+
+    function updateUI() {
+        el.gold.innerText = state.gold.toLocaleString();
+        el.stage.innerText = `${state.stage}-${state.subStage}`;
+        
+        document.getElementById('stat-atk').innerText = (state.stats.atk.val).toFixed(1);
+        document.getElementById('stat-dps').innerText = (state.stats.dps.val * runtime.multipliers.dps).toFixed(1);
+        document.getElementById('stat-crit').innerText = state.stats.crit.val.toFixed(1);
+        
+        document.getElementById('val-atk-lv').innerText = state.stats.atk.lv;
+        document.getElementById('val-dps-lv').innerText = state.stats.dps.lv;
+        document.getElementById('val-crit-lv').innerText = state.stats.crit.lv;
+
+        ['atk', 'dps', 'crit'].forEach(id => {
+            const s = state.stats[id];
+            const cost = Math.floor(s.basePrice * Math.pow(1.5, s.lv));
+            document.getElementById(`btn-upgrade-${id}`).innerText = `Upgrade (${cost}G)`;
+        });
+    }
+
+    function switchTab(tab) {
+        ['stats', 'shop', 'skills'].forEach(t => {
+            document.getElementById(`content-${t}`).classList.add('hidden');
+            document.getElementById(`tab-${t}`).classList.replace('bg-indigo-600', 'bg-gray-700');
+            document.getElementById(`tab-${t}`).classList.replace('text-white', 'text-gray-300');
+        });
+        document.getElementById(`content-${tab}`).classList.remove('hidden');
+        document.getElementById(`tab-${tab}`).classList.replace('bg-gray-700', 'bg-indigo-600');
+        document.getElementById(`tab-${tab}`).classList.replace('text-gray-300', 'text-white');
+    }
+
+    function showDamageText(dmg, x, y, isCrit) {
+        const text = document.createElement('div');
+        text.className = 'floating-text ' + (isCrit ? 'text-red-500 text-xl' : 'text-white text-sm');
+        text.innerText = Math.floor(dmg);
+        text.style.left = `${x}px`;
+        text.style.top = `${y}px`;
+        document.body.appendChild(text);
+        setTimeout(() => text.remove(), 800);
+    }
+
+    function showMessage(msg) {
+        el.msg.innerText = msg;
+        el.msg.style.opacity = "1";
+        setTimeout(() => el.msg.style.opacity = "0", 1500);
+    }
+
+    // --- Skills ---
+
+    function checkSkillUnlocks() {
+        for (let id in runtime.skills) {
+            const sk = runtime.skills[id];
+            const btn = document.getElementById(`skill-${id}`);
+            if (!sk.unlocked && state.stage >= sk.reqStage) {
+                sk.unlocked = true;
+                btn.classList.remove('opacity-50', 'cursor-not-allowed');
+            }
+        }
+    }
+
+    function useSkill(id) {
+        const sk = runtime.skills[id];
+        const now = Date.now();
+        if (!sk.unlocked || now - sk.lastUsed < sk.cooldown) return;
+
+        sk.lastUsed = now;
+        const overlay = document.getElementById(`cooldown-${id}`);
+        overlay.style.opacity = "0.7";
+
+        let start = null;
+        function animate(timestamp) {
+            if (!start) start = timestamp;
+            let prog = timestamp - start;
+            overlay.style.height = `${(1 - prog / sk.cooldown) * 100}%`;
+            if (prog < sk.cooldown) requestAnimationFrame(animate);
+            else { overlay.style.height = "0"; overlay.style.opacity = "0"; }
+        }
+        requestAnimationFrame(animate);
+
+        if (id === 1) {
+            runtime.multipliers.dps = 3;
+            showMessage("GOD SPEED! DPS x3");
+            setTimeout(() => { runtime.multipliers.dps = 1; updateUI(); }, sk.duration);
+        } else if (id === 2) {
+            applyDamage(state.enemy.maxHp * 0.3, true, window.innerWidth/2, window.innerHeight/3);
+            showMessage("EXCALIBUR!");
+        }
+        updateUI();
+    }
+
+    window.onload = init;
+</script>
+
+</body>
+</html>
+
