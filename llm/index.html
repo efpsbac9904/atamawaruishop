@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>My Local AI - Final Debug</title>
+    <title>My Local AI - GitHub Pages Fix</title>
     <style>
         :root { --p: #007aff; --bg: #ffffff; --ai-bg: #f2f2f7; }
         * { box-sizing: border-box; }
@@ -26,7 +26,7 @@
 <div id="status">ステータス: 待機中</div>
 
 <div id="chat">
-    <div class="msg ai">内部キャッシュを無視して、直接リクエストを投げる設定に変えたよ。これでどうかな？</div>
+    <div class="msg ai">GitHub Pagesのカスタムドメイン向けに調整したよ。GPT-2で通信が通るかまずチェックしよう！</div>
 </div>
 
 <div class="input-area">
@@ -35,16 +35,22 @@
 </div>
 
 <script type="module">
+    // ライブラリの読み込み
     import { pipeline, env } from 'https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.2';
     
-    // 1. 環境設定：キャッシュを一時的に無効化してテスト
+    // 1. GitHub Pagesの環境に合わせた厳格な設定
     env.allowLocalModels = false;
-    env.useBrowserCache = false; // IndexedDBへの保存を一旦止めてみる
-    env.useCustomCache = false;
+    env.useBrowserCache = true; // GitHub Pagesは静的配信なのでキャッシュ利用を推奨
 
-    // 2. 接続先とパスの固定
-    env.remoteHost = 'https://huggingface.co';
-    env.remotePathTemplate = '{model}/resolve/{revision}/';
+    // 2. リクエストオプションの強制上書き
+    // カスタムドメインからのリファラーが原因で401/CORSが出るのを防ぐ
+    env.remoteModelDefaultOptions = {
+        credentials: 'omit', // 認証Cookieを送らない
+        mode: 'cors',       // CORSモードを明示
+        headers: {
+            'Accept': 'application/json, text/plain, */*'
+        }
+    };
 
     const status = document.getElementById('status');
     const chat = document.getElementById('chat');
@@ -65,16 +71,11 @@
     btn.onclick = async () => {
         if (!generator) {
             btn.disabled = true;
-            status.innerText = "強制リロード中...";
+            status.innerText = "ロード開始...";
             try {
-                // 3. pipeline実行時に直接 fetch オプションを上書き
-                // credentialsを明示的に指定し、キャッシュをバイパス
-                generator = await pipeline('text-generation', 'Xenova/SmolLM-135M-Instruct', {
-                    fetch_options: {
-                        credentials: 'omit',
-                        cache: 'no-store', // ブラウザのHTTPキャッシュも無視
-                        mode: 'cors'
-                    },
+                // まずは最も軽量で通りやすいGPT-2でテスト
+                // これが成功すれば、ネットワーク経路の問題はクリア
+                generator = await pipeline('text-generation', 'Xenova/gpt2', {
                     progress_callback: (p) => {
                         if (p.status === 'progress') status.innerText = `DL: ${Math.round(p.progress)}%`;
                     }
@@ -84,32 +85,24 @@
                 btn.innerText = "送信";
                 btn.disabled = false;
                 input.disabled = false;
+                addChat("ロード成功！このドメインでも通信できることが確認できたよ。", "ai");
             } catch (e) {
-                console.error("DEBUG INFO:", e);
+                console.error("GitHub Pages Error:", e);
                 status.innerText = "エラー: " + e.message;
                 btn.disabled = false;
-                
-                if (e.message.includes('Unauthorized') || e.message.includes('fetch')) {
-                    addChat("まだダメだね。Hugging Faceのサーバーが特定のドメインからのリクエストを厳しく制限している可能性があるよ。", "ai");
-                }
+                addChat("エラーだね。GitHub Pagesの『Enforce HTTPS』設定がオンになっているか、リポジトリの設定を確認してみて。", "ai");
             }
         } else {
             const val = input.value.trim();
             if (!val) return;
             input.value = "";
             addChat(val, 'user');
-            
             const aiMsg = addChat("...", "ai");
             try {
-                const result = await generator(val, { 
-                    max_new_tokens: 100,
-                    temperature: 0.7,
-                    do_sample: true 
-                });
-                const response = result[0].generated_text.replace(val, "").trim();
-                aiMsg.innerText = response || "回答が空でした。";
+                const result = await generator(val, { max_new_tokens: 30 });
+                aiMsg.innerText = result[0].generated_text.replace(val, "").trim();
             } catch (e) {
-                aiMsg.innerText = "生成エラー。";
+                aiMsg.innerText = "エラー。";
             }
         }
     };
