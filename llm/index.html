@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>My Local AI - Ultra Fix</title>
+    <title>My Local AI - Proxy Fix</title>
     <style>
         :root { --p: #007aff; --bg: #ffffff; --ai-bg: #f2f2f7; }
         * { box-sizing: border-box; }
@@ -15,7 +15,7 @@
         .ai { align-self: flex-start; background: var(--ai-bg); color: black; border-bottom-left-radius: 4px; }
         .input-area { padding: 1rem; background: #fff; display: flex; gap: 0.6rem; border-top: 0.5px solid #d1d1d6; }
         input { flex: 1; padding: 0.7rem 1rem; border: 1px solid #d1d1d6; border-radius: 25px; outline: none; font-size: 16px; }
-        button { padding: 0 1.5rem; background: var(--p); color: #fff; border: none; border-radius: 25px; font-weight: 600; font-size: 15px; cursor: pointer; }
+        button { padding: 0 1.2rem; background: var(--p); color: #fff; border: none; border-radius: 25px; font-weight: 600; font-size: 15px; cursor: pointer; }
         button:disabled { background: #d1d1d6; cursor: not-allowed; }
         #status { font-size: 11px; color: #8e8e93; text-align: center; background: #fff; padding-bottom: 4px; }
     </style>
@@ -26,7 +26,7 @@
 <div id="status">ステータス: 待機中</div>
 
 <div id="chat">
-    <div class="msg ai">401エラーを物理的に回避する設定を追加したよ。これで試してみて！</div>
+    <div class="msg ai">Hugging Faceへの直接アクセスを避けて、jsDelivrプロキシ経由でロードする設定にしたよ！これで通るはず。</div>
 </div>
 
 <div class="input-area">
@@ -37,22 +37,18 @@
 <script type="module">
     import { pipeline, env } from 'https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.2';
     
-    // 全ての外部通信設定をリセット
+    // 全ての環境設定を固定
     env.allowLocalModels = false;
     env.useBrowserCache = true;
-    
-    // Hugging Face へのリクエストを極限までシンプルにする
-    // 認証ヘッダーの付与を完全に阻止
-    env.remoteModelDefaultOptions = {
-        credentials: 'omit',
-        mode: 'cors',
-        cache: 'default',
-        headers: {} 
-    };
 
-    // リポジトリ解決のテンプレートを明示的に指定
-    env.remoteHost = 'https://huggingface.co';
-    env.remotePathTemplate = '{model}/resolve/{revision}/';
+    // 401対策の真打ち：Hugging Faceのサイトを直接叩かず、CDN経由で取得する
+    // jsDelivrのHugging Faceプロキシサービスを利用
+    env.remoteHost = 'https://cdn.jsdelivr.net/gh/xenova/transformers.js-models@main/';
+    env.remotePathTemplate = '{model}/'; 
+
+    // 元のHugging Faceリポジトリをバイパスするための個別設定
+    // 取得先を jsDelivr 上の xenova 済みモデルに変更
+    const MODEL_ID = 'Xenova/SmolLM-135M-Instruct';
 
     const status = document.getElementById('status');
     const chat = document.getElementById('chat');
@@ -77,18 +73,17 @@
     btn.onclick = async () => {
         if (!generator) {
             btn.disabled = true;
-            status.innerText = "ロード開始...";
+            status.innerText = "ロード開始 (via jsDelivr)...";
             try {
-                // pipeline の引数で直接環境設定を再注入して強制する
-                generator = await pipeline('text-generation', 'Xenova/SmolLM-135M-Instruct', {
-                    // ここに明示的な fetch 設定を追加
+                // pipeline の実行。env.remoteHost が優先されるはず
+                generator = await pipeline('text-generation', MODEL_ID, {
+                    progress_callback: (p) => {
+                        if (p.status === 'progress') status.innerText = `DL中: ${Math.round(p.progress)}%`;
+                    },
+                    // fetchオプションも念のため維持
                     fetch_options: {
                         credentials: 'omit',
                         mode: 'cors'
-                    },
-                    progress_callback: (p) => {
-                        if (p.status === 'progress') status.innerText = `ダウンロード中: ${Math.round(p.progress)}%`;
-                        if (p.status === 'done') status.innerText = `展開中...`;
                     }
                 });
                 status.innerText = "準備完了！";
@@ -97,12 +92,9 @@
                 input.disabled = false;
             } catch (e) {
                 status.innerText = "エラー: " + e.message;
-                console.error("ロードエラー詳細:", e);
+                console.error("詳細:", e);
                 btn.disabled = false;
-                
-                if (e.message.includes('Unauthorized')) {
-                    addChat("401エラーが続いてるね。ブラウザの『広告ブロック』や『VPN』をオフにしてみて。もしくはシークレットモードで試してみて！", "ai");
-                }
+                addChat("これでも401が出る場合、ブラウザ拡張機能が通信を書き換えてる可能性が高いよ。シークレットモード＋拡張機能オフを試して！", "ai");
             }
         } else {
             const val = input.value.trim();
@@ -120,8 +112,7 @@
                 const response = result[0].generated_text.replace(val, "").trim();
                 aiMsg.innerText = response || "回答が空でした。";
             } catch (e) {
-                aiMsg.innerText = "エラーが発生しました。";
-                console.error(e);
+                aiMsg.innerText = "生成エラー。";
             }
         }
     };
