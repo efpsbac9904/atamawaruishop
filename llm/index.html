@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>My Local AI - CORS Bypass</title>
+    <title>My Local AI - Final Debug</title>
     <style>
         :root { --p: #007aff; --bg: #ffffff; --ai-bg: #f2f2f7; }
         * { box-sizing: border-box; }
@@ -26,7 +26,7 @@
 <div id="status">ステータス: 待機中</div>
 
 <div id="chat">
-    <div class="msg ai">CORSエラー対策版だよ。今度こそ通るはず！</div>
+    <div class="msg ai">内部キャッシュを無視して、直接リクエストを投げる設定に変えたよ。これでどうかな？</div>
 </div>
 
 <div class="input-area">
@@ -37,21 +37,14 @@
 <script type="module">
     import { pipeline, env } from 'https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.2';
     
-    // 1. 環境設定の徹底リセット
+    // 1. 環境設定：キャッシュを一時的に無効化してテスト
     env.allowLocalModels = false;
-    env.useBrowserCache = true;
+    env.useBrowserCache = false; // IndexedDBへの保存を一旦止めてみる
+    env.useCustomCache = false;
 
-    // 2. CORSプロキシのような挙動を避けるため、一旦標準のHFに戻しつつ
-    // リクエストを「極限までプレーン」にする設定
+    // 2. 接続先とパスの固定
     env.remoteHost = 'https://huggingface.co';
     env.remotePathTemplate = '{model}/resolve/{revision}/';
-    
-    // transformers.js内部のリクエストオプションを上書き
-    env.remoteModelDefaultOptions = {
-        credentials: 'omit',
-        mode: 'cors',
-        headers: {} // 余計なヘッダーを一切送らない
-    };
 
     const status = document.getElementById('status');
     const chat = document.getElementById('chat');
@@ -59,10 +52,6 @@
     const btn = document.getElementById('action-btn');
 
     let generator = null;
-
-    if ('serviceWorker' in navigator && window.location.protocol.startsWith('http')) {
-        navigator.serviceWorker.register('./sw.js').catch(() => {});
-    }
 
     function addChat(text, role) {
         const d = document.createElement('div');
@@ -76,10 +65,16 @@
     btn.onclick = async () => {
         if (!generator) {
             btn.disabled = true;
-            status.innerText = "ロード開始...";
+            status.innerText = "強制リロード中...";
             try {
-                // pipeline実行時に、直接 fetch オプションを叩き込む
+                // 3. pipeline実行時に直接 fetch オプションを上書き
+                // credentialsを明示的に指定し、キャッシュをバイパス
                 generator = await pipeline('text-generation', 'Xenova/SmolLM-135M-Instruct', {
+                    fetch_options: {
+                        credentials: 'omit',
+                        cache: 'no-store', // ブラウザのHTTPキャッシュも無視
+                        mode: 'cors'
+                    },
                     progress_callback: (p) => {
                         if (p.status === 'progress') status.innerText = `DL: ${Math.round(p.progress)}%`;
                     }
@@ -90,12 +85,13 @@
                 btn.disabled = false;
                 input.disabled = false;
             } catch (e) {
-                console.error("Error Details:", e);
-                // fetch失敗時はネットワークを疑う
+                console.error("DEBUG INFO:", e);
                 status.innerText = "エラー: " + e.message;
                 btn.disabled = false;
                 
-                addChat("ネットワーク制限があるかも。もし可能なら、スマホのデザリングとか別の回線で一度だけ試してみて！", "ai");
+                if (e.message.includes('Unauthorized') || e.message.includes('fetch')) {
+                    addChat("まだダメだね。Hugging Faceのサーバーが特定のドメインからのリクエストを厳しく制限している可能性があるよ。", "ai");
+                }
             }
         } else {
             const val = input.value.trim();
@@ -113,7 +109,7 @@
                 const response = result[0].generated_text.replace(val, "").trim();
                 aiMsg.innerText = response || "回答が空でした。";
             } catch (e) {
-                aiMsg.innerText = "エラーが発生しました。";
+                aiMsg.innerText = "生成エラー。";
             }
         }
     };
