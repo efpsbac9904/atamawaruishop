@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>My Local AI - SmolLM Edition</title>
+    <title>My Local AI - SmolLM Ultra Fix</title>
     <style>
         :root { --p: #007aff; --bg: #ffffff; --ai-bg: #f2f2f7; }
         * { box-sizing: border-box; }
@@ -26,7 +26,7 @@
 <div id="status">ステータス: 待機中</div>
 
 <div id="chat">
-    <div class="msg ai">ロード成功おめでとう！SmolLMモデルに切り替えたよ。もう一度「ロード」して、準備ができたら話しかけてみてね。</div>
+    <div class="msg ai">SmolLM用の認証回避設定を追加したよ。これで「ロード」してみて！</div>
 </div>
 
 <div class="input-area">
@@ -37,17 +37,13 @@
 <script type="module">
     import { pipeline, env } from 'https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.2';
     
-    // GitHub Pages / カスタムドメイン環境用の最適化設定
+    // GitHub Pages 環境用の詳細設定
     env.allowLocalModels = false;
     env.useBrowserCache = true; 
 
-    env.remoteModelDefaultOptions = {
-        credentials: 'omit',
-        mode: 'cors',
-        headers: {
-            'Accept': 'application/json, text/plain, */*'
-        }
-    };
+    // 通信先を明示的に固定
+    env.remoteHost = 'https://huggingface.co';
+    env.remotePathTemplate = '{model}/resolve/{revision}/';
 
     const status = document.getElementById('status');
     const chat = document.getElementById('chat');
@@ -68,10 +64,18 @@
     btn.onclick = async () => {
         if (!generator) {
             btn.disabled = true;
-            status.innerText = "SmolLM ロード中...";
+            status.innerText = "SmolLM 接続中...";
             try {
-                // 本命の軽量・高性能モデル
+                // pipelineの引数で直接fetchオプションを渡して、認証ヘッダーを完全に除外する
                 generator = await pipeline('text-generation', 'Xenova/SmolLM-135M-Instruct', {
+                    revision: 'main',
+                    fetch_options: {
+                        credentials: 'omit',
+                        mode: 'cors',
+                        headers: {
+                            'Accept': '*/*'
+                        }
+                    },
                     progress_callback: (p) => {
                         if (p.status === 'progress') status.innerText = `DL: ${Math.round(p.progress)}%`;
                         if (p.status === 'done') status.innerText = "モデルを展開中...";
@@ -83,10 +87,10 @@
                 btn.disabled = false;
                 input.disabled = false;
             } catch (e) {
-                console.error("Load Error:", e);
+                console.error("Critical Load Error:", e);
                 status.innerText = "エラー: " + e.message;
                 btn.disabled = false;
-                addChat("モデルのロードでエラーが起きたみたい。リロードしてもう一度試してみて。", "ai");
+                addChat("401エラーがしつこいね…。一度ブラウザの『設定』から『サイトデータ』を削除して試すか、別のブラウザで試してみて！", "ai");
             }
         } else {
             const val = input.value.trim();
@@ -96,7 +100,6 @@
             
             const aiMsg = addChat("考え中...", "ai");
             try {
-                // チャット形式のプロンプトを構成
                 const prompt = `<|im_start|>user\n${val}<|im_end|>\n<|im_start|>assistant\n`;
                 
                 const result = await generator(prompt, { 
@@ -107,19 +110,17 @@
                     stop: ['<|im_end|>', '<|endoftext|>']
                 });
                 
-                // プロンプト部分を除去して回答だけを表示
                 let response = result[0].generated_text.split('<|im_start|>assistant\n')[1] || result[0].generated_text;
                 response = response.replace('<|im_end|>', '').trim();
                 
                 aiMsg.innerText = response;
             } catch (e) {
-                aiMsg.innerText = "ごめん、生成中にエラーが起きちゃった。";
+                aiMsg.innerText = "エラーが発生したよ。";
                 console.error(e);
             }
         }
     };
 
-    // エンターキーでも送信できるようにする
     input.addEventListener('keypress', (e) => {
         if (e.key === 'Enter' && !btn.disabled) btn.click();
     });
