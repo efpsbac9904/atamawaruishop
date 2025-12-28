@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>My Local AI - Final Fix</title>
+    <title>My Local AI - Universal Fix</title>
     <style>
         :root { --p: #007aff; --bg: #ffffff; --ai-bg: #f2f2f7; }
         * { box-sizing: border-box; }
@@ -26,7 +26,7 @@
 <div id="status">ステータス: 待機中</div>
 
 <div id="chat">
-    <div class="msg ai">401も404も出さないように、接続設定を極限までシンプルにしたよ。これで試して！</div>
+    <div class="msg ai">接続先をミラーサーバーに切り替えたよ！これで「401 Unauthorized」を回避できるはず。試してみて！</div>
 </div>
 
 <div class="input-area">
@@ -35,14 +35,25 @@
 </div>
 
 <script type="module">
+    // 1. ライブラリを読み込む前に fetch を上書き (最優先)
+    const originalFetch = window.fetch;
+    window.fetch = function(...args) {
+        if (typeof args[0] === 'string' && args[0].includes('huggingface.co')) {
+            const options = args[1] || {};
+            options.credentials = 'omit';
+            options.mode = 'cors';
+            args[1] = options;
+        }
+        return originalFetch.apply(this, args);
+    };
+
     import { pipeline, env } from 'https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.2';
     
-    // 1. 基本設定をクリア
+    // 2. 環境設定：Hugging Face公式のミラーエンドポイントを使用する
+    // これにより、通常の huggingface.co で発生する認証トラブルを回避する
     env.allowLocalModels = false;
     env.useBrowserCache = true;
-
-    // 2. 接続先をHugging Faceの標準に戻すが、パス解決を最も標準的な形に強制
-    env.remoteHost = 'https://huggingface.co';
+    env.remoteHost = 'https://hf-mirror.com'; // ミラーサイトを指定
     env.remotePathTemplate = '{model}/resolve/{revision}/';
 
     const status = document.getElementById('status');
@@ -70,8 +81,7 @@
             btn.disabled = true;
             status.innerText = "ロード開始...";
             try {
-                // 3. pipeline作成時に、fetchの挙動を直接書き換える
-                // credentials: 'omit' を「確実に」実行するために引数を調整
+                // pipelineの実行
                 generator = await pipeline('text-generation', 'Xenova/SmolLM-135M-Instruct', {
                     progress_callback: (p) => {
                         if (p.status === 'progress') status.innerText = `DL中: ${Math.round(p.progress)}%`;
@@ -87,9 +97,8 @@
                 status.innerText = "エラー: " + e.message;
                 btn.disabled = false;
                 
-                // 401がしつこい場合の最終手段をチャットで提示
                 if (e.message.includes('Unauthorized')) {
-                    addChat("どうしても拒否されちゃうね… ブラウザの設定で『サードパーティCookieのブロック』をオフにするか、別のブラウザ（Edgeとか）で一度試してみて！", "ai");
+                    addChat("まだ拒否されちゃうか… ブラウザの拡張機能（広告ブロック等）を全てオフにするか、EdgeやスマホのSafariなど別の環境で試してみて！", "ai");
                 }
             }
         } else {
@@ -108,22 +117,9 @@
                 const response = result[0].generated_text.replace(val, "").trim();
                 aiMsg.innerText = response || "回答が空でした。";
             } catch (e) {
-                aiMsg.innerText = "生成エラー。";
+                aiMsg.innerText = "生成エラー。リロードしてね。";
             }
         }
-    };
-
-    // 4. 【重要】グローバルのfetchをハックして、Hugging Faceへのリクエストから認証情報を強制削除
-    const originalFetch = window.fetch;
-    window.fetch = function() {
-        if (arguments[0] && typeof arguments[0] === 'string' && arguments[0].includes('huggingface.co')) {
-            if (arguments[1]) {
-                arguments[1].credentials = 'omit';
-            } else {
-                arguments[1] = { credentials: 'omit' };
-            }
-        }
-        return originalFetch.apply(this, arguments);
     };
 </script>
 
