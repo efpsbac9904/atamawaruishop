@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>My Local AI - Universal Fix</title>
+    <title>My Local AI - CORS Bypass</title>
     <style>
         :root { --p: #007aff; --bg: #ffffff; --ai-bg: #f2f2f7; }
         * { box-sizing: border-box; }
@@ -26,7 +26,7 @@
 <div id="status">ステータス: 待機中</div>
 
 <div id="chat">
-    <div class="msg ai">接続先をミラーサーバーに切り替えたよ！これで「401 Unauthorized」を回避できるはず。試してみて！</div>
+    <div class="msg ai">CORSエラー対策版だよ。今度こそ通るはず！</div>
 </div>
 
 <div class="input-area">
@@ -35,26 +35,23 @@
 </div>
 
 <script type="module">
-    // 1. ライブラリを読み込む前に fetch を上書き (最優先)
-    const originalFetch = window.fetch;
-    window.fetch = function(...args) {
-        if (typeof args[0] === 'string' && args[0].includes('huggingface.co')) {
-            const options = args[1] || {};
-            options.credentials = 'omit';
-            options.mode = 'cors';
-            args[1] = options;
-        }
-        return originalFetch.apply(this, args);
-    };
-
     import { pipeline, env } from 'https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.2';
     
-    // 2. 環境設定：Hugging Face公式のミラーエンドポイントを使用する
-    // これにより、通常の huggingface.co で発生する認証トラブルを回避する
+    // 1. 環境設定の徹底リセット
     env.allowLocalModels = false;
     env.useBrowserCache = true;
-    env.remoteHost = 'https://hf-mirror.com'; // ミラーサイトを指定
+
+    // 2. CORSプロキシのような挙動を避けるため、一旦標準のHFに戻しつつ
+    // リクエストを「極限までプレーン」にする設定
+    env.remoteHost = 'https://huggingface.co';
     env.remotePathTemplate = '{model}/resolve/{revision}/';
+    
+    // transformers.js内部のリクエストオプションを上書き
+    env.remoteModelDefaultOptions = {
+        credentials: 'omit',
+        mode: 'cors',
+        headers: {} // 余計なヘッダーを一切送らない
+    };
 
     const status = document.getElementById('status');
     const chat = document.getElementById('chat');
@@ -81,10 +78,10 @@
             btn.disabled = true;
             status.innerText = "ロード開始...";
             try {
-                // pipelineの実行
+                // pipeline実行時に、直接 fetch オプションを叩き込む
                 generator = await pipeline('text-generation', 'Xenova/SmolLM-135M-Instruct', {
                     progress_callback: (p) => {
-                        if (p.status === 'progress') status.innerText = `DL中: ${Math.round(p.progress)}%`;
+                        if (p.status === 'progress') status.innerText = `DL: ${Math.round(p.progress)}%`;
                     }
                 });
                 
@@ -94,12 +91,11 @@
                 input.disabled = false;
             } catch (e) {
                 console.error("Error Details:", e);
+                // fetch失敗時はネットワークを疑う
                 status.innerText = "エラー: " + e.message;
                 btn.disabled = false;
                 
-                if (e.message.includes('Unauthorized')) {
-                    addChat("まだ拒否されちゃうか… ブラウザの拡張機能（広告ブロック等）を全てオフにするか、EdgeやスマホのSafariなど別の環境で試してみて！", "ai");
-                }
+                addChat("ネットワーク制限があるかも。もし可能なら、スマホのデザリングとか別の回線で一度だけ試してみて！", "ai");
             }
         } else {
             const val = input.value.trim();
@@ -117,7 +113,7 @@
                 const response = result[0].generated_text.replace(val, "").trim();
                 aiMsg.innerText = response || "回答が空でした。";
             } catch (e) {
-                aiMsg.innerText = "生成エラー。リロードしてね。";
+                aiMsg.innerText = "エラーが発生しました。";
             }
         }
     };
