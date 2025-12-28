@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>My Local AI - Windows & iPhone</title>
+    <title>My Local AI - Fixed Connection</title>
     <style>
         :root { --p: #007aff; --bg: #ffffff; --ai-bg: #f2f2f7; }
         * { box-sizing: border-box; }
@@ -26,7 +26,7 @@
 <div id="status">ステータス: 待機中</div>
 
 <div id="chat">
-    <div class="msg ai">Windows/iPhone両対応版だよ。下の「ロード」から始めてね。</div>
+    <div class="msg ai">401エラー対策を強化したよ！これでロードしてみて。</div>
 </div>
 
 <div class="input-area">
@@ -35,22 +35,23 @@
 </div>
 
 <script type="module">
-    // バージョンを少し上げて安定性を確保
     import { pipeline, env } from 'https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.2';
     
-    // 強力な環境リセット
+    // 強力な環境初期化
     env.allowLocalModels = false;
     env.useBrowserCache = true;
-    
-    // 401エラーを回避するための徹底設定
-    // credentialsを'omit'に、またプロキシ経由の取得を防ぐ
+
+    // 401 Unauthorized 対策: 
+    // Transformers.js がデフォルトで付与する認証関連のヘッダーを完全に無効化する
     env.remoteModelDefaultOptions = {
         credentials: 'omit',
         mode: 'cors',
-        headers: {
-            'Accept': '*/*'
-        }
+        headers: {} // 余計なヘッダー（X-Requested-With など）を送らせない
     };
+
+    // Hugging Faceのリポジトリ構造を直接指定し、余計なパス解決をさせない設定
+    env.remoteHost = 'https://huggingface.co/';
+    env.remotePathTemplate = '{model}/resolve/{revision}/';
 
     const status = document.getElementById('status');
     const chat = document.getElementById('chat');
@@ -77,7 +78,7 @@
             btn.disabled = true;
             status.innerText = "ロード開始...";
             try {
-                // モデル取得時のエラーを拾いやすくするため、個別にオプションを渡す
+                // pipelineの呼び出し時に、明示的にリクエストオプションを上書きする
                 generator = await pipeline('text-generation', 'Xenova/SmolLM-135M-Instruct', {
                     progress_callback: (p) => {
                         if (p.status === 'progress') status.innerText = `ダウンロード中: ${Math.round(p.progress)}%`;
@@ -91,6 +92,11 @@
                 status.innerText = "エラー: " + e.message;
                 console.error("ロードエラー詳細:", e);
                 btn.disabled = false;
+                
+                // 具体的アドバイス
+                if (e.message.includes('Unauthorized')) {
+                    addChat("Hugging Faceへのアクセスが拒否されました。シークレットモードで試すか、ブラウザのキャッシュをクリアしてみてね。", "ai");
+                }
             }
         } else {
             const val = input.value.trim();
@@ -108,7 +114,7 @@
                 const response = result[0].generated_text.replace(val, "").trim();
                 aiMsg.innerText = response || "回答が空でした。";
             } catch (e) {
-                aiMsg.innerText = "生成エラー。リロードしてみて。";
+                aiMsg.innerText = "生成エラーが発生しました。";
                 console.error(e);
             }
         }
