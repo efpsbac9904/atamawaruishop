@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Infinite Growth Rogue RPG - Offline Earnings</title>
+    <title>Infinite Growth Rogue RPG - Rebalanced</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
@@ -59,7 +59,6 @@
             transform: scale(0.95);
         }
 
-        /* Modal styling for offline results */
         #offline-modal {
             background-color: rgba(0,0,0,0.9);
             z-index: 100;
@@ -104,13 +103,13 @@
     <!-- Offline Earnings Modal -->
     <div id="offline-modal" class="hidden absolute inset-0 flex items-center justify-center p-6">
         <div class="bg-indigo-900 border-2 border-indigo-400 p-6 rounded-lg shadow-2xl w-full max-w-sm text-center">
-            <h2 class="text-xl font-bold text-yellow-400 mb-2">Welcome Back!</h2>
-            <p id="offline-time" class="text-xs text-indigo-200 mb-4">You were away for 0m 0s</p>
+            <h2 class="text-xl font-bold text-yellow-400 mb-2">おかえりなさい！</h2>
+            <p id="offline-time" class="text-xs text-indigo-200 mb-4">放置時間: 0m 0s</p>
             <div class="bg-indigo-800 p-4 rounded mb-4">
-                <div class="text-xs text-gray-300">Earnings</div>
+                <div class="text-xs text-gray-300">獲得報酬</div>
                 <div id="offline-gold" class="text-2xl font-bold text-yellow-200">+0 GOLD</div>
             </div>
-            <button onclick="closeOfflineModal()" class="w-full bg-indigo-500 hover:bg-indigo-400 py-2 rounded font-bold text-white transition-colors">Claim Rewards</button>
+            <button onclick="closeOfflineModal()" class="w-full bg-indigo-500 hover:bg-indigo-400 py-2 rounded font-bold text-white transition-colors">報酬を受け取る</button>
         </div>
     </div>
 
@@ -123,21 +122,34 @@
             <button onclick="resetGame()" class="px-2 py-1 text-[8px] bg-red-900 text-red-200 rounded">RESET</button>
         </div>
 
-        <div id="content-stats" class="space-y-3">
+        <div id="content-stats" class="space-y-3 overflow-y-auto max-h-48 pr-1">
             <div class="flex justify-between items-center text-sm">
-                <span>Atk: <span id="stat-atk" class="text-indigo-300">5</span></span>
-                <span class="text-xs text-gray-400">Lv <span id="val-atk-lv">1</span></span>
-                <button onclick="upgradeStat('atk')" id="btn-upgrade-atk" class="bg-yellow-600 hover:bg-yellow-500 px-3 py-1 rounded text-xs font-bold text-white">Upgrade (10G)</button>
+                <div>
+                    <span class="font-bold">Atk:</span> <span id="stat-atk" class="text-indigo-300">5</span>
+                    <div class="text-[10px] text-gray-400">Lv <span id="val-atk-lv">1</span></div>
+                </div>
+                <button onclick="upgradeStat('atk')" id="btn-upgrade-atk" class="bg-yellow-600 hover:bg-yellow-500 px-3 py-1 rounded text-xs font-bold text-white">Upgrade</button>
             </div>
             <div class="flex justify-between items-center text-sm">
-                <span>Auto DPS: <span id="stat-dps" class="text-green-300">0</span></span>
-                <span class="text-xs text-gray-400">Lv <span id="val-dps-lv">0</span></span>
-                <button onclick="upgradeStat('dps')" id="btn-upgrade-dps" class="bg-yellow-600 hover:bg-yellow-500 px-3 py-1 rounded text-xs font-bold text-white">Upgrade (15G)</button>
+                <div>
+                    <span class="font-bold">Auto DPS:</span> <span id="stat-dps" class="text-green-300">0</span>
+                    <div class="text-[10px] text-gray-400">Lv <span id="val-dps-lv">0</span></div>
+                </div>
+                <button onclick="upgradeStat('dps')" id="btn-upgrade-dps" class="bg-yellow-600 hover:bg-yellow-500 px-3 py-1 rounded text-xs font-bold text-white">Upgrade</button>
             </div>
             <div class="flex justify-between items-center text-sm">
-                <span>Crit: <span id="stat-crit" class="text-red-300">5</span>%</span>
-                <span class="text-xs text-gray-400">Lv <span id="val-crit-lv">1</span></span>
-                <button onclick="upgradeStat('crit')" id="btn-upgrade-crit" class="bg-yellow-600 hover:bg-yellow-500 px-3 py-1 rounded text-xs font-bold text-white">Upgrade (50G)</button>
+                <div>
+                    <span class="font-bold">Crit:</span> <span id="stat-crit" class="text-red-300">5</span>%
+                    <div class="text-[10px] text-gray-400">Lv <span id="val-crit-lv">1</span></div>
+                </div>
+                <button onclick="upgradeStat('crit')" id="btn-upgrade-crit" class="bg-yellow-600 hover:bg-yellow-500 px-3 py-1 rounded text-xs font-bold text-white">Upgrade</button>
+            </div>
+            <div class="flex justify-between items-center text-sm">
+                <div>
+                    <span class="font-bold text-yellow-400">Gold Luck:</span> x<span id="stat-gold" class="text-yellow-200">1.0</span>
+                    <div class="text-[10px] text-gray-400">Lv <span id="val-gold-lv">1</span></div>
+                </div>
+                <button onclick="upgradeStat('gold')" id="btn-upgrade-gold" class="bg-yellow-600 hover:bg-yellow-500 px-3 py-1 rounded text-xs font-bold text-white">Upgrade</button>
             </div>
         </div>
 
@@ -145,7 +157,7 @@
             <div class="flex justify-between items-center text-sm border-b border-gray-700 pb-2">
                 <div>
                     <div class="font-bold">Greedy Sword</div>
-                    <div class="text-[10px] text-gray-400">Gold Earnings +10%</div>
+                    <div class="text-[10px] text-gray-400">Gold Earnings +50%</div>
                 </div>
                 <button onclick="buySpecial('gold_boost')" id="btn-special-gold" class="bg-indigo-600 px-3 py-1 rounded text-xs font-bold">Buy (500G)</button>
             </div>
@@ -155,12 +167,12 @@
             <div class="flex gap-2">
                 <button id="skill-1" onclick="useSkill(1)" class="flex-1 bg-gray-900 border-2 border-gray-600 p-2 rounded relative opacity-50 cursor-not-allowed overflow-hidden">
                     <div class="text-[10px] text-blue-400 font-bold">God Speed</div>
-                    <div class="text-[8px] text-gray-500">DPS x3 (10s)</div>
+                    <div class="text-[8px] text-gray-500">DPS x5 (10s)</div>
                     <div id="cooldown-1" class="absolute inset-0 bg-black opacity-0 transition-all"></div>
                 </button>
                 <button id="skill-2" onclick="useSkill(2)" class="flex-1 bg-gray-900 border-2 border-gray-600 p-2 rounded relative opacity-50 cursor-not-allowed overflow-hidden">
                     <div class="text-[10px] text-red-400 font-bold">Excalibur</div>
-                    <div class="text-[8px] text-gray-500">30% HP Damage</div>
+                    <div class="text-[8px] text-gray-500">50% HP Damage</div>
                     <div id="cooldown-2" class="absolute inset-0 bg-black opacity-0 transition-all"></div>
                 </button>
             </div>
@@ -173,8 +185,8 @@
 </div>
 
 <script>
-    // --- Constants ---
-    const SAVE_KEY = "infinite_rogue_rpg_save_v2";
+    // --- Constants & Config ---
+    const SAVE_KEY = "infinite_rogue_rpg_save_v3"; // Version bump for rebalance
     const monsterData = [
         { name: "Slime", color: "#4ade80", d: "M20,80 Q50,20 80,80 Z" },
         { name: "Goblin", color: "#a3e635", d: "M30,80 L20,60 L50,30 L80,60 L70,80 Z" },
@@ -189,9 +201,10 @@
         stage: 1,
         subStage: 1,
         stats: {
-            atk: { lv: 1, val: 5, basePrice: 10 },
-            dps: { lv: 0, val: 0, basePrice: 15 },
-            crit: { lv: 1, val: 5, basePrice: 50 }
+            atk: { lv: 1, val: 5, basePrice: 10, growth: 1.15 },
+            dps: { lv: 0, val: 0, basePrice: 15, growth: 1.16 },
+            crit: { lv: 1, val: 5, basePrice: 50, growth: 1.2 },
+            gold: { lv: 1, val: 1.0, basePrice: 100, growth: 1.18 }
         },
         items: {
             gold_boost: false
@@ -222,6 +235,11 @@
 
     // --- System Functions ---
 
+    function formatNum(num) {
+        if (num >= 1e9) return num.toExponential(2);
+        return Math.floor(num).toLocaleString();
+    }
+
     function saveGame() {
         state.lastSaveTime = Date.now();
         localStorage.setItem(SAVE_KEY, JSON.stringify(state));
@@ -232,16 +250,16 @@
         if (saved) {
             const parsed = JSON.parse(saved);
             state = { ...state, ...parsed };
-            // Apply shop item effects
+            // Fix potential missing properties in old saves
+            if (!state.stats.gold) state.stats.gold = { lv: 1, val: 1.0, basePrice: 100, growth: 1.18 };
+            
             if (state.items.gold_boost) {
-                runtime.multipliers.gold = 1.1;
+                runtime.multipliers.gold = 1.5;
                 const btn = document.getElementById('btn-special-gold');
                 btn.innerText = "Bought";
                 btn.disabled = true;
                 btn.classList.add('bg-gray-500');
             }
-            
-            // Calculate Offline Earnings
             calculateOfflineEarnings();
         }
     }
@@ -250,25 +268,19 @@
         const now = Date.now();
         const diffInSeconds = Math.floor((now - state.lastSaveTime) / 1000);
         
-        // Only trigger if away for more than 1 minute and have DPS
         if (diffInSeconds > 60 && state.stats.dps.val > 0) {
             const dps = state.stats.dps.val * runtime.multipliers.dps;
             const totalDamage = dps * diffInSeconds;
-            
-            // Simplified logic for how many mobs killed offline
-            // Using current enemy HP as average
-            const avgHp = state.enemy.maxHp || (10 * Math.pow(1.3, state.stage - 1));
+            const avgHp = state.enemy.maxHp || (10 * Math.pow(1.2, state.stage - 1));
             const kills = Math.floor(totalDamage / avgHp);
             
             if (kills > 0) {
-                const rewardPerKill = Math.floor(state.stage * 5 * (1 + state.subStage * 0.2) * runtime.multipliers.gold);
+                const rewardPerKill = calculateReward();
                 const totalGold = kills * rewardPerKill;
-                
                 state.gold += totalGold;
                 
-                // Show Modal
-                document.getElementById('offline-time').innerText = `You were away for ${Math.floor(diffInSeconds/60)}m ${diffInSeconds%60}s`;
-                document.getElementById('offline-gold').innerText = `+${totalGold.toLocaleString()} GOLD`;
+                document.getElementById('offline-time').innerText = `放置時間: ${Math.floor(diffInSeconds/60)}分 ${diffInSeconds%60}秒`;
+                document.getElementById('offline-gold').innerText = `+${formatNum(totalGold)} GOLD`;
                 el.offlineModal.classList.remove('hidden');
             }
         }
@@ -280,7 +292,7 @@
     }
 
     function resetGame() {
-        if (confirm("Reset all progress and start over?")) {
+        if (confirm("全ての進行状況をリセットして最初からやり直しますか？")) {
             localStorage.removeItem(SAVE_KEY);
             location.reload();
         }
@@ -291,7 +303,6 @@
         spawnEnemy();
         updateUI();
         
-        // Auto DPS Loop (10 ticks per second)
         setInterval(() => {
             if (state.stats.dps.val > 0) {
                 applyDamage(state.stats.dps.val * runtime.multipliers.dps / 10, false);
@@ -299,27 +310,33 @@
             checkSkillUnlocks();
         }, 100);
 
-        // Auto Save Loop (Every 5 seconds)
         setInterval(saveGame, 5000);
 
         el.enemyContainer.addEventListener('click', (e) => {
             let dmg = state.stats.atk.val * runtime.multipliers.atk;
             let isCrit = false;
             if (Math.random() * 100 < state.stats.crit.val) {
-                dmg *= 2;
+                dmg *= 2.5; // Buffed crit multiplier
                 isCrit = true;
             }
-            applyDamage(dmg, true, e.clientX, e.clientY);
+            applyDamage(dmg, true, e.clientX, e.clientY, isCrit);
         });
     }
 
     // --- Battle Logic ---
 
-    function applyDamage(amount, fromClick, x, y) {
+    function calculateReward() {
+        const base = state.stage * 5;
+        const subBonus = (1 + state.subStage * 0.3);
+        const luck = state.stats.gold.val;
+        return Math.floor(base * subBonus * luck * runtime.multipliers.gold);
+    }
+
+    function applyDamage(amount, fromClick, x, y, isCrit) {
         state.enemy.hp -= amount;
         
         if (fromClick) {
-            showDamageText(amount, x, y, false);
+            showDamageText(amount, x, y, isCrit);
             el.enemyContainer.classList.add('shake');
             setTimeout(() => el.enemyContainer.classList.remove('shake'), 100);
         }
@@ -331,15 +348,14 @@
     }
 
     function killEnemy() {
-        const reward = Math.floor(state.stage * 5 * (1 + state.subStage * 0.2) * runtime.multipliers.gold);
-        state.gold += reward;
+        state.gold += calculateReward();
 
         state.subStage++;
         if (state.subStage > 10) {
             state.subStage = 1;
             state.stage++;
             saveGame();
-            showMessage(`STAGE ${state.stage} REACHED! AUTO-SAVED`);
+            showMessage(`STAGE ${state.stage} 到達！ オートセーブ完了`);
         }
 
         spawnEnemy();
@@ -347,7 +363,8 @@
     }
 
     function spawnEnemy() {
-        const difficulty = Math.pow(1.3, state.stage - 1) * (1 + state.subStage * 0.1);
+        // Reduced exponential growth for enemy HP (1.3 -> 1.22)
+        const difficulty = Math.pow(1.22, state.stage - 1) * (1 + state.subStage * 0.2);
         state.enemy.maxHp = Math.floor(10 * difficulty);
         state.enemy.hp = state.enemy.maxHp;
         
@@ -361,25 +378,35 @@
     function updateHPBar() {
         const percent = Math.max(0, (state.enemy.hp / state.enemy.maxHp) * 100);
         el.hpBar.style.width = `${percent}%`;
-        el.hpText.innerText = `${Math.ceil(state.enemy.hp)} / ${state.enemy.maxHp}`;
+        el.hpText.innerText = `${formatNum(Math.ceil(state.enemy.hp))} / ${formatNum(state.enemy.maxHp)}`;
     }
 
     // --- UI/Stats ---
 
+    function getUpgradeCost(statId) {
+        const s = state.stats[statId];
+        return Math.floor(s.basePrice * Math.pow(s.growth, s.lv - 1));
+    }
+
     function upgradeStat(id) {
         const s = state.stats[id];
-        const cost = Math.floor(s.basePrice * Math.pow(1.5, s.lv));
+        const cost = getUpgradeCost(id);
         
         if (state.gold >= cost) {
             state.gold -= cost;
             s.lv++;
-            if (id === 'atk') s.val += 2;
-            if (id === 'dps') s.val += 1;
-            if (id === 'crit') s.val += 0.5;
+            
+            // Dynamic value growth: gains increase as level increases
+            const levelBonus = 1 + (s.lv / 100); 
+            if (id === 'atk') s.val += 2 * levelBonus;
+            if (id === 'dps') s.val += (1.5 * levelBonus);
+            if (id === 'crit') s.val = Math.min(80, s.val + 0.2); // Cap crit at 80%
+            if (id === 'gold') s.val += 0.1;
+            
             updateUI();
             saveGame();
         } else {
-            showMessage("Need more Gold!");
+            showMessage("ゴールドが足りません！");
         }
     }
 
@@ -387,33 +414,34 @@
         if (type === 'gold_boost' && state.gold >= 500 && !state.items.gold_boost) {
             state.gold -= 500;
             state.items.gold_boost = true;
-            runtime.multipliers.gold = 1.1;
+            runtime.multipliers.gold = 1.5;
             const btn = document.getElementById('btn-special-gold');
             btn.innerText = "Bought";
             btn.disabled = true;
             btn.classList.add('bg-gray-500');
             updateUI();
             saveGame();
-            showMessage("Greed increased!");
+            showMessage("金運が大幅に上昇！");
         }
     }
 
     function updateUI() {
-        el.gold.innerText = state.gold.toLocaleString();
+        el.gold.innerText = formatNum(state.gold);
         el.stage.innerText = `${state.stage}-${state.subStage}`;
         
-        document.getElementById('stat-atk').innerText = (state.stats.atk.val).toFixed(1);
-        document.getElementById('stat-dps').innerText = (state.stats.dps.val * runtime.multipliers.dps).toFixed(1);
+        document.getElementById('stat-atk').innerText = formatNum(state.stats.atk.val);
+        document.getElementById('stat-dps').innerText = formatNum(state.stats.dps.val * runtime.multipliers.dps);
         document.getElementById('stat-crit').innerText = state.stats.crit.val.toFixed(1);
+        document.getElementById('stat-gold').innerText = state.stats.gold.val.toFixed(1);
         
         document.getElementById('val-atk-lv').innerText = state.stats.atk.lv;
         document.getElementById('val-dps-lv').innerText = state.stats.dps.lv;
         document.getElementById('val-crit-lv').innerText = state.stats.crit.lv;
+        document.getElementById('val-gold-lv').innerText = state.stats.gold.lv;
 
-        ['atk', 'dps', 'crit'].forEach(id => {
-            const s = state.stats[id];
-            const cost = Math.floor(s.basePrice * Math.pow(1.5, s.lv));
-            document.getElementById(`btn-upgrade-${id}`).innerText = `Upgrade (${cost}G)`;
+        ['atk', 'dps', 'crit', 'gold'].forEach(id => {
+            const cost = getUpgradeCost(id);
+            document.getElementById(`btn-upgrade-${id}`).innerText = `Upgrade (${formatNum(cost)}G)`;
         });
     }
 
@@ -430,8 +458,8 @@
 
     function showDamageText(dmg, x, y, isCrit) {
         const text = document.createElement('div');
-        text.className = 'floating-text ' + (isCrit ? 'text-red-500 text-xl' : 'text-white text-sm');
-        text.innerText = Math.floor(dmg);
+        text.className = 'floating-text ' + (isCrit ? 'text-yellow-400 text-xl font-black' : 'text-white text-sm');
+        text.innerText = (isCrit ? 'CRIT! ' : '') + formatNum(dmg);
         text.style.left = `${x}px`;
         text.style.top = `${y}px`;
         document.body.appendChild(text);
@@ -477,12 +505,12 @@
         requestAnimationFrame(animate);
 
         if (id === 1) {
-            runtime.multipliers.dps = 3;
-            showMessage("GOD SPEED! DPS x3");
+            runtime.multipliers.dps = 5;
+            showMessage("GOD SPEED! DPS x5");
             setTimeout(() => { runtime.multipliers.dps = 1; updateUI(); }, sk.duration);
         } else if (id === 2) {
-            applyDamage(state.enemy.maxHp * 0.3, true, window.innerWidth/2, window.innerHeight/3);
-            showMessage("EXCALIBUR!");
+            applyDamage(state.enemy.maxHp * 0.5, true, window.innerWidth/2, window.innerHeight/3, true);
+            showMessage("EXCALIBUR! 50% DMG");
         }
         updateUI();
     }
@@ -492,4 +520,3 @@
 
 </body>
 </html>
-
