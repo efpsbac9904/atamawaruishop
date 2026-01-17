@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>DOT MERGE - REPLAY PRO</title>
+    <title>DOT MERGE - REPLAY PRO FX+</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body {
@@ -12,6 +12,7 @@
             background-color: #050505;
             color: #ffffff;
             font-family: 'Inter', 'Hiragino Kaku Gothic ProN', 'Meiryo', sans-serif;
+            overflow: hidden;
         }
         .grid-container {
             display: grid;
@@ -22,6 +23,8 @@
             border-radius: 24px;
             box-shadow: 0 0 40px rgba(0,0,0,1), inset 0 0 20px rgba(255,255,255,0.02);
             border: 1px solid #222;
+            position: relative;
+            z-index: 10;
         }
         .cell {
             aspect-ratio: 1;
@@ -65,14 +68,17 @@
             0% { box-shadow: 0 0 10px currentColor; opacity: 0.9; }
             100% { box-shadow: 0 0 25px currentColor; opacity: 1; }
         }
+        
         @keyframes merge-flash {
             0% { transform: scale(1); filter: brightness(1); }
-            50% { transform: scale(1.4); filter: brightness(2); box-shadow: 0 0 50px currentColor; }
+            30% { transform: scale(1.5); filter: brightness(3); box-shadow: 0 0 80px currentColor, 0 0 120px currentColor; }
             100% { transform: scale(1); filter: brightness(1); }
         }
         .flash {
-            animation: merge-flash 0.4s ease-out;
+            animation: merge-flash 0.5s ease-out;
+            z-index: 100;
         }
+
         .progress-container {
             width: 100%;
             height: 10px;
@@ -89,14 +95,7 @@
             box-shadow: 0 0 15px rgba(255,255,255,0.5);
             transition: width 0.1s linear;
         }
-        .low-time-pulse {
-            animation: pulse-red 0.5s infinite;
-        }
-        @keyframes pulse-red {
-            0% { background: #ff3b30; box-shadow: 0 0 20px #ff3b30; }
-            50% { background: #550000; box-shadow: 0 0 0px #ff3b30; }
-            100% { background: #ff3b30; box-shadow: 0 0 20px #ff3b30; }
-        }
+
         .stats-card {
             background: #111;
             border: 1px solid #222;
@@ -133,7 +132,6 @@
         }
         @keyframes blink { 50% { opacity: 0.5; } }
 
-        /* リプレイコントロールパネル */
         #replay-controls {
             display: none;
             position: fixed;
@@ -160,9 +158,57 @@
             align-items: center;
             justify-content: center;
         }
-        .ctrl-btn:hover { background: rgba(255,255,255,0.1); }
-        .ctrl-btn:active { transform: scale(0.9); }
-        .ctrl-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+        .ctrl-btn:hover:not(:disabled) { background: rgba(255,255,255,0.1); }
+        .ctrl-btn:active:not(:disabled) { transform: scale(0.9); }
+        .ctrl-btn:disabled { opacity: 0.2; cursor: not-allowed; }
+
+        .particle {
+            position: absolute;
+            pointer-events: none;
+            border-radius: 50%;
+            animation: particle-fade 0.8s ease-out forwards;
+            z-index: 50;
+            box-shadow: 0 0 15px currentColor;
+        }
+        @keyframes particle-fade {
+            0% { transform: translate(0, 0) scale(1); opacity: 1; filter: brightness(2); }
+            100% { transform: translate(var(--tx), var(--ty)) scale(0); opacity: 0; }
+        }
+
+        .shockwave {
+            position: absolute;
+            border-radius: 50%;
+            border: 4px solid currentColor;
+            transform: translate(-50%, -50%) scale(0.5);
+            opacity: 1;
+            pointer-events: none;
+            animation: shockwave-expand 0.6s ease-out forwards;
+            z-index: 40;
+            box-shadow: 0 0 30px currentColor, inset 0 0 20px currentColor;
+            filter: brightness(2);
+        }
+        @keyframes shockwave-expand {
+            0% { transform: translate(-50%, -50%) scale(0.5); opacity: 1; border-width: 10px; }
+            100% { transform: translate(-50%, -50%) scale(2.5); opacity: 0; border-width: 0px; }
+        }
+
+        .floating-score {
+            position: absolute;
+            color: white;
+            font-family: 'Courier New', monospace;
+            font-weight: 900;
+            font-size: 1.4rem;
+            pointer-events: none;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.8), 0 0 15px rgba(255,255,255,0.8);
+            animation: float-up 1s cubic-bezier(0.2, 0.9, 0.3, 1) forwards;
+            z-index: 60;
+            white-space: nowrap;
+        }
+        @keyframes float-up {
+            0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
+            20% { transform: translate(-50%, -150%) scale(1.3); opacity: 1; filter: brightness(1.5); }
+            100% { transform: translate(-50%, -300%) scale(1); opacity: 0; }
+        }
     </style>
 </head>
 <body class="flex flex-col items-center justify-center min-h-screen p-6">
@@ -223,18 +269,13 @@
                 </div>
             </div>
 
-            <!-- 復活したレベル表示バー -->
             <div class="stats-card w-full flex items-center justify-between px-4 py-2 border-white/5 mb-4 min-h-[42px]">
                 <div class="text-left flex items-center gap-3">
                     <p class="text-gray-500 text-[9px] font-bold uppercase tracking-widest">NEXT DOTS</p>
-                    <div id="level-display" class="flex gap-2 items-center font-black text-xs">
-                        <!-- JSで動的に挿入 -->
-                    </div>
+                    <div id="level-display" class="flex gap-2 items-center font-black text-xs"></div>
                 </div>
                 <div class="text-right">
-                    <p id="next-level-text" class="text-[9px] font-bold text-white/40 uppercase tracking-tighter">
-                        <!-- JSで動的に挿入 -->
-                    </p>
+                    <p id="next-level-text" class="text-[9px] font-bold text-white/40 uppercase tracking-tighter"></p>
                 </div>
             </div>
         </div>
@@ -269,45 +310,20 @@
     </div>
 
     <script>
-        // 定数を定義
         const GRID_SIZE = 5;
         const INITIAL_TIME = 30;
         const MAX_TIME = 30;
         const TIME_RECOVERY_UNIT = 0.8;
         const COLORS = ['#FF3B30', '#007AFF', '#34C759', '#FFCC00', '#FF9500', '#AF52DE', '#5AC8FA', '#FF2D55', '#00FFCC', '#FF00FF', '#7FFF00', '#FF4500', '#4B0082', '#FF69B4', '#C0C0C0', '#FFD700', '#000080', '#8B0000', '#006400', '#2F4F4F'];
         
-        // レベル閾値定義
         const LEVEL_THRESHOLDS = [
-           { score: 500, min: 2 },
-           { score: 1000, min: 3 },
-          { score: 2000, min: 4 },
-
-            { score: 3000, min: 5 },
-
-            { score: 4000, min: 6 },
-
-            { score: 5000, min: 7 },
-
-            { score: 7000, min: 8 },
-
-            { score: 10000, min: 9 },
-
-            { score: 12000, min: 10 },
-
-            { score: 13000, min: 11 },
-
-            { score: 19000, min: 12 },
-
-            { score: 25000, min: 13 },
-
-            { score: 50000, min: 14 },
-
-            { score: 75000, min: 15 },
-
-            { score: 90000, min: 16 }
+           { score: 500, min: 2 }, { score: 1000, min: 3 }, { score: 2000, min: 4 },
+            { score: 3000, min: 5 }, { score: 4000, min: 6 }, { score: 5000, min: 7 },
+            { score: 7000, min: 8 }, { score: 10000, min: 9 }, { score: 12000, min: 10 },
+            { score: 13000, min: 11 }, { score: 19000, min: 12 }, { score: 25000, min: 13 },
+            { score: 50000, min: 14 }, { score: 75000, min: 15 }, { score: 90000, min: 16 }
         ];
 
-        // DOM要素の取得
         const startScreen = document.getElementById('start-screen');
         const gameUI = document.getElementById('game-ui');
         const gridElement = document.getElementById('game-grid');
@@ -325,12 +341,9 @@
         const importInput = document.getElementById('import-replay'); 
         const replayButton = document.getElementById('replay-button');
         const exportButton = document.getElementById('export-button');
-        
-        // 追加: レベル表示用DOM
         const levelDisplay = document.getElementById('level-display');
         const nextLevelText = document.getElementById('next-level-text');
 
-        // ゲーム状態の管理
         let score = 0;
         let timeLeft = INITIAL_TIME;
         let bestScore = parseInt(localStorage.getItem('dotmerge_v3_best')) || 0;
@@ -340,13 +353,62 @@
         let gameActive = false;
         let timerInterval = null;
 
-        // リプレイ管理
         let isReplaying = false;
         let isPaused = false;
+        let isProcessing = false; // 連打防止用フラグ
         let currentActionIndex = 0;
         let replayLog = { version: "1.1", score: 0, initialGrid: [], actions: [], randomPool: [] };
         let randomCursor = 0;
         let stateHistory = []; 
+
+        // --- エフェクト関数 ---
+        
+        function spawnParticles(x, y, color, count) {
+            for (let i = 0; i < count; i++) {
+                const p = document.createElement('div');
+                p.className = 'particle';
+                p.style.backgroundColor = color;
+                const angle = Math.random() * Math.PI * 2;
+                const velocity = Math.random() * 80 + 30; 
+                const tx = Math.cos(angle) * velocity;
+                const ty = Math.sin(angle) * velocity;
+                p.style.setProperty('--tx', `${tx}px`);
+                p.style.setProperty('--ty', `${ty}px`);
+                const size = Math.random() * 6 + 3;
+                p.style.width = `${size}px`;
+                p.style.height = `${size}px`;
+                p.style.left = `${x}px`;
+                p.style.top = `${y}px`;
+                document.body.appendChild(p);
+                p.addEventListener('animationend', () => p.remove());
+            }
+        }
+
+        function spawnShockwave(x, y, color) {
+            const el = document.createElement('div');
+            el.className = 'shockwave';
+            el.style.left = `${x}px`;
+            el.style.top = `${y}px`;
+            el.style.color = color;
+            el.style.width = '100px';
+            el.style.height = '100px';
+            document.body.appendChild(el);
+            el.addEventListener('animationend', () => el.remove());
+        }
+
+        function showFloatingScore(x, y, amount, isBonus) {
+            const el = document.createElement('div');
+            el.className = 'floating-score';
+            el.textContent = `+${amount}`;
+            el.style.left = `${x}px`;
+            el.style.top = `${y}px`;
+            if (isBonus) {
+                el.style.color = '#FFD700';
+                el.style.fontSize = '1.8rem';
+            }
+            document.body.appendChild(el);
+            el.addEventListener('animationend', () => el.remove());
+        }
 
         function getCurrentMin(currentScore) {
             let min = 1;
@@ -354,12 +416,9 @@
             return min;
         }
 
-        // 戦略UI（出現ドットと次レベルまでの表示）の更新
         function updateStrategyUI(currentScore) {
             const min = getCurrentMin(currentScore);
             const max = min + 1;
-            
-            // ドットアイコンの生成
             const minColor = COLORS[(min - 1) % COLORS.length];
             const maxColor = COLORS[(max - 1) % COLORS.length];
 
@@ -371,15 +430,12 @@
                 <span>${max}</span>
             `;
 
-            // 次のレベルまでのスコア計算
             const next = LEVEL_THRESHOLDS.find(t => currentScore < t.score);
             if (next) {
                 const diff = next.score - currentScore;
                 nextLevelText.textContent = `NEXT LEVEL: ${diff.toLocaleString()}`;
-                nextLevelText.classList.remove('text-yellow-400');
             } else {
                 nextLevelText.textContent = `MAX LEVEL`;
-                nextLevelText.classList.add('text-yellow-400');
             }
         }
 
@@ -397,6 +453,7 @@
             gameActive = false;
             isReplaying = false;
             isPaused = false;
+            isProcessing = false;
             if (timerInterval) clearInterval(timerInterval);
             startScreen.classList.remove('hidden');
             gameUI.classList.add('hidden');
@@ -418,6 +475,7 @@
             timeLeft = INITIAL_TIME;
             gameActive = true;
             isReplaying = false;
+            isProcessing = false;
             selectedChain = [];
             stateHistory = [];
             replayLog = { version: "1.1", score: 0, initialGrid: [], actions: [], randomPool: [] };
@@ -455,7 +513,6 @@
             else dot.classList.remove('glow-active');
         }
 
-        // リプレイ再生管理
         async function startReplay() {
             if (replayLog.actions.length === 0) return;
             startScreen.classList.add('hidden');
@@ -469,6 +526,7 @@
             gameActive = false;
             isReplaying = true;
             isPaused = false;
+            isProcessing = false;
             randomCursor = 0;
             currentActionIndex = 0;
             stateHistory = [];
@@ -489,7 +547,7 @@
                     continue;
                 }
                 await runNextStep();
-                await new Promise(r => setTimeout(r, 600));
+                await new Promise(r => setTimeout(r, 600)); // 再生の間隔
             }
             if (isReplaying && currentActionIndex >= replayLog.actions.length) {
                 setTimeout(() => endGame(), 1000);
@@ -497,36 +555,50 @@
         }
 
         async function runNextStep() {
-            if (currentActionIndex >= replayLog.actions.length) return;
+            if (isProcessing || currentActionIndex >= replayLog.actions.length) return;
+            isProcessing = true;
             saveCurrentState();
+            
             const action = replayLog.actions[currentActionIndex];
+            
+            // 選択アニメーション
             for (const idx of action.chain) {
                 selectedChain.push(idx);
                 grid[idx].element.classList.add('selected');
-                await new Promise(r => setTimeout(r, 80));
+                await new Promise(r => setTimeout(r, 50));
             }
-            await new Promise(r => setTimeout(r, 150));
-            mergeChain();
+            
+            await new Promise(r => setTimeout(r, 100));
+            
+            // マージ処理 (内部で refillGrid まで呼ぶ)
+            await mergeChain();
+            
             selectedChain = [];
             currentActionIndex++;
             updateReplayUI();
+            isProcessing = false;
         }
 
-        function runPrevStep() {
-            if (stateHistory.length === 0) return;
+        async function runPrevStep() {
+            if (isProcessing || stateHistory.length === 0) return;
+            isProcessing = true;
+            
             const prevState = stateHistory.pop();
             score = prevState.score;
             randomCursor = prevState.randomCursor;
+            
             grid.forEach((cell, i) => {
                 cell.value = prevState.gridValues[i];
                 updateDotVisuals(cell.dot, cell.value);
                 cell.element.classList.remove('selected');
-                cell.dot.style.transform = 'scale(1)';
-                cell.dot.style.opacity = '1';
+                cell.dot.classList.remove('flash');
             });
+            
             currentActionIndex--;
             updateScoreUI();
             updateReplayUI();
+            
+            isProcessing = false;
         }
 
         function saveCurrentState() {
@@ -535,13 +607,12 @@
 
         function updateReplayUI() {
             replayProgress.textContent = `${currentActionIndex} / ${replayLog.actions.length}`;
-            document.getElementById('ctrl-prev').disabled = currentActionIndex === 0;
-            document.getElementById('ctrl-next').disabled = currentActionIndex >= replayLog.actions.length;
+            document.getElementById('ctrl-prev').disabled = currentActionIndex === 0 || isProcessing;
+            document.getElementById('ctrl-next').disabled = currentActionIndex >= replayLog.actions.length || isProcessing;
             if (isPaused) { svgPlay.classList.remove('hidden'); svgPause.classList.add('hidden'); }
             else { svgPlay.classList.add('hidden'); svgPause.classList.remove('hidden'); }
         }
 
-        // 基本ロジック
         function startTimer() {
             if (timerInterval) clearInterval(timerInterval);
             timerInterval = setInterval(() => {
@@ -563,21 +634,39 @@
         }
 
         function mergeChain() {
-            const lastIndex = selectedChain[selectedChain.length - 1];
-            const originalValue = grid[lastIndex].value;
-            updateScore(selectedChain.length * originalValue * 25);
-            if (!isReplaying) timeLeft = Math.min(MAX_TIME, timeLeft + (selectedChain.length * TIME_RECOVERY_UNIT * Math.max(0.3, 1 - (score / 400000))));
-            selectedChain.forEach(idx => {
-                if (idx !== lastIndex) grid[idx].value = 0;
+            return new Promise((resolve) => {
+                const lastIndex = selectedChain[selectedChain.length - 1];
+                const originalValue = grid[lastIndex].value;
+                const gain = selectedChain.length * originalValue * 25;
+                updateScore(gain);
+                
+                const rect = grid[lastIndex].element.getBoundingClientRect();
+                const cx = rect.left + rect.width / 2;
+                const cy = rect.top + rect.height / 2;
+                const color = COLORS[(originalValue - 1) % COLORS.length];
+                
+                spawnParticles(cx, cy, color, Math.min(30, selectedChain.length * 4));
+                showFloatingScore(cx, cy, gain, selectedChain.length >= 5);
+                spawnShockwave(cx, cy, color);
+
+                if (!isReplaying) {
+                    timeLeft = Math.min(MAX_TIME, timeLeft + (selectedChain.length * TIME_RECOVERY_UNIT * Math.max(0.3, 1 - (score / 400000))));
+                }
+
+                selectedChain.forEach(idx => {
+                    if (idx !== lastIndex) grid[idx].value = 0;
+                });
+                grid[lastIndex].value = originalValue + 1;
+                updateDotVisuals(grid[lastIndex].dot, grid[lastIndex].value);
+                grid[lastIndex].dot.classList.add('flash');
+
+                setTimeout(() => {
+                    grid[lastIndex].dot.classList.remove('flash');
+                    grid.forEach(cell => cell.element.classList.remove('selected'));
+                    refillGrid();
+                    resolve();
+                }, 300);
             });
-            grid[lastIndex].value = originalValue + 1;
-            updateDotVisuals(grid[lastIndex].dot, grid[lastIndex].value);
-            grid[lastIndex].dot.classList.add('flash');
-            setTimeout(() => {
-                grid[lastIndex].dot.classList.remove('flash');
-                grid.forEach(cell => cell.element.classList.remove('selected'));
-                refillGrid();
-            }, 300);
         }
 
         function refillGrid() {
@@ -597,8 +686,6 @@
             }
             grid.forEach(cell => {
                 updateDotVisuals(cell.dot, cell.value);
-                cell.dot.style.transform = 'scale(1)';
-                cell.dot.style.opacity = '1';
             });
         }
 
@@ -613,12 +700,13 @@
 
         function updateScoreUI() { 
             scoreElement.textContent = String(score).padStart(4, '0');
-            updateStrategyUI(score); // スコア更新時にレベル表示も更新
+            updateStrategyUI(score); 
         }
 
         function endGame() {
             gameActive = false;
             isDragging = false;
+            isProcessing = false;
             if (timerInterval) clearInterval(timerInterval);
             document.getElementById('final-score').textContent = score;
             gameOverElement.classList.remove('hidden');
@@ -629,7 +717,6 @@
             }
         }
 
-        // イベントリスナー
         document.getElementById('start-button').addEventListener('click', initGame);
         document.getElementById('restart-button').addEventListener('click', initGame);
         document.getElementById('back-to-title').addEventListener('click', showTitleScreen);
@@ -644,8 +731,8 @@
         });
         document.getElementById('reset-btn').addEventListener('click', showTitleScreen);
         playPauseBtn.addEventListener('click', () => { isPaused = !isPaused; updateReplayUI(); });
-        document.getElementById('ctrl-next').addEventListener('click', () => { if (isPaused) runNextStep(); });
-        document.getElementById('ctrl-prev').addEventListener('click', () => { if (isPaused) runPrevStep(); });
+        document.getElementById('ctrl-next').addEventListener('click', () => { if (isPaused && !isProcessing) runNextStep(); });
+        document.getElementById('ctrl-prev').addEventListener('click', () => { if (isPaused && !isProcessing) runPrevStep(); });
         importInput.addEventListener('change', (e) => {
             const file = e.target.files[0];
             if (!file) return;
@@ -654,7 +741,7 @@
                 try {
                     replayLog = JSON.parse(ev.target.result);
                     startReplay();
-                } catch (err) { console.error(err); }
+                } catch (err) { console.error("Invalid JSON", err); }
             };
             reader.readAsText(file);
         });
@@ -680,15 +767,17 @@
                 }
             }
         });
-        window.addEventListener('mouseup', () => {
+        window.addEventListener('mouseup', async () => {
             if (!isDragging) return;
             isDragging = false;
-            if (selectedChain.length >= 3) { replayLog.actions.push({ chain: [...selectedChain] }); mergeChain(); }
+            if (selectedChain.length >= 3) { 
+                replayLog.actions.push({ chain: [...selectedChain] }); 
+                await mergeChain(); 
+            }
             else grid.forEach(c => c.element.classList.remove('selected'));
             selectedChain = [];
         });
 
-        // タッチ操作 (スマホ用)
         gridElement.addEventListener('touchstart', (e) => {
             if (!gameActive || isReplaying) return;
             const target = e.touches[0].target.closest('.cell');
@@ -710,10 +799,13 @@
                 }
             }
         }, { passive: false });
-        window.addEventListener('touchend', () => {
+        window.addEventListener('touchend', async () => {
             if (!isDragging) return;
             isDragging = false;
-            if (selectedChain.length >= 3) { replayLog.actions.push({ chain: [...selectedChain] }); mergeChain(); }
+            if (selectedChain.length >= 3) { 
+                replayLog.actions.push({ chain: [...selectedChain] }); 
+                await mergeChain(); 
+            }
             else grid.forEach(c => c.element.classList.remove('selected'));
             selectedChain = [];
         });
@@ -722,4 +814,3 @@
     </script>
 </body>
 </html>
-
