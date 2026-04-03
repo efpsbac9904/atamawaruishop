@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3MF to STL Converter</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    
+    <!-- Three.js Loaders and Exporters -->
+    <script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r128/examples/js/loaders/3MFLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r128/examples/js/exporters/STLExporter.js"></script>
+    
+    <style>
+        .drop-zone {
+            transition: all 0.3s ease;
+        }
+        .drop-zone.drag-over {
+            border-color: #3b82f6;
+            background-color: #eff6ff;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen flex flex-col items-center justify-center p-4">
+
+    <div class="max-w-2xl w-full bg-white rounded-2xl shadow-xl p-8">
+        <div class="text-center mb-8">
+            <h1 class="text-3xl font-bold text-gray-800 mb-2">3MF to STL Converter</h1>
+            <p class="text-gray-600">Choose a .3mf file to convert it to .stl format locally in your browser.</p>
+        </div>
+
+        <div id="dropZone" class="drop-zone border-4 border-dashed border-gray-200 rounded-xl p-12 text-center cursor-pointer hover:border-gray-300">
+            <div class="flex flex-col items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                </svg>
+                <p class="text-lg font-medium text-gray-700">Drag & Drop your 3MF file here</p>
+                <p class="text-sm text-gray-500 mt-1">or click to select a file</p>
+            </div>
+            <input type="file" id="fileInput" class="hidden" accept=".3mf">
+        </div>
+
+        <div id="statusContainer" class="hidden mt-8">
+            <div id="loadingSpinner" class="flex items-center justify-center mb-4">
+                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+                <span class="ml-3 text-gray-700 font-medium" id="statusMessage">Processing...</span>
+            </div>
+            
+            <div id="resultInfo" class="hidden bg-green-50 border border-green-200 rounded-lg p-4 flex flex-col items-center">
+                <p class="text-green-700 font-medium mb-4">Success! Your file is ready.</p>
+                <button id="downloadBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-lg shadow-md transition-colors flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                    </svg>
+                    Download STL
+                </button>
+            </div>
+        </div>
+
+        <div id="errorMessage" class="hidden mt-4 p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg text-center">
+            Error processing file. Please ensure it's a valid 3MF file.
+        </div>
+
+        <footer class="mt-12 text-center text-xs text-gray-400">
+            Files are processed locally and never leave your device.
+        </footer>
+    </div>
+
+    <script>
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const statusContainer = document.getElementById('statusContainer');
+        const statusMessage = document.getElementById('statusMessage');
+        const resultInfo = document.getElementById('resultInfo');
+        const loadingSpinner = document.getElementById('loadingSpinner');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const errorMessage = document.getElementById('errorMessage');
+
+        let convertedBlob = null;
+        let originalFileName = "";
+
+        const showStatus = (msg) => {
+            statusContainer.classList.remove('hidden');
+            statusMessage.innerText = msg;
+            loadingSpinner.classList.remove('hidden');
+            resultInfo.classList.add('hidden');
+            errorMessage.classList.add('hidden');
+        };
+
+        const showError = (msg) => {
+            statusContainer.classList.add('hidden');
+            errorMessage.classList.remove('hidden');
+            errorMessage.innerText = msg || "An error occurred while converting.";
+        };
+
+        const showSuccess = (blob) => {
+            convertedBlob = blob;
+            loadingSpinner.classList.add('hidden');
+            resultInfo.classList.remove('hidden');
+        };
+
+        dropZone.onclick = () => fileInput.click();
+        
+        fileInput.onchange = (e) => {
+            if (e.target.files.length > 0) handleFile(e.target.files[0]);
+        };
+
+        dropZone.ondragover = (e) => {
+            e.preventDefault();
+            dropZone.classList.add('drag-over');
+        };
+
+        dropZone.ondragleave = () => {
+            dropZone.classList.remove('drag-over');
+        };
+
+        dropZone.ondrop = (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('drag-over');
+            if (e.dataTransfer.files.length > 0) handleFile(e.dataTransfer.files[0]);
+        };
+
+        /**
+         * 修正版: localhost でも安定してライブラリをロードする
+         */
+        async function loadLibrary(url) {
+            try {
+                const response = await fetch(url);
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                const code = await response.text();
+                
+                // Blob URL を作成して script タグとして読み込む（appendChild のエラー回避）
+                const blob = new Blob([code], { type: 'text/javascript' });
+                const blobUrl = URL.createObjectURL(blob);
+                
+                return new Promise((resolve, reject) => {
+                    const script = document.createElement('script');
+                    script.src = blobUrl;
+                    script.onload = () => {
+                        URL.revokeObjectURL(blobUrl);
+                        resolve();
+                    };
+                    script.onerror = () => reject(new Error(`Failed to execute script from ${url}`));
+                    document.head.appendChild(script);
+                });
+            } catch (e) {
+                throw new Error(`Library load failed: ${e.message}`);
+            }
+        }
+
+        async function handleFile(file) {
+            if (!file.name.toLowerCase().endsWith('.3mf')) {
+                showError("Please select a .3mf file.");
+                return;
+            }
+
+            originalFileName = file.name.replace(/\.[^/.]+$/, "");
+            showStatus("Loading engine...");
+
+            try {
+                // UNPKG などの別のCDNも試せるように予備のURLを使う
+                const fflateUrl = "https://unpkg.com/fflate@0.8.2/lib/browser.min.js";
+                await loadLibrary(fflateUrl);
+                
+                if (!window.fflate) {
+                    throw new Error("fflate loaded but not found in window object.");
+                }
+
+                showStatus("Reading 3MF file...");
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    convert3MFtoSTL(event.target.result);
+                };
+                reader.onerror = () => showError("Failed to read file.");
+                reader.readAsArrayBuffer(file);
+            } catch (err) {
+                showError(err.message);
+            }
+        }
+
+        async function convert3MFtoSTL(buffer) {
+            try {
+                // Three.js 側に渡す
+                const loader = new THREE.ThreeMFLoader();
+                
+                // インスタンスへの注入
+                if (typeof loader.addResource === 'function') {
+                    loader.addResource('fflate', window.fflate);
+                }
+
+                const group = loader.parse(buffer);
+                if (!group) throw new Error("Invalid 3MF file.");
+
+                showStatus("Generating STL...");
+
+                const exporter = new THREE.STLExporter();
+                const stlResult = exporter.parse(group, { binary: true });
+                
+                convertedBlob = new Blob([stlResult], { type: 'application/octet-stream' });
+                showSuccess(convertedBlob);
+            } catch (err) {
+                console.error(err);
+                showError("Conversion failed: " + err.message);
+            }
+        }
+
+        downloadBtn.onclick = () => {
+            if (!convertedBlob) return;
+            const url = URL.createObjectURL(convertedBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `${originalFileName}.stl`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        };
+    </script>
+</body>
+</html>
