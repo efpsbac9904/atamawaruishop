@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>数学 模試風問題・解答用紙レンダラー</title>
+  
+  <!-- KaTeX CSS & JS (数式用) -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+
+  <!-- JSXGraph CSS & JS (図形描画用) -->
+  <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/jsxgraph@1.6.0/distrib/jsxgraph.css" />
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/jsxgraph@1.6.0/distrib/jsxgraphcore.js"></script>
+
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: "Hiragino Mincho ProN", "Yu Mincho", "MS PMincho", serif;
+      background-color: #f4f5f7;
+      margin: 0;
+      padding: 20px;
+      color: #000;
+    }
+    
+    .controls {
+      max-width: 900px;
+      margin: 0 auto 20px auto;
+      background: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      font-family: sans-serif;
+    }
+    .controls h2 { margin-top: 0; font-size: 1.2rem; }
+    .controls h3 { margin: 15px 0 10px 0; font-size: 1rem; border-bottom: 2px solid #0066cc; padding-bottom: 4px; color: #0066cc; }
+
+    .setting-group {
+      display: flex;
+      gap: 15px;
+      margin-bottom: 15px;
+      background: #f8f9fa;
+      padding: 12px;
+      border-radius: 6px;
+      border: 1px solid #e9ecef;
+      flex-wrap: wrap;
+    }
+    .setting-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.85rem;
+      font-weight: bold;
+    }
+    .setting-item.full { width: 100%; }
+
+    .cover-input-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      width: 100%;
+    }
+    .cover-input-grid input, .cover-input-grid textarea {
+      padding: 6px 10px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 0.9rem;
+    }
+
+    textarea {
+      width: 100%;
+      height: 180px;
+      font-family: monospace;
+      font-size: 13px;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    .btn-group { margin-top: 15px; display: flex; gap: 10px; }
+    button {
+      padding: 10px 20px;
+      background-color: #0066cc;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: bold;
+      font-size: 0.95rem;
+    }
+    button:hover { background-color: #0052a3; }
+    
+    /* 画面上の通常用紙スタイル (A4縦) */
+    .paper {
+      width: 210mm;
+      min-height: 297mm;
+      padding: 20mm 18mm;
+      margin: 0 auto 30px auto;
+      background: white;
+      box-shadow: 0 0 15px rgba(0,0,0,0.15);
+      position: relative;
+      page-break-after: always;
+      break-after: page;
+    }
+
+    .page-tag {
+      position: absolute;
+      top: 10px;
+      right: 15px;
+      font-size: 10pt;
+      font-family: sans-serif;
+      color: #888;
+      background: #f0f0f0;
+      padding: 2px 8px;
+      border-radius: 4px;
+    }
+
+    /* --- 表紙デザイン --- */
+    .cover-paper {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      height: 257mm; /* 余白を除いたコンテンツ部分の高さ */
+      border: 4px double #000;
+      padding: 15mm 15mm !important;
+    }
+    .cover-header { text-align: center; margin-top: 10px; }
+    .cover-title { font-size: 28pt; font-weight: bold; margin-bottom: 15px; letter-spacing: 2px; }
+    .cover-subtitle { font-size: 16pt; border-bottom: 2px solid #000; display: inline-block; padding: 0 20px 5px 20px; }
+    
+    .cover-meta {
+      display: flex;
+      justify-content: space-between;
+      margin: 30px 0;
+      font-size: 13pt;
+      font-weight: bold;
+    }
+    
+    .cover-info-box {
+      border: 2px solid #000;
+      padding: 20px;
+      margin-bottom: 20px;
+      flex-grow: 1;
+      max-height: 120mm;
+    }
+    .cover-info-title { font-weight: bold; font-size: 14pt; margin-bottom: 12px; text-decoration: underline; }
+    .cover-info-content { font-size: 11pt; line-height: 1.8; white-space: pre-wrap; }
+
+    .cover-name-box {
+      border: 2px solid #000;
+      padding: 15px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 14pt;
+      margin-top: auto;
+    }
+    .cover-name-space {
+      border-bottom: 1px solid #000;
+      width: 250px;
+      height: 30px;
+    }
+
+    /* 大問ごとのブロック間隔 */
+    .section-block { margin-bottom: 30px; }
+
+    /* 大問ヘッダーレイアウト */
+    .section-header-container {
+      display: flex;
+      gap: 20px;
+      margin-bottom: 20px;
+      border-bottom: 2px solid #000;
+      padding-bottom: 12px;
+      page-break-inside: avoid;
+      break-inside: avoid;
+    }
+    .section-header-left {
+      flex: 1;
+      display: flex;
+      align-items: flex-start;
+      font-size: var(--sec-font-size, 16pt);
+      font-weight: bold;
+    }
+    .section-num {
+      font-size: calc(var(--sec-font-size, 16pt) * 1.5);
+      font-family: sans-serif;
+      font-weight: 900;
+      line-height: 1;
+      margin-right: 12px;
+    }
+    .section-title { line-height: 1.5; flex: 1; }
+    .section-score { font-size: 0.9em; font-weight: normal; margin-left: 8px; }
+    
+    .section-figure {
+      width: var(--fig-width, 200px);
+      height: var(--fig-width, 200px);
+      flex-shrink: 0;
+    }
+    
+    .question-list { 
+      display: flex; 
+      flex-direction: column; 
+      gap: var(--q-gap, 40px); 
+    }
+    
+    .question-item { 
+      display: flex; 
+      align-items: flex-start; 
+      font-size: var(--q-font-size, 13pt); 
+      line-height: 1.7; 
+      page-break-inside: avoid;
+      break-inside: avoid;
+    }
+    .question-num { min-width: 45px; font-weight: bold; }
+    .question-content-wrapper {
+      flex: 1;
+      display: flex;
+      gap: 20px;
+    }
+    
+    .layout-right { flex-direction: row; }
+    .layout-right .question-text { flex: 1; }
+    .layout-right .question-figure {
+      width: var(--fig-width, 200px);
+      height: var(--fig-width, 200px);
+      flex-shrink: 0;
+    }
+
+    /* 解答解説用スタイル */
+    .answer-item {
+      margin-bottom: 25px;
+      font-size: 12pt;
+      line-height: 1.6;
+      page-break-inside: avoid;
+      break-inside: avoid;
+    }
+    .answer-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: bold;
+      font-size: 13pt;
+      margin-bottom: 5px;
+      background: #f0f0f0;
+      padding: 4px 8px;
+      border-left: 4px solid #333;
+    }
+    .answer-result {
+      font-weight: bold;
+      margin-bottom: 8px;
+      padding-left: 10px;
+    }
+    .answer-explanation {
+      padding-left: 10px;
+      color: #333;
+      line-height: 1.8;
+    }
+
+    .jxgbox {
+      border: none !important;
+      background-color: transparent !important;
+    }
+    .JXGtext { font-family: "serif" !important; }
+
+    .question-score { margin-left: 10px; white-space: nowrap; }
+    .katex { font-size: 1.05em !important; }
+
+    /* --- 印刷設定（改ページ余白問題の解決） --- */
+    @media print {
+      @page { 
+        size: A4 portrait; 
+        margin: 20mm 18mm; /* 紙本来の印刷余白を定義！これで途中改ページでも絶対に余白が確保される */
+      }
+      body { 
+        background: none; 
+        padding: 0; 
+      }
+      .controls, .page-tag { 
+        display: none !important; 
+      }
+      
+      /* 通常のページ */
+      .paper { 
+        box-shadow: none; 
+        width: 100% !important; 
+        min-height: auto !important;
+        margin: 0 !important; 
+        padding: 0 !important; /* 余白は @page に任せる */
+      }
+      
+      /* 表紙ページ専用：@pageの余白分外側に引っ張ってA4いっぱいに枠を広げる */
+      .cover-paper {
+        height: 257mm !important; /* 297mm - 40mm (上下余白) */
+        margin: 0 !important;
+        padding: 10mm !important;
+        box-sizing: border-box;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="controls">
+    <h2>数学 模試レンダラー</h2>
+    
+    <h3>1. レイアウト設定</h3>
+    <div class="setting-group">
+      <div class="setting-item">
+        <label for="secFontSizeSlider">大問文字サイズ:</label>
+        <input type="range" id="secFontSizeSlider" min="11" max="22" value="16" oninput="updateLayout()">
+        <span id="secFontSizeVal">16pt</span>
+      </div>
+      <div class="setting-item">
+        <label for="fontSizeSlider">問題文字サイズ:</label>
+        <input type="range" id="fontSizeSlider" min="10" max="18" value="13" oninput="updateLayout()">
+        <span id="fontSizeVal">13pt</span>
+      </div>
+      <div class="setting-item">
+        <label for="gapSlider">問題間の余白:</label>
+        <input type="range" id="gapSlider" min="15" max="120" value="40" oninput="updateLayout()">
+        <span id="gapVal">40px</span>
+      </div>
+      <div class="setting-item">
+        <label for="figWidthSlider">図形のサイズ:</label>
+        <input type="range" id="figWidthSlider" min="120" max="300" value="180" oninput="updateLayout()">
+        <span id="figWidthVal">180px</span>
+      </div>
+    </div>
+
+    <h3>2. 表紙（カバーページ）設定</h3>
+    <div class="setting-group">
+      <div class="setting-item full">
+        <input type="checkbox" id="showCoverCheck" checked onchange="toggleCoverUI(); renderExam();">
+        <label for="showCoverCheck">表紙を出力する</label>
+      </div>
+      <div class="cover-input-grid" id="coverFields">
+        <input type="text" id="coverTitleInput" value="第1回 模試風数学テスト" placeholder="テストタイトル" oninput="renderExam()">
+        <input type="text" id="coverSubTitleInput" value="中学3年 数学" placeholder="サブタイトル" oninput="renderExam()">
+        <input type="text" id="coverTimeInput" value="時間: 50分" placeholder="試験時間" oninput="renderExam()">
+        <input type="text" id="coverScoreInput" value="満点: 100点" placeholder="満点" oninput="renderExam()">
+        <textarea id="coverNoticeInput" style="grid-column: span 2; height: 70px;" placeholder="注意事項" oninput="renderExam()">1. 指示があるまで、問題用紙を開いてはいけません。
+2. 問題は全部で 2 大問あります。
+3. 答えはすべて別紙の解答用紙に記入しなさい。</textarea>
+      </div>
+    </div>
+
+    <h3>3. 問題データ (JSON)</h3>
+    <textarea id="jsonInput"></textarea>
+    
+    <div class="btn-group">
+      <button onclick="renderExam()">レンダリング実行</button>
+      <button onclick="window.print()" style="background-color:#28a745;">印刷 / PDF保存</button>
+    </div>
+  </div>
+
+  <div id="pages-container"></div>
+
+  <script>
+    const sampleData = {
+      "sections": [
+        {
+          "sectionNumber": 1,
+          "sectionTitle": "次の計算をしなさい。",
+          "sectionScore": 12,
+          "questions": [
+            {
+              "num": "(1)",
+              "text": "$(-3) \\times 4 + 7$ を計算しなさい。",
+              "score": 6
+            },
+            {
+              "num": "(2)",
+              "text": "$\\frac{3x - y}{2} - \\frac{x - 2y}{3}$ を計算しなさい。",
+              "score": 6
+            }
+          ],
+          "answers": [
+            {
+              "num": "(1)",
+              "result": "$-5$",
+              "explanation": "$(-3) \\times 4 + 7 = -12 + 7 = -5$"
+            },
+            {
+              "num": "(2)",
+              "result": "$\\frac{7x + y}{6}$",
+              "explanation": "通分して計算します。\n$\\frac{3(3x - y) - 2(x - 2y)}{6} = \\frac{9x - 3y - 2x + 4y}{6} = \\frac{7x + y}{6}$"
+            }
+          ]
+        },
+        {
+          "sectionNumber": 2,
+          "sectionTitle": "右の図のように、関数 $y = \\frac{1}{2}x^2$ のグラフ上に 2 点 $A, B$ があります。$A, B$ の $x$ 座標がそれぞれ $-2, 4$ であるとき、あとの問いに答えなさい。",
+          "sectionScore": 10,
+          "figure": {
+            "boundingbox": [-4, 9, 6, -2],
+            "script": [
+              "var board_sec = board;",
+              "board_sec.create('axis', [[0,0], [1,0]], {name:'x', withLabel:true, label:{position:'rt'}});",
+              "board_sec.create('axis', [[0,0], [0,1]], {name:'y', withLabel:true, label:{position:'rt'}});",
+              "board_sec.create('functiongraph', [function(x){ return 0.5*x*x; }, -4, 5], {strokeColor:'black', strokeWidth:1.5});",
+              "var A = board_sec.create('point', [-2, 2], {name:'A', size:1, color:'black', label:{position:'left'}});",
+              "var B = board_sec.create('point', [4, 8], {name:'B', size:1, color:'black', label:{position:'right'}});",
+              "board_sec.create('line', [A, B], {straightFirst:false, straightLast:false, strokeColor:'black', strokeWidth:1.5});"
+            ]
+          },
+          "questions": [
+            {
+              "num": "(1)",
+              "text": "2点 $A, B$ を通る直線の式を求めなさい。",
+              "score": 5
+            },
+            {
+              "num": "(2)",
+              "text": "$\\triangle OAB$ の面積を求めなさい。",
+              "score": 5
+            }
+          ],
+          "answers": [
+            {
+              "num": "(1)",
+              "result": "$y = x + 4$",
+              "explanation": "$A(-2, 2)$, $B(4, 8)$ を通る直線の傾きは $\\frac{8 - 2}{4 - (-2)} = 1$。\n$y = x + b$ に $(-2, 2)$ を代入して $b = 4$。"
+            },
+            {
+              "num": "(2)",
+              "result": "12",
+              "explanation": "直線と $y$ 軸の交点を $C(0, 4)$ とすると、\n$\\triangle OAB = \\triangle OAC + \\triangle OBC = \\frac{1}{2} \\times 4 \\times 2 + \\frac{1}{2} \\times 4 \\times 4 = 4 + 8 = 12$"
+            }
+          ]
+        }
+      ]
+    };
+
+    document.getElementById('jsonInput').value = JSON.stringify(sampleData, null, 2);
+
+    function toggleCoverUI() {
+      const isChecked = document.getElementById('showCoverCheck').checked;
+      document.getElementById('coverFields').style.opacity = isChecked ? "1" : "0.4";
+      document.getElementById('coverFields').style.pointerEvents = isChecked ? "auto" : "none";
+    }
+
+    function generateCoverHTML() {
+      const title = document.getElementById('coverTitleInput').value;
+      const subTitle = document.getElementById('coverSubTitleInput').value;
+      const time = document.getElementById('coverTimeInput').value;
+      const score = document.getElementById('coverScoreInput').value;
+      const notice = document.getElementById('coverNoticeInput').value;
+
+      return `
+        <div class="cover-header">
+          <div class="cover-title">${title}</div>
+          ${subTitle ? `<div class="cover-subtitle">${subTitle}</div>` : ''}
+        </div>
+        <div class="cover-meta">
+          <div>${time}</div>
+          <div>${score}</div>
+        </div>
+        <div class="cover-info-box">
+          <div class="cover-info-title">【 注意事項 】</div>
+          <div class="cover-info-content">${notice}</div>
+        </div>
+        <div class="cover-name-box">
+          <div>組・番・氏名</div>
+          <div class="cover-name-space"></div>
+        </div>
+      `;
+    }
+
+    function updateLayout() {
+      const secFontSize = document.getElementById('secFontSizeSlider').value;
+      const fontSize = document.getElementById('fontSizeSlider').value;
+      const gap = document.getElementById('gapSlider').value;
+      const figWidth = document.getElementById('figWidthSlider').value;
+      
+      document.getElementById('secFontSizeVal').innerText = secFontSize + 'pt';
+      document.getElementById('fontSizeVal').innerText = fontSize + 'pt';
+      document.getElementById('gapVal').innerText = gap + 'px';
+      document.getElementById('figWidthVal').innerText = figWidth + 'px';
+
+      const pages = document.querySelectorAll('.paper');
+      pages.forEach(p => {
+        p.style.setProperty('--sec-font-size', secFontSize + 'pt');
+        p.style.setProperty('--q-font-size', fontSize + 'pt');
+        p.style.setProperty('--q-gap', gap + 'px');
+        p.style.setProperty('--fig-width', figWidth + 'px');
+      });
+    }
+
+    function formatSafeText(input) {
+      if (!input) return '';
+      const parts = input.split(/(\$[^\$]+\$)/g);
+
+      return parts.map(part => {
+        if (part.startsWith('$') && part.endsWith('$')) {
+          return part;
+        }
+        return part
+          .replace(/\\n/g, '\n')
+          .replace(/\r\n|\r|\n/g, '<br>')
+          .replace(/\\t/g, '&nbsp;&nbsp;&nbsp;&nbsp;')
+          .replace(/\t/g, '&nbsp;&nbsp;&nbsp;&nbsp;');
+      }).join('');
+    }
+
+    function renderExam() {
+      toggleCoverUI();
+
+      try {
+        const data = JSON.parse(document.getElementById('jsonInput').value);
+        const container = document.getElementById('pages-container');
+        container.innerHTML = "";
+
+        const showCover = document.getElementById('showCoverCheck').checked;
+        let pages = [];
+
+        // 1. 表紙
+        if (showCover) {
+          pages.push({
+            type: 'cover',
+            html: generateCoverHTML()
+          });
+        }
+
+        // 2. 大問ごと
+        const sections = data.sections ? data.sections : [data];
+        sections.forEach((sec, secIdx) => {
+          const hasSecFig = sec.figure && sec.figure.script;
+          const secBoxId = `jxgbox_sec_${secIdx}`;
+
+          let secHtml = `
+            <div class="section-block">
+              <div class="section-header-container">
+                <div class="section-header-left">
+                  <div class="section-num">${sec.sectionNumber}</div>
+                  <div class="section-title">
+                    ${formatSafeText(sec.sectionTitle)}
+                    ${sec.sectionScore ? `<span class="section-score">（${sec.sectionScore}点）</span>` : ''}
+                  </div>
+                </div>
+                ${hasSecFig ? `<div id="${secBoxId}" class="jxgbox section-figure"></div>` : ''}
+              </div>
+              <div class="question-list">
+          `;
+
+          if (sec.questions && sec.questions.length > 0) {
+            sec.questions.forEach((q, qIdx) => {
+              const hasQFig = q.figure && q.figure.script;
+              const qBoxId = `jxgbox_q_${secIdx}_${qIdx}`;
+
+              secHtml += `
+                <div class="question-item">
+                  <div class="question-num">${q.num}</div>
+                  <div class="question-content-wrapper layout-right">
+                    <div class="question-text">
+                      ${formatSafeText(q.text)}
+                      ${q.score ? `<span class="question-score">（${q.score}点）</span>` : ''}
+                    </div>
+                    ${hasQFig ? `<div id="${qBoxId}" class="jxgbox question-figure"></div>` : ''}
+                  </div>
+                </div>
+              `;
+            });
+          }
+          secHtml += `</div></div>`;
+
+          pages.push({
+            type: 'section',
+            html: secHtml
+          });
+        });
+
+        // 3. 解答解説
+        let ansHtml = `
+          <div class="section-block">
+            <div class="section-header-container">
+              <div class="section-header-left">
+                <div class="section-title">【解答・解説】</div>
+              </div>
+            </div>
+            <div class="answer-list">
+        `;
+        sections.forEach((sec) => {
+          if (sec.answers && sec.answers.length > 0) {
+            sec.answers.forEach(ans => {
+              ansHtml += `
+                <div class="answer-item">
+                  <div class="answer-header">大問${sec.sectionNumber} - 問題 ${ans.num}</div>
+                  <div class="answer-result">【答え】 ${formatSafeText(ans.result)}</div>
+                  <div class="answer-explanation">【解説】<br>${formatSafeText(ans.explanation)}</div>
+                </div>
+              `;
+            });
+          }
+        });
+        ansHtml += `</div></div>`;
+
+        pages.push({
+          type: 'answer',
+          html: ansHtml
+        });
+
+        // DOMレンダリング
+        pages.forEach((p, index) => {
+          const div = document.createElement('div');
+          div.className = `paper ${p.type === 'cover' ? 'cover-paper' : ''}`;
+          div.innerHTML = `<div class="page-tag">${index + 1} ページ目</div>` + p.html;
+          container.appendChild(div);
+        });
+
+        updateLayout();
+
+        // KaTeX描画
+        if (window.katex) {
+          const textNodes = document.querySelectorAll('.question-text, .section-title, .answer-result, .answer-explanation');
+          textNodes.forEach(node => {
+            node.innerHTML = node.innerHTML.replace(/\$([^\$]+)\$/g, (match, math) => {
+              try {
+                return katex.renderToString(math, { throwOnError: false });
+              } catch (e) { return match; }
+            });
+          });
+        }
+
+        // JSXGraph描画
+        sections.forEach((sec, secIdx) => {
+          if (sec.figure && sec.figure.script && sec.figure.script.length > 0) {
+            const secBoxId = `jxgbox_sec_${secIdx}`;
+            const targetEl = document.getElementById(secBoxId);
+            if (targetEl) {
+              const board = JXG.JSXGraph.initBoard(secBoxId, {
+                boundingbox: sec.figure.boundingbox || [-5, 5, 5, -5],
+                axis: false,
+                showCopyright: false,
+                showNavigation: false,
+                keepaspectratio: true
+              });
+              try { new Function('board', sec.figure.script.join('\n'))(board); } catch (err) {}
+            }
+          }
+
+          if (sec.questions) {
+            sec.questions.forEach((q, qIdx) => {
+              if (q.figure && q.figure.script && q.figure.script.length > 0) {
+                const qBoxId = `jxgbox_q_${secIdx}_${qIdx}`;
+                const targetEl = document.getElementById(qBoxId);
+                if (targetEl) {
+                  const board = JXG.JSXGraph.initBoard(qBoxId, {
+                    boundingbox: q.figure.boundingbox || [-5, 5, 5, -5],
+                    axis: false,
+                    showCopyright: false,
+                    showNavigation: false,
+                    keepaspectratio: true
+                  });
+                  try { new Function('board', q.figure.script.join('\n'))(board); } catch (err) {}
+                }
+              }
+            });
+          }
+        });
+
+      } catch (e) {
+        alert('JSONの形式にエラーがあるよ！\n' + e.message);
+      }
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      setTimeout(renderExam, 300);
+    });
+  </script>
+</body>
+</html>
