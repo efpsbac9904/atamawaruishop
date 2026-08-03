@@ -3,143 +3,446 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>たかは市立レンタル高等学校 - 公式ホームページ</title>
+    <title>たかは市立レンタル高等学校 - 公式Webサイト</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Noto+Sans+JP:wght@300;400;500;700&family=Shippori+Mincho:wght@600;800&display=swap" rel="stylesheet">
     <style>
-        body {
-            font-family: 'Hiragino Kaku Gothic ProN', 'メイリオ', sans-serif;
+        :root {
+            --primary: #0f2027;
+            --secondary: #203a43;
+            --accent: #2c5364;
+            --gold: #d4af37;
+            --gold-light: #f3e5ab;
+            --text-dark: #1a1a1a;
+            --text-muted: #555555;
+            --bg-light: #f8f9fa;
+            --white: #ffffff;
+            --danger: #e63946;
+        }
+
+        * {
+            box-sizing: border-box;
             margin: 0;
             padding: 0;
-            background-color: #f4f6f9;
-            color: #333;
         }
+
+        body {
+            font-family: 'Noto Sans JP', sans-serif;
+            background-color: var(--bg-light);
+            color: var(--text-dark);
+            line-height: 1.8;
+            letter-spacing: 0.03em;
+        }
+
+        /* Header / Nav */
         header {
-            background-color: #1a365d;
-            color: white;
-            padding: 2rem 1rem;
-            text-align: center;
-            border-bottom: 5px solid #e53e3e;
+            background: linear-gradient(135deg, var(--primary), var(--secondary), var(--accent));
+            color: var(--white);
+            padding: 1.2rem 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
-        header h1 {
-            margin: 0;
-            font-size: 2.2rem;
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
         }
-        header p {
-            margin-top: 0.5rem;
-            font-size: 1.1rem;
-            color: #feb2b2;
-            font-weight: bold;
+
+        .logo-mark {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--gold), var(--gold-light));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Cinzel', serif;
+            font-weight: 700;
+            color: var(--primary);
+            font-size: 1.2rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
         }
-        .container {
-            max-width: 800px;
-            margin: 2rem auto;
-            padding: 0 1rem;
+
+        .logo-text {
+            font-family: 'Shippori Mincho', serif;
+            font-size: 1.3rem;
+            font-weight: 800;
+            letter-spacing: 0.1em;
+            color: var(--white);
         }
-        .card {
-            background: white;
-            padding: 1.5rem;
-            margin-bottom: 1.5rem;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+
+        nav ul {
+            display: flex;
+            list-style: none;
+            gap: 2rem;
         }
-        h2 {
-            color: #2b6cb0;
-            border-bottom: 2px solid #2b6cb0;
-            padding-bottom: 0.3rem;
-            margin-top: 0;
-        }
-        .badge {
-            background-color: #e53e3e;
-            color: white;
-            padding: 0.2rem 0.6rem;
-            border-radius: 4px;
-            font-size: 0.8rem;
-            font-weight: bold;
-        }
-        .qa {
-            background-color: #edf2f7;
-            padding: 1rem;
-            border-left: 4px solid #4299e1;
-            margin-bottom: 1rem;
-            border-radius: 0 4px 4px 0;
-        }
-        .qa-q {
-            font-weight: bold;
-            color: #2b6cb0;
-        }
-        .qa-a {
-            margin-top: 0.5rem;
-        }
-        .error-box {
-            background-color: #fff5f5;
-            border: 1px dashed #feb2b2;
-            padding: 1rem;
-            color: #c53030;
-            font-family: monospace;
+
+        nav a {
+            color: rgba(255,255,255,0.85);
+            text-decoration: none;
             font-size: 0.9rem;
-            border-radius: 4px;
+            font-weight: 500;
+            transition: all 0.3s ease;
         }
-        footer {
+
+        nav a:hover {
+            color: var(--gold-light);
+        }
+
+        /* Hero Section */
+        .hero {
+            background: linear-gradient(rgba(15, 32, 39, 0.85), rgba(32, 58, 67, 0.9)), 
+                        url('https://images.unsplash.com/photo-1523050854058-8df90110c9f1?q=80&w=1200&auto=format&fit=crop') center/cover no-repeat;
+            color: var(--white);
+            padding: 8rem 2rem 6rem;
             text-align: center;
-            padding: 1.5rem;
-            background-color: #2d3748;
-            color: #a0aec0;
-            font-size: 0.8rem;
+            position: relative;
+        }
+
+        .hero-badge {
+            display: inline-block;
+            background: rgba(212, 175, 55, 0.2);
+            border: 1px solid var(--gold);
+            color: var(--gold-light);
+            padding: 0.4rem 1.2rem;
+            border-radius: 50px;
+            font-size: 0.85rem;
+            letter-spacing: 0.15em;
+            margin-bottom: 1.5rem;
+            text-transform: uppercase;
+        }
+
+        .hero h1 {
+            font-family: 'Shippori Mincho', serif;
+            font-size: 3rem;
+            font-weight: 800;
+            line-height: 1.3;
+            margin-bottom: 1.5rem;
+            text-shadow: 0 4px 15px rgba(0,0,0,0.5);
+        }
+
+        .hero p {
+            font-size: 1.15rem;
+            color: rgba(255,255,255,0.85);
+            max-width: 650px;
+            margin: 0 auto 2.5rem;
+            font-weight: 300;
+        }
+
+        .cta-btn {
+            display: inline-block;
+            background: linear-gradient(135deg, var(--gold), #b89320);
+            color: var(--primary);
+            padding: 1rem 2.5rem;
+            border-radius: 4px;
+            font-weight: 700;
+            text-decoration: none;
+            letter-spacing: 0.1em;
+            box-shadow: 0 4px 15px rgba(212, 175, 55, 0.4);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .cta-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(212, 175, 55, 0.6);
+        }
+
+        /* Container */
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 4rem 1.5rem;
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 3.5rem;
+        }
+
+        .section-header h2 {
+            font-family: 'Shippori Mincho', serif;
+            font-size: 2rem;
+            color: var(--primary);
+            position: relative;
+            display: inline-block;
+            padding-bottom: 0.8rem;
+        }
+
+        .section-header h2::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 40px;
+            height: 3px;
+            background: var(--gold);
+        }
+
+        .section-header p {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            margin-top: 0.5rem;
+        }
+
+        /* Grid Cards */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-bottom: 4rem;
+        }
+
+        .card {
+            background: var(--white);
+            border-radius: 8px;
+            padding: 2.5rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+            border-top: 4px solid var(--accent);
+            transition: transform 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+        }
+
+        .card-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .card h3 {
+            font-family: 'Shippori Mincho', serif;
+            font-size: 1.3rem;
+            color: var(--primary);
+            margin-bottom: 1rem;
+        }
+
+        .card p {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            line-height: 1.7;
+        }
+
+        /* Key Metrics Banner */
+        .metrics-banner {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: var(--white);
+            border-radius: 12px;
+            padding: 3rem 2rem;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 2rem;
+            text-align: center;
+            margin-bottom: 5rem;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+        }
+
+        .metric-item h4 {
+            font-size: 2.5rem;
+            font-family: 'Cinzel', serif;
+            color: var(--gold-light);
+            margin-bottom: 0.3rem;
+        }
+
+        .metric-item p {
+            font-size: 0.85rem;
+            color: rgba(255,255,255,0.7);
+            letter-spacing: 0.05em;
+        }
+
+        /* System Error Callout Box */
+        .error-callout {
+            background: #fff;
+            border-left: 4px solid var(--danger);
+            border-radius: 6px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.06);
+            margin-bottom: 4rem;
+        }
+
+        .error-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--danger);
+            font-weight: 700;
+            font-size: 1rem;
+            margin-bottom: 1rem;
+            letter-spacing: 0.05em;
+        }
+
+        .error-body {
+            background: #fdf2f2;
+            padding: 1.2rem 1.5rem;
+            border-radius: 4px;
+            font-family: 'Courier New', Courier, monospace;
+            color: #9b1c1c;
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
+
+        /* Admission Section */
+        .admission-box {
+            background: var(--white);
+            border-radius: 12px;
+            padding: 3rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+            margin-bottom: 4rem;
+        }
+
+        .admission-list {
+            list-style: none;
+            margin-top: 1.5rem;
+        }
+
+        .admission-list li {
+            position: relative;
+            padding-left: 2rem;
+            margin-bottom: 1.2rem;
+            font-size: 1rem;
+            color: var(--text-dark);
+        }
+
+        .admission-list li::before {
+            content: '◆';
+            position: absolute;
+            left: 0;
+            color: var(--gold);
+            font-size: 0.9rem;
+        }
+
+        /* Footer */
+        footer {
+            background: var(--primary);
+            color: rgba(255,255,255,0.6);
+            padding: 3rem 2rem 2rem;
+            text-align: center;
+            font-size: 0.85rem;
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .copyright {
+            color: rgba(255,255,255,0.4);
+            margin-top: 1.5rem;
+            font-size: 0.75rem;
+        }
+
+        @media (max-width: 768px) {
+            .hero h1 { font-size: 2rem; }
+            .metrics-banner { grid-template-columns: 1fr; gap: 1.5rem; }
+            nav { display: none; }
         }
     </style>
 </head>
 <body>
 
 <header>
-    <h1>たかは市立レンタル高等学校</h1>
-    <p>〜 マシュへへマタティカリィ・コレクトな未来を、あなたに 〜</p>
+    <div class="logo-container">
+        <div class="logo-mark">TR</div>
+        <div class="logo-text">たかは市立レンタル高等学校</div>
+    </div>
+    <nav>
+        <ul>
+            <li><a href="#about">学校概要</a></li>
+            <li><a href="#features">教育の特徴</a></li>
+            <li><a href="#admission">入試情報</a></li>
+        </ul>
+    </nav>
 </header>
+
+<section class="hero">
+    <span class="hero-badge">Municipal Rental High School</span>
+    <h1>未来を、レンタルで切り拓く。</h1>
+    <p>マシュへへマタティカリィ・コレクトな理念のもと、従来の学力観に縛られない「圧倒的個性の逸材」を社会へと貸し出します。</p>
+    <a href="#admission" class="cta-btn">令和9年度 入試要項を見る</a>
+</section>
 
 <div class="container">
 
-    <div class="card">
-        <h2>🏫 校長あいさつ</h2>
-        <p>当校は、偏差値の概念を超越した<b>FFFラン最高峰</b>の学びやです。数学3点・理科2点といった常識にとらわれない柔軟な思考力を持つ「逸材」を全力でレンタルしております。</p>
-        <p>「市立ゴミゴミ」や「私立害害国際寺田」との併願をお考えの受験生も、安心して当校へお流れてきてください。</p>
+    <!-- Key Metrics -->
+    <div class="metrics-banner">
+        <div class="metric-item">
+            <h4>FFF</h4>
+            <p>RANKING (異次元級)</p>
+        </div>
+        <div class="metric-item">
+            <h4>100%</h4>
+            <p>PASS RATE (判定A)</p>
+        </div>
+        <div class="metric-item">
+            <h4>5.2σ</h4>
+            <p>STANDARD DEVIATION</p>
+        </div>
     </div>
 
-    <div class="card">
-        <h2>📝 令和9年度 自己推薦入試要項 <span class="badge">合格率100%</span></h2>
-        <ul>
-            <li><b>募集人員：</b> 志望理由書に「レンタルするため」と書いた人全員</li>
-            <li><b>選考方法：</b> 
-                <ul>
-                    <li>ドアへの<b>爆音1回ノック</b>審査</li>
-                    <li>椅子への<b>ジャンプ着席</b>および覇気チェック</li>
-                    <li>面接官からの意味不明な質疑応答</li>
-                </ul>
-            </li>
-            <li><b>出願資格：</b> 平均より標準偏差の5.2倍程度悪い成績をお持ちの方</li>
+    <!-- Features -->
+    <div class="section-header" id="about">
+        <h2>教育理念・特徴</h2>
+        <p>学力偏差値のバリアをフリーにした、新時代の学習空間</p>
+    </div>
+
+    <div class="grid" id="features">
+        <div class="card">
+            <div class="card-icon">🏛️</div>
+            <h3>完全バリアフリー校風</h3>
+            <p>当校では偏差値による段差（バリア）を一切撤去しております。数学3点・理科2点といった従来の枠組みに収まらない柔軟な発想力を評価いたします。</p>
+        </div>
+        <div class="card">
+            <div class="card-icon">🤝</div>
+            <h3>併願校からの華麗な接続</h3>
+            <p>「市立ゴミゴミ」や「私立害害国際寺田」を志望される受験生の皆様に、最も確実で洗練されたセーフティネット（第二志望）として機能します。</p>
+        </div>
+        <div class="card">
+            <div class="card-icon">✨</div>
+            <h3>校長推薦・即時承認</h3>
+            <p>出身中学校の校長先生が「貴校の求める逸材です」と笑顔で太鼓判を押して推薦書を作成できるよう、全面的なサポート体制を整えています。</p>
+        </div>
+    </div>
+
+    <!-- Error Alert Box -->
+    <div class="error-callout">
+        <div class="error-header">
+            ⚠️ 8月レンタル模試 システム判定に関する公式見解
+        </div>
+        <p style="margin-bottom: 1rem; color: var(--text-muted); font-size: 0.95rem;">
+            当校を受験される皆様の模試成績表において、一部の解析システムが動作を停止する事象が報告されております。
+        </p>
+        <div class="error-body">
+            [SYSTEM_NOTICE]: ある意味凄すぎる成績であるため、詳細な分析データーおよびグラフを作成できませんでした。<br>
+            諦めて『たかは市立レンタル高校』へ向かってください。当模試ではこれ以上のアドバイスを作成できませんでした。
+        </div>
+    </div>
+
+    <!-- Admission -->
+    <div class="section-header" id="admission">
+        <h2>令和9年度 自己推薦入試</h2>
+        <p>選考基準は「覇気」と「レンタルへの強い情熱」</p>
+    </div>
+
+    <div class="admission-box">
+        <h3 style="font-family: 'Shippori Mincho', serif; color: var(--primary); font-size: 1.4rem;">出願・選考プロセス</h3>
+        <ul class="admission-list">
+            <li><b>出願資格：</b> 志望理由書に「レンタルするため」と明確に記載された方（平均より標準偏差の5.2倍程度離れた成績を推奨）。</li>
+            <li><b>面接審査：</b> 面接室への突入時に「爆音1回ノック」を披露していただきます。</li>
+            <li><b>着席審査：</b> 面接官の提示する椅子へ「覇気を纏ったジャンプ着席」を行っていただきます。</li>
+            <li><b>質疑応答：</b> 「マシュへへマタティカリィ・コレクト」に関する意味不明な質問に答えていただきます。</li>
         </ul>
-    </div>
-
-    <div class="card">
-        <h2>❓ よくある質問（Q&A）</h2>
-        
-        <div class="qa">
-            <div class="qa-q">Q. 偏差値はどれくらいですか？</div>
-            <div class="qa-a">A. ボーダーフリー（BF）を超越した<b>FFFランク</b>となっております。模試の判定結果が「FFFFF」の方でも安心してご受験いただけます。</div>
-        </div>
-
-        <div class="qa">
-            <div class="qa-q">Q. 成績表のグラフが生成されなかったのですが…</div>
-            <div class="qa-a">
-                A. ご安心ください。当校の受験生の大半が以下のエラーを出力しております。
-                <div class="error-box" style="margin-top: 0.5rem;">
-                    [SYSTEM ERROR] ある意味凄すぎる成績であるため、グラフおよび詳細な分析データーを作成できませんでした。諦めて『たかは市立レンタル高校』へ向かってください。
-                </div>
-            </div>
-        </div>
     </div>
 
 </div>
 
 <footer>
-    &copy; 2026 たかは市立レンタル高等学校 All Rights Reserved. (※このサイトは完全なるジョークです)
+    <p><b>たかは市立レンタル高等学校</b></p>
+    <p>〒000-0000 レンタル県たかは市立ゴミゴミ区寺田 1-2-3</p>
+    <p class="copyright">&copy; 2026 Takahashicity Municipal Rental High School. All rights reserved. (※本Webサイトはジョークコンテンツです)</p>
 </footer>
 
 </body>
