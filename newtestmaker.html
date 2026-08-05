@@ -264,32 +264,33 @@
     .question-score { margin-left: 10px; white-space: nowrap; }
     .katex { font-size: 1.05em !important; }
 
-    /* --- 印刷設定（改ページ余白問題の解決） --- */
+    /* --- 印刷設定 --- */
     @media print {
-      @page { 
-        size: A4 portrait; 
-        margin: 20mm 18mm; /* 紙本来の印刷余白を定義！これで途中改ページでも絶対に余白が確保される */
-      }
       body { 
         background: none; 
         padding: 0; 
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
       }
       .controls, .page-tag { 
         display: none !important; 
       }
       
-      /* 通常のページ */
+      @page { 
+        size: A4 portrait; 
+        margin: 20mm 18mm;
+      }
+
       .paper { 
         box-shadow: none; 
         width: 100% !important; 
         min-height: auto !important;
         margin: 0 !important; 
-        padding: 0 !important; /* 余白は @page に任せる */
+        padding: 0 !important;
       }
       
-      /* 表紙ページ専用：@pageの余白分外側に引っ張ってA4いっぱいに枠を広げる */
       .cover-paper {
-        height: 257mm !important; /* 297mm - 40mm (上下余白) */
+        height: 257mm !important;
         margin: 0 !important;
         padding: 10mm !important;
         box-sizing: border-box;
@@ -300,7 +301,7 @@
 <body>
 
   <div class="controls">
-    <h2>数学 模試レンダラー</h2>
+    <h2>数学 模試レンダラー (A4版)</h2>
     
     <h3>1. レイアウト設定</h3>
     <div class="setting-group">
@@ -326,13 +327,17 @@
       </div>
     </div>
 
-    <h3>2. 表紙（カバーページ）設定</h3>
+    <h3>2. 出力・表紙設定</h3>
     <div class="setting-group">
-      <div class="setting-item full">
+      <div class="setting-item">
         <input type="checkbox" id="showCoverCheck" checked onchange="toggleCoverUI(); renderExam();">
         <label for="showCoverCheck">表紙を出力する</label>
       </div>
-      <div class="cover-input-grid" id="coverFields">
+      <div class="setting-item" style="margin-left: 20px;">
+        <input type="checkbox" id="showAnswersCheck" checked onchange="renderExam();">
+        <label for="showAnswersCheck" style="color: #0066cc;">解答・解説を出力する</label>
+      </div>
+      <div class="cover-input-grid" id="coverFields" style="margin-top: 10px;">
         <input type="text" id="coverTitleInput" value="第1回 模試風数学テスト" placeholder="テストタイトル" oninput="renderExam()">
         <input type="text" id="coverSubTitleInput" value="中学3年 数学" placeholder="サブタイトル" oninput="renderExam()">
         <input type="text" id="coverTimeInput" value="時間: 50分" placeholder="試験時間" oninput="renderExam()">
@@ -345,10 +350,12 @@
 
     <h3>3. 問題データ (JSON)</h3>
     <textarea id="jsonInput"></textarea>
-    
+          <h3>4. データ変換(A3冊子PDF化をする場合)</h3>
+<a href="https://a1-trust.online/pdf-cov-a3-v0.html">コンバーター</a>
     <div class="btn-group">
       <button onclick="renderExam()">レンダリング実行</button>
       <button onclick="window.print()" style="background-color:#28a745;">印刷 / PDF保存</button>
+
     </div>
   </div>
 
@@ -510,6 +517,7 @@
         container.innerHTML = "";
 
         const showCover = document.getElementById('showCoverCheck').checked;
+        const showAnswers = document.getElementById('showAnswersCheck').checked;
         let pages = [];
 
         // 1. 表紙
@@ -568,35 +576,37 @@
           });
         });
 
-        // 3. 解答解説
-        let ansHtml = `
-          <div class="section-block">
-            <div class="section-header-container">
-              <div class="section-header-left">
-                <div class="section-title">【解答・解説】</div>
-              </div>
-            </div>
-            <div class="answer-list">
-        `;
-        sections.forEach((sec) => {
-          if (sec.answers && sec.answers.length > 0) {
-            sec.answers.forEach(ans => {
-              ansHtml += `
-                <div class="answer-item">
-                  <div class="answer-header">大問${sec.sectionNumber} - 問題 ${ans.num}</div>
-                  <div class="answer-result">【答え】 ${formatSafeText(ans.result)}</div>
-                  <div class="answer-explanation">【解説】<br>${formatSafeText(ans.explanation)}</div>
+        // 3. 解答解説 (チェックされている時だけ追加)
+        if (showAnswers) {
+          let ansHtml = `
+            <div class="section-block">
+              <div class="section-header-container">
+                <div class="section-header-left">
+                  <div class="section-title">【解答・解説】</div>
                 </div>
-              `;
-            });
-          }
-        });
-        ansHtml += `</div></div>`;
+              </div>
+              <div class="answer-list">
+          `;
+          sections.forEach((sec) => {
+            if (sec.answers && sec.answers.length > 0) {
+              sec.answers.forEach(ans => {
+                ansHtml += `
+                  <div class="answer-item">
+                    <div class="answer-header">大問${sec.sectionNumber} - 問題 ${ans.num}</div>
+                    <div class="answer-result">【答え】 ${formatSafeText(ans.result)}</div>
+                    <div class="answer-explanation">【解説】<br>${formatSafeText(ans.explanation)}</div>
+                  </div>
+                `;
+              });
+            }
+          });
+          ansHtml += `</div></div>`;
 
-        pages.push({
-          type: 'answer',
-          html: ansHtml
-        });
+          pages.push({
+            type: 'answer',
+            html: ansHtml
+          });
+        }
 
         // DOMレンダリング
         pages.forEach((p, index) => {
