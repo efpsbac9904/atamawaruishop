@@ -1,0 +1,181 @@
+
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>A4 PDF → A3小冊子(中綴じ) 変換ツール</title>
+  <!-- pdf-lib ライブラリ (PDFの操作用) -->
+  <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+  <style>
+    body {
+      font-family: sans-serif;
+      background: #f4f5f7;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+    }
+    .card {
+      background: #fff;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+      width: 480px;
+      text-align: center;
+    }
+    h1 { font-size: 1.3rem; color: #333; margin-top: 0; }
+    p { font-size: 0.9rem; color: #666; line-height: 1.5; }
+    
+    .drop-zone {
+      border: 2px dashed #0066cc;
+      border-radius: 8px;
+      padding: 40px 20px;
+      margin: 20px 0;
+      background: #f8fafd;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .drop-zone:hover, .drop-zone.dragover {
+      background: #e6f0fa;
+    }
+    .drop-zone p {
+      margin: 0;
+      font-weight: bold;
+      color: #0066cc;
+    }
+    input[type="file"] { display: none; }
+
+    .status {
+      margin-top: 15px;
+      font-weight: bold;
+      font-size: 0.9rem;
+      color: #28a745;
+    }
+    .error { color: #dc3545; }
+  </style>
+</head>
+<body>
+
+  <div class="card">
+    <h1>📄 A4 PDF → A3小冊子 変換器</h1>
+    <p>A4のPDFをドロップするだけで、真ん中で折ればそのまま小冊子（中綴じ）になるA3見開きPDFに変換します。</p>
+
+    <div class="drop-zone" id="dropZone" onclick="document.getElementById('fileInput').click()">
+      <p>ここに A4 PDF をドラッグ＆ドロップ<br><span style="font-size:0.8rem; font-weight:normal; color:#888;">またはクリックして選択</span></p>
+      <input type="file" id="fileInput" accept="application/pdf">
+    </div>
+
+    <div id="status" class="status"></div>
+  </div>
+
+  <script>
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('fileInput');
+    const status = document.getElementById('status');
+
+    // ドラッグ＆ドロップ処理
+    dropZone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      dropZone.classList.add('dragover');
+    });
+    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+    dropZone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropZone.classList.remove('dragover');
+      const files = e.dataTransfer.files;
+      if (files.length > 0 && files[0].type === 'application/pdf') {
+        processPDF(files[0]);
+      } else {
+        showStatus('PDFファイルを選択してください！', true);
+      }
+    });
+
+    fileInput.addEventListener('change', (e) => {
+      if (e.target.files.length > 0) {
+        processPDF(e.target.files[0]);
+      }
+    });
+
+    function showStatus(text, isError = false) {
+      status.innerText = text;
+      status.className = `status ${isError ? 'error' : ''}`;
+    }
+
+    async function processPDF(file) {
+      try {
+        showStatus('PDFを変換中...');
+        const arrayBuffer = await file.arrayBuffer();
+        const srcDoc = await PDFLib.PDFDocument.load(arrayBuffer);
+        const pageCount = srcDoc.getPageCount();
+
+        // 総ページ数を4の倍数に繰り上げ（足りない分は白紙）
+        const totalPages = Math.ceil(pageCount / 4) * 4;
+
+        // 新しいA3横向きのPDFを作成 (A3: 1190.55 x 841.89 pt)
+        const pdfDoc = await PDFLib.PDFDocument.create();
+        const a3Width = 1190.55;
+        const a3Height = 841.89;
+        const halfWidth = a3Width / 2;
+
+        // 全ページを組み込めるように元PDFの全ページを埋め込み化
+        const embeddedPages = await pdfDoc.embedPdf(srcDoc, srcDoc.getPageIndices());
+
+        // 面付け（中綴じ）アルゴリズム
+        // 用紙1枚目 表: [N, 1], 裏: [2, N-1] ...
+        for (let i = 0; i < totalPages / 2; i += 2) {
+          // --- 表ページ (Front) ---
+          const frontPage = pdfDoc.addPage([a3Width, a3Height]);
+          
+          // 左側: N - i ページ目
+          const leftIdxFront = totalPages - 1 - i;
+          if (leftIdxFront < pageCount) {
+            frontPage.drawPage(embeddedPages[leftIdxFront], {
+              x: 0, y: 0, width: halfWidth, height: a3Height
+            });
+          }
+          // 右側: i + 1 ページ目
+          const rightIdxFront = i;
+          if (rightIdxFront < pageCount) {
+            frontPage.drawPage(embeddedPages[rightIdxFront], {
+              x: halfWidth, y: 0, width: halfWidth, height: a3Height
+            });
+          }
+
+          // --- 裏ページ (Back) ---
+          const backPage = pdfDoc.addPage([a3Width, a3Height]);
+
+          // 左側: i + 2 ページ目
+          const leftIdxBack = i + 1;
+          if (leftIdxBack < pageCount) {
+            backPage.drawPage(embeddedPages[leftIdxBack], {
+              x: 0, y: 0, width: halfWidth, height: a3Height
+            });
+          }
+          // 右側: N - 1 - i ページ目
+          const rightIdxBack = totalPages - 2 - i;
+          if (rightIdxBack < pageCount) {
+            backPage.drawPage(embeddedPages[rightIdxBack], {
+              x: halfWidth, y: 0, width: halfWidth, height: a3Height
+            });
+          }
+        }
+
+        // PDFのダウンロード処理
+        const pdfBytes = await pdfDoc.save();
+        const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = file.name.replace('.pdf', '_A3小冊子.pdf');
+        link.click();
+
+        showStatus('変換完了！ダウンロードされたよ🎉');
+      } catch (err) {
+        console.error(err);
+        showStatus('エラーが発生したよ。ファイルを確認してね。', true);
+      }
+    }
+  </script>
+</body>
+</html>
