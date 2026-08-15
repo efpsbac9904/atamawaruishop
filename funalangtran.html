@@ -74,7 +74,7 @@
                     <textarea 
                         id="inputText" 
                         class="w-full p-4 border-2 border-teal-100 rounded-2xl focus:ring-2 focus:ring-teal-400 focus:border-teal-400 outline-none transition text-base shadow-inner bg-slate-50/50"
-                        placeholder="変換したい文章を入力..."
+                        placeholder="変換したい文章を入力（例: あいうえお、123、^_^ など）..."
                     ></textarea>
                 </div>
 
@@ -124,8 +124,12 @@
 
     <!-- 置換ロジックの実装 -->
     <script>
-        // 内部変換ルール（画面には非表示）
-        const rawRules = "1q,2w,3e,4r,5t,6y,7u,8i,9o,0p,-a,/s,:d,@f,(g,)h,「j,」k,¥l,&ー,！n,？b,、v,。c";
+        // 内部変換ルール（数字・記号に加え、ひらがな・カタカナもカバー）
+        const rawRules = "1q,2w,3e,4r,5t,6y,7u,8i,9o,0p,-a,/s,:d,@f,(g,)h,「j,」k,¥l,&ー,！n,？b,、v,。c," + 
+                         "ぬq,ふw,あe,えt,おy,やu,ゆi,よo,わp,たa,てs,いd,かf,きg,くh,まj,のk,りl," +
+                         "つz,さx,そc,ひv,こb,みn,もm,ぁe,ぃd,ぅr,ぇt,ぉy,ゃu,ゅi,ょo,っz," +
+                         "ヌq,フw,アe,ウr,エt,オy,ヤu,ユi,ヨo,ワp,タa,テs,イd,カf,キg,クh,マj,ノk,リl," +
+                         "ツz,サx,ソc,ヒv,コb,ミn,モm,ァe,ィd,ゥr,ェt,ォy,ャu,ュi,ョo,ッz";
         
         // 翻訳モード ('normal' or 'reverse')
         let currentMode = 'normal';
