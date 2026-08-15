@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Funa語 翻訳機</title>
+    <!-- Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        textarea {
+            resize: vertical;
+            min-height: 130px;
+        }
+        /* スクロールバーのカスタマイズ */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-amber-50 via-teal-50 to-sky-100 text-slate-800 min-h-screen flex flex-col justify-between font-sans antialiased">
+
+    <!-- ヘッダー -->
+    <header class="bg-teal-600 text-white shadow-md border-b-4 border-amber-400">
+        <div class="max-w-4xl mx-auto px-4 py-4 flex justify-between items-center">
+            <h1 class="text-xl sm:text-2xl font-black tracking-wider flex items-center gap-2">
+                <span class="text-2xl animate-bounce">🐟</span> Funa語翻訳機
+            </h1>
+            <span class="text-xs bg-amber-400 text-teal-950 font-bold px-3 py-1 rounded-full shadow-sm">
+                Funa-AI Engine v2.0
+            </span>
+        </div>
+    </header>
+
+    <!-- メインコンテンツ -->
+    <main class="max-w-4xl w-full mx-auto px-4 py-6 flex-grow">
+        <div class="bg-white/90 backdrop-blur rounded-3xl shadow-xl border border-teal-100 p-6 md:p-8 space-y-6">
+            
+            <!-- 方向切り替えスイッチ -->
+            <div class="flex flex-col sm:flex-row items-center justify-between gap-4 bg-teal-50/80 p-4 rounded-2xl border border-teal-100">
+                <div class="flex items-center gap-3">
+                    <span class="text-2xl">🌊</span>
+                    <div>
+                        <p class="font-bold text-teal-950 text-sm sm:text-base">翻訳モード選択</p>
+                        <p class="text-xs text-teal-700" id="directionDesc">人類語をFuna語に変換します</p>
+                    </div>
+                </div>
+                
+                <div class="flex bg-white rounded-xl p-1.5 border border-teal-200 w-full sm:w-auto shadow-inner">
+                    <button id="normalModeBtn" class="flex-1 sm:flex-none px-4 py-2 text-sm font-bold rounded-lg transition-all duration-200 bg-teal-600 text-white shadow">
+                        人類語 ➔ Funa語
+                    </button>
+                    <button id="reverseModeBtn" class="flex-1 sm:flex-none px-4 py-2 text-sm font-bold rounded-lg transition-all duration-200 text-teal-700 hover:text-teal-900">
+                        Funa語 ➔ 人類語
+                    </button>
+                </div>
+            </div>
+
+            <!-- 入力と出力エリア -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- 入力側 -->
+                <div class="flex flex-col space-y-2">
+                    <label for="inputText" class="text-sm font-bold text-teal-900 flex justify-between items-center">
+                        <span id="inputLabel">人類語を入力</span>
+                        <span id="inputCharCount" class="text-xs text-slate-400 font-mono">0 文字</span>
+                    </label>
+                    <textarea 
+                        id="inputText" 
+                        class="w-full p-4 border-2 border-teal-100 rounded-2xl focus:ring-2 focus:ring-teal-400 focus:border-teal-400 outline-none transition text-base shadow-inner bg-slate-50/50"
+                        placeholder="変換したい文章を入力..."
+                    ></textarea>
+                </div>
+
+                <!-- 出力側 -->
+                <div class="flex flex-col space-y-2">
+                    <label for="outputText" class="text-sm font-bold text-teal-900 flex justify-between items-center">
+                        <span id="outputLabel">Funa語の翻訳結果</span>
+                        <span id="outputCharCount" class="text-xs text-slate-400 font-mono">0 文字</span>
+                    </label>
+                    <textarea 
+                        id="outputText" 
+                        readonly
+                        class="w-full p-4 border-2 border-teal-100 rounded-2xl bg-teal-50/30 focus:outline-none text-base cursor-default font-medium text-teal-950 shadow-inner"
+                        placeholder="ここにFuna語が表示されます..."
+                    ></textarea>
+                </div>
+            </div>
+
+            <!-- アクションエリア -->
+            <div class="flex flex-wrap gap-3 pt-2">
+                <button 
+                    id="copyBtn"
+                    class="flex-1 sm:flex-initial px-6 py-3.5 bg-teal-600 hover:bg-teal-700 active:bg-teal-800 text-white font-bold rounded-2xl transition shadow-md hover:shadow-lg flex justify-center items-center gap-2 touch-manipulation"
+                >
+                    <span>📋</span> 翻訳結果をコピー
+                </button>
+                <button 
+                    id="clearBtn"
+                    class="px-6 py-3.5 bg-slate-100 hover:bg-slate-200 active:bg-slate-300 text-slate-600 font-bold rounded-2xl transition flex justify-center items-center gap-2 touch-manipulation"
+                >
+                    <span>🧹</span> クリア
+                </button>
+            </div>
+
+            <!-- コピートースト通知 -->
+            <div id="toast" class="fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-teal-900 text-amber-300 px-6 py-3 rounded-full text-sm font-bold shadow-2xl opacity-0 pointer-events-none transition-all duration-300 flex items-center gap-2 border border-amber-400">
+                <span>🐟</span> コピーしました！
+            </div>
+
+        </div>
+    </main>
+
+    <!-- フッター -->
+    <footer class="bg-teal-950 text-teal-200/70 text-xs py-4 text-center border-t border-teal-900">
+        <p>© 2026 Funa語翻訳委員会. All rights reserved.</p>
+    </footer>
+
+    <!-- 置換ロジックの実装 -->
+    <script>
+        // 内部変換ルール（画面には非表示）
+        const rawRules = "1q,2w,3e,4r,5t,6y,7u,8i,9o,0p,-a,/s,:d,@f,(g,)h,「j,」k,¥l,&ー,！n,？b,、v,。c";
+        
+        // 翻訳モード ('normal' or 'reverse')
+        let currentMode = 'normal';
+
+        // 内部マッピングマップ
+        const normalMap = {};
+        const reverseMap = {};
+
+        // ルール構築
+        rawRules.split(',').forEach(rule => {
+            if (rule.length >= 2) {
+                const left = rule.charAt(0);
+                const right = rule.substring(1);
+                
+                normalMap[left] = right;
+                reverseMap[right] = left;
+            }
+        });
+
+        // DOM要素
+        const inputText = document.getElementById('inputText');
+        const outputText = document.getElementById('outputText');
+        const copyBtn = document.getElementById('copyBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        const inputCharCount = document.getElementById('inputCharCount');
+        const outputCharCount = document.getElementById('outputCharCount');
+        const toast = document.getElementById('toast');
+        const normalModeBtn = document.getElementById('normalModeBtn');
+        const reverseModeBtn = document.getElementById('reverseModeBtn');
+        const directionDesc = document.getElementById('directionDesc');
+        const inputLabel = document.getElementById('inputLabel');
+        const outputLabel = document.getElementById('outputLabel');
+
+        // 置換処理
+        function performReplacement(text) {
+            if (!text) return '';
+
+            if (currentMode === 'normal') {
+                // 人類語 ➔ Funa語: 1. 「^_^」 -> 「m」
+                let processedText = text.split('^_^').join('m');
+                // 2. 残りをマッピング
+                let result = '';
+                for (let i = 0; i < processedText.length; i++) {
+                    const char = processedText[i];
+                    if (normalMap.hasOwnProperty(char)) {
+                        result += normalMap[char];
+                    } else {
+                        result += char;
+                    }
+                }
+                return result;
+            } else {
+                // Funa語 ➔ 人類語: 1. 「m」 -> 「^_^」
+                let processedText = text.split('m').join('^_^');
+                // 2. 残りをマッピング
+                let result = '';
+                for (let i = 0; i < processedText.length; i++) {
+                    const char = processedText[i];
+                    if (reverseMap.hasOwnProperty(char)) {
+                        result += reverseMap[char];
+                    } else {
+                        result += char;
+                    }
+                }
+                return result;
+            }
+        }
+
+        // テキスト更新処理
+        function updateConversion() {
+            const inputVal = inputText.value;
+            const outputVal = performReplacement(inputVal);
+            outputText.value = outputVal;
+            inputCharCount.textContent = `${inputVal.length} 文字`;
+            outputCharCount.textContent = `${outputVal.length} 文字`;
+        }
+
+        // モード設定
+        function setMode(mode) {
+            currentMode = mode;
+            if (mode === 'normal') {
+                normalModeBtn.className = "flex-1 sm:flex-none px-4 py-2 text-sm font-bold rounded-lg transition-all duration-200 bg-teal-600 text-white shadow";
+                reverseModeBtn.className = "flex-1 sm:flex-none px-4 py-2 text-sm font-bold rounded-lg transition-all duration-200 text-teal-700 hover:text-teal-900";
+                
+                directionDesc.textContent = "人類語をFuna語に変換します";
+                inputLabel.textContent = "人類語を入力";
+                outputLabel.textContent = "Funa語の翻訳結果";
+            } else {
+                normalModeBtn.className = "flex-1 sm:flex-none px-4 py-2 text-sm font-bold rounded-lg transition-all duration-200 text-teal-700 hover:text-teal-900";
+                reverseModeBtn.className = "flex-1 sm:flex-none px-4 py-2 text-sm font-bold rounded-lg transition-all duration-200 bg-teal-600 text-white shadow";
+                
+                directionDesc.textContent = "Funa語を人類語に解読します";
+                inputLabel.textContent = "Funa語を入力";
+                outputLabel.textContent = "人類語への解読結果";
+            }
+            updateConversion();
+        }
+
+        // イベントリスナー
+        normalModeBtn.addEventListener('click', () => setMode('normal'));
+        reverseModeBtn.addEventListener('click', () => setMode('reverse'));
+        inputText.addEventListener('input', updateConversion);
+
+        // コピーボタン
+        copyBtn.addEventListener('click', () => {
+            if (!outputText.value) return;
+            
+            try {
+                outputText.select();
+                document.execCommand('copy');
+                window.getSelection().removeAllRanges();
+
+                toast.classList.remove('opacity-0', 'pointer-events-none');
+                toast.classList.add('opacity-100');
+                
+                setTimeout(() => {
+                    toast.classList.remove('opacity-100');
+                    toast.classList.add('opacity-0', 'pointer-events-none');
+                }, 2000);
+            } catch (err) {
+                console.error('コピー失敗', err);
+            }
+        });
+
+        // クリアボタン
+        clearBtn.addEventListener('click', () => {
+            inputText.value = '';
+            outputText.value = '';
+            inputCharCount.textContent = '0 文字';
+            outputCharCount.textContent = '0 文字';
+            inputText.focus();
+        });
+
+        // 初期化
+        setMode('normal');
+    </script>
+</body>
+</html>
+
