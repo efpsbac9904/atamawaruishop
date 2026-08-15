@@ -74,7 +74,7 @@
                     <textarea 
                         id="inputText" 
                         class="w-full p-4 border-2 border-teal-100 rounded-2xl focus:ring-2 focus:ring-teal-400 focus:border-teal-400 outline-none transition text-base shadow-inner bg-slate-50/50"
-                        placeholder="変換したい文章を入力（例: あいうえお、123、^_^ など）..."
+                        placeholder="人類語を入力（例: wem）..."
                     ></textarea>
                 </div>
 
@@ -124,28 +124,26 @@
 
     <!-- 置換ロジックの実装 -->
     <script>
-        // 内部変換ルール（数字・記号に加え、ひらがな・カタカナもカバー）
-        const rawRules = "1q,2w,3e,4r,5t,6y,7u,8i,9o,0p,-a,/s,:d,@f,(g,)h,「j,」k,¥l,&ー,！n,？b,、v,。c," + 
-                         "ぬq,ふw,あe,えt,おy,やu,ゆi,よo,わp,たa,てs,いd,かf,きg,くh,まj,のk,りl," +
-                         "つz,さx,そc,ひv,こb,みn,もm,ぁe,ぃd,ぅr,ぇt,ぉy,ゃu,ゅi,ょo,っz," +
-                         "ヌq,フw,アe,ウr,エt,オy,ヤu,ユi,ヨo,ワp,タa,テs,イd,カf,キg,クh,マj,ノk,リl," +
-                         "ツz,サx,ソc,ヒv,コb,ミn,モm,ァe,ィd,ゥr,ェt,ォy,ャu,ュi,ョo,ッz";
+        // 元通りの変換ルール（画面には非表示）
+        const rawRules = "1q,2w,3e,4r,5t,6y,7u,8i,9o,0p,-a,/s,:d,@f,(g,)h,「j,」k,¥l,&ー,！n,？b,、v,。c";
         
-        // 翻訳モード ('normal' or 'reverse')
-        let currentMode = 'normal';
+        // 翻訳モード ('humanToFuna' or 'funaToHuman')
+        let currentMode = 'humanToFuna';
 
-        // 内部マッピングマップ
-        const normalMap = {};
-        const reverseMap = {};
+        // マッピング辞書
+        // left = Funa語 (例: 1, 2, 3, ^_^)
+        // right = 人類語 (例: q, w, e, m)
+        const funaToHumanMap = {};
+        const humanToFunaMap = {};
 
         // ルール構築
         rawRules.split(',').forEach(rule => {
             if (rule.length >= 2) {
-                const left = rule.charAt(0);
-                const right = rule.substring(1);
+                const funaChar = rule.charAt(0);
+                const humanChar = rule.substring(1);
                 
-                normalMap[left] = right;
-                reverseMap[right] = left;
+                funaToHumanMap[funaChar] = humanChar;
+                humanToFunaMap[humanChar] = funaChar;
             }
         });
 
@@ -167,29 +165,29 @@
         function performReplacement(text) {
             if (!text) return '';
 
-            if (currentMode === 'normal') {
-                // 人類語 ➔ Funa語: 1. 「^_^」 -> 「m」
-                let processedText = text.split('^_^').join('m');
-                // 2. 残りをマッピング
+            if (currentMode === 'humanToFuna') {
+                // 人類語 ➔ Funa語 : 1. 「m」 -> 「^_^」
+                let processedText = text.split('m').join('^_^');
+                // 2. 残りの人類語（アルファベット等）をFuna語（記号）にマッピング
                 let result = '';
                 for (let i = 0; i < processedText.length; i++) {
                     const char = processedText[i];
-                    if (normalMap.hasOwnProperty(char)) {
-                        result += normalMap[char];
+                    if (humanToFunaMap.hasOwnProperty(char)) {
+                        result += humanToFunaMap[char];
                     } else {
                         result += char;
                     }
                 }
                 return result;
             } else {
-                // Funa語 ➔ 人類語: 1. 「m」 -> 「^_^」
-                let processedText = text.split('m').join('^_^');
-                // 2. 残りをマッピング
+                // Funa語 ➔ 人類語 : 1. 「^_^」 -> 「m」
+                let processedText = text.split('^_^').join('m');
+                // 2. 残りのFuna語（記号）を人類語（アルファベット等）にマッピング
                 let result = '';
                 for (let i = 0; i < processedText.length; i++) {
                     const char = processedText[i];
-                    if (reverseMap.hasOwnProperty(char)) {
-                        result += reverseMap[char];
+                    if (funaToHumanMap.hasOwnProperty(char)) {
+                        result += funaToHumanMap[char];
                     } else {
                         result += char;
                     }
@@ -210,13 +208,15 @@
         // モード設定
         function setMode(mode) {
             currentMode = mode;
-            if (mode === 'normal') {
+            if (mode === 'humanToFuna') {
                 normalModeBtn.className = "flex-1 sm:flex-none px-4 py-2 text-sm font-bold rounded-lg transition-all duration-200 bg-teal-600 text-white shadow";
                 reverseModeBtn.className = "flex-1 sm:flex-none px-4 py-2 text-sm font-bold rounded-lg transition-all duration-200 text-teal-700 hover:text-teal-900";
                 
                 directionDesc.textContent = "人類語をFuna語に変換します";
                 inputLabel.textContent = "人類語を入力";
                 outputLabel.textContent = "Funa語の翻訳結果";
+                inputText.placeholder = "人類語を入力（例: wem）...";
+                outputText.placeholder = "ここにFuna語が表示されます...";
             } else {
                 normalModeBtn.className = "flex-1 sm:flex-none px-4 py-2 text-sm font-bold rounded-lg transition-all duration-200 text-teal-700 hover:text-teal-900";
                 reverseModeBtn.className = "flex-1 sm:flex-none px-4 py-2 text-sm font-bold rounded-lg transition-all duration-200 bg-teal-600 text-white shadow";
@@ -224,13 +224,15 @@
                 directionDesc.textContent = "Funa語を人類語に解読します";
                 inputLabel.textContent = "Funa語を入力";
                 outputLabel.textContent = "人類語への解読結果";
+                inputText.placeholder = "Funa語を入力（例: 23^_^）...";
+                outputText.placeholder = "ここに人類語が表示されます...";
             }
             updateConversion();
         }
 
         // イベントリスナー
-        normalModeBtn.addEventListener('click', () => setMode('normal'));
-        reverseModeBtn.addEventListener('click', () => setMode('reverse'));
+        normalModeBtn.addEventListener('click', () => setMode('humanToFuna'));
+        reverseModeBtn.addEventListener('click', () => setMode('funaToHuman'));
         inputText.addEventListener('input', updateConversion);
 
         // コピーボタン
@@ -264,7 +266,7 @@
         });
 
         // 初期化
-        setMode('normal');
+        setMode('humanToFuna');
     </script>
 </body>
 </html>
