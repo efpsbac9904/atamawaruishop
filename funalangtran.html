@@ -9,7 +9,7 @@
     <style>
         textarea {
             resize: vertical;
-            min-height: 130px;
+            min-height: 140px;
         }
         /* スクロールバーのカスタマイズ */
         ::-webkit-scrollbar {
@@ -34,7 +34,7 @@
                 <span class="text-2xl animate-bounce">🐟</span> Funa語翻訳機
             </h1>
             <span class="text-xs bg-amber-400 text-teal-950 font-bold px-3 py-1 rounded-full shadow-sm">
-                Funa-AI Engine v2.0
+                Funa-AI Engine v3.0
             </span>
         </div>
     </header>
@@ -74,7 +74,7 @@
                     <textarea 
                         id="inputText" 
                         class="w-full p-4 border-2 border-teal-100 rounded-2xl focus:ring-2 focus:ring-teal-400 focus:border-teal-400 outline-none transition text-base shadow-inner bg-slate-50/50"
-                        placeholder="人類語を入力（例: wem）..."
+                        placeholder="変換したい文章を入力..."
                     ></textarea>
                 </div>
 
@@ -88,7 +88,7 @@
                         id="outputText" 
                         readonly
                         class="w-full p-4 border-2 border-teal-100 rounded-2xl bg-teal-50/30 focus:outline-none text-base cursor-default font-medium text-teal-950 shadow-inner"
-                        placeholder="ここにFuna語が表示されます..."
+                        placeholder="ここに結果が表示されます..."
                     ></textarea>
                 </div>
             </div>
@@ -122,21 +122,19 @@
         <p>© 2026 Funa語翻訳委員会. All rights reserved.</p>
     </footer>
 
-    <!-- 置換ロジックの実装 -->
+    <!-- 置換＆高度なMD風トークン解析ロジック -->
     <script>
-        // 元通りの変換ルール（画面には非表示）
+        // 基本の置換ルール (Funa語 ➔ 人類語ローマ字)
         const rawRules = "1q,2w,3e,4r,5t,6y,7u,8i,9o,0p,-a,/s,:d,@f,(g,)h,「j,」k,¥l,&ー,！n,？b,、v,。c";
-        
-        // 翻訳モード ('humanToFuna' or 'funaToHuman')
+
+        // 翻訳モード
         let currentMode = 'humanToFuna';
 
-        // マッピング辞書
-        // left = Funa語 (例: 1, 2, 3, ^_^)
-        // right = 人類語 (例: q, w, e, m)
+        // 辞書オブジェクト
         const funaToHumanMap = {};
         const humanToFunaMap = {};
 
-        // ルール構築
+        // ルール辞書構築
         rawRules.split(',').forEach(rule => {
             if (rule.length >= 2) {
                 const funaChar = rule.charAt(0);
@@ -146,6 +144,209 @@
                 humanToFunaMap[humanChar] = funaChar;
             }
         });
+
+        // --- ローマ字 ➔ ひらがな 変換テーブル ---
+        const romajiToHiraganaTable = [
+            { r: 'kya', h: 'きゃ' }, { r: 'kyu', h: 'きゅ' }, { r: 'kyo', h: 'きょ' },
+            { r: 'sha', h: 'しゃ' }, { r: 'shu', h: 'しゅ' }, { r: 'sho', h: 'しょ' },
+            { r: 'cha', h: 'ちゃ' }, { r: 'chu', h: 'ちゅ' }, { r: 'cho', h: 'ちょ' },
+            { r: 'nya', h: 'にゃ' }, { r: 'nyu', h: 'にゅ' }, { r: 'nyo', h: 'にょ' },
+            { r: 'hya', h: 'ひゃ' }, { r: 'hyu', h: 'ひゅ' }, { r: 'hyo', h: 'ひょ' },
+            { r: 'mya', h: 'みゃ' }, { r: 'myu', h: 'みゅ' }, { r: 'myo', h: 'みょ' },
+            { r: 'rya', h: 'りゃ' }, { r: 'ryu', h: 'りゅ' }, { r: 'ryo', h: 'りょ' },
+            { r: 'gya', h: 'ぎゃ' }, { r: 'gyu', h: 'ぎゅ' }, { r: 'gyo', h: 'ぎょ' },
+            { r: 'ja', h: 'じゃ' },  { r: 'ju', h: 'じゅ' },  { r: 'jo', h: 'じょ' },
+            { r: 'bya', h: 'びゃ' }, { r: 'byu', h: 'びゅ' }, { r: 'byo', h: 'びょ' },
+            { r: 'pya', h: 'ぴゃ' }, { r: 'pyu', h: 'ぴゅ' }, { r: 'pyo', h: 'ぴょ' },
+            { r: 'shi', h: 'し' },  { r: 'chi', h: 'ち' },  { r: 'tsu', h: 'つ' },
+            { r: 'nn', h: 'ん' },   { r: "n'", h: 'ん' },
+            { r: 'ka', h: 'か' }, { r: 'ki', h: 'き' }, { r: 'ku', h: 'く' }, { r: 'ke', h: 'け' }, { r: 'ko', h: 'こ' },
+            { r: 'ga', h: 'が' }, { r: 'gi', h: 'ぎ' }, { r: 'gu', h: 'ぐ' }, { r: 'ge', h: 'げ' }, { r: 'go', h: 'ご' },
+            { r: 'sa', h: 'さ' }, { r: 'si', h: 'し' }, { r: 'su', h: 'す' }, { r: 'se', h: 'せ' }, { r: 'so', h: 'そ' },
+            { r: 'za', h: 'ざ' }, { r: 'zi', h: 'じ' }, { r: 'zu', h: 'ず' }, { r: 'ze', h: 'ぜ' }, { r: 'zo', h: 'ぞ' },
+            { r: 'ji', h: 'じ' },
+            { r: 'ta', h: 'た' }, { r: 'ti', h: 'ち' }, { r: 'tu', h: 'つ' }, { r: 'te', h: 'て' }, { r: 'to', h: 'と' },
+            { r: 'da', h: 'だ' }, { r: 'di', h: 'ぢ' }, { r: 'du', h: 'づ' }, { r: 'de', h: 'で' }, { r: 'do', h: 'ど' },
+            { r: 'na', h: 'な' }, { r: 'ni', h: 'に' }, { r: 'nu', h: 'ぬ' }, { r: 'ne', h: 'ね' }, { r: 'no', h: 'の' },
+            { r: 'ha', h: 'は' }, { r: 'hi', h: 'ひ' }, { r: 'fu', h: 'ふ' }, { r: 'hu', h: 'ふ' }, { r: 'he', h: 'へ' }, { r: 'ho', h: 'ほ' },
+            { r: 'ba', h: 'ば' }, { r: 'bi', h: 'び' }, { r: 'bu', h: 'ぶ' }, { r: 'be', h: 'べ' }, { r: 'bo', h: 'ぼ' },
+            { r: 'pa', h: 'ぱ' }, { r: 'pi', h: 'ぴ' }, { r: 'pu', h: 'ぷ' }, { r: 'pe', h: 'ぺ' }, { r: 'po', h: 'ぽ' },
+            { r: 'ma', h: 'ま' }, { r: 'mi', h: 'み' }, { r: 'mu', h: 'む' }, { r: 'me', h: 'め' }, { r: 'mo', h: 'も' },
+            { r: 'ya', h: 'や' }, { r: 'yu', h: 'ゆ' }, { r: 'yo', h: 'よ' },
+            { r: 'ra', h: 'ら' }, { r: 'ri', h: 'り' }, { r: 'ru', h: 'る' }, { r: 're', h: 'れ' }, { r: 'ro', h: 'ろ' },
+            { r: 'wa', h: 'わ' }, { r: 'wo', h: 'を' },
+            { r: 'a', h: 'あ' }, { r: 'i', h: 'い' }, { r: 'u', h: 'う' }, { r: 'e', h: 'え' }, { r: 'o', h: 'お' },
+            { r: '-', h: 'ー' }
+        ];
+
+        // --- ひらがな ➔ ローマ字 変換テーブル ---
+        const hiraganaToRomajiMap = {};
+        romajiToHiraganaTable.forEach(item => {
+            if (!hiraganaToRomajiMap[item.h]) {
+                hiraganaToRomajiMap[item.h] = item.r;
+            }
+        });
+        hiraganaToRomajiMap['ん'] = 'n';
+        hiraganaToRomajiMap['っ'] = 'xtsu';
+
+        // カタカナ ➔ ひらがな変換
+        function katakanaToHiragana(str) {
+            return str.replace(/[\u30a1-\u30f6]/g, match => {
+                return String.fromCharCode(match.charCodeAt(0) - 0x60);
+            });
+        }
+
+        // ひらがな ➔ カタカナ変換
+        function hiraganaToKatakana(str) {
+            return str.replace(/[\u3041-\u3096]/g, match => {
+                return String.fromCharCode(match.charCodeAt(0) + 0x60);
+            });
+        }
+
+        // ローマ字 ➔ ひらがな変換
+        function convertRomajiToHiragana(text) {
+            let res = '';
+            let i = 0;
+            const str = text.toLowerCase();
+
+            while (i < str.length) {
+                let matched = false;
+
+                // 促音（子音の連続）
+                if (i + 1 < str.length && str[i] === str[i+1] && /[a-z]/i.test(str[i]) && !['a','i','u','e','o','n'].includes(str[i])) {
+                    res += 'っ';
+                    i++;
+                    continue;
+                }
+
+                for (let entry of romajiToHiraganaTable) {
+                    if (str.startsWith(entry.r, i)) {
+                        res += entry.h;
+                        i += entry.r.length;
+                        matched = true;
+                        break;
+                    }
+                }
+
+                if (!matched) {
+                    if (str[i] === 'n') {
+                        const next = str[i+1];
+                        if (!next || !['a','i','u','e','o','y','n'].includes(next)) {
+                            res += 'ん';
+                            i++;
+                            continue;
+                        }
+                    }
+                    res += text[i];
+                    i++;
+                }
+            }
+            return res;
+        }
+
+        // 日本語（ひらがな・カタカナ）➔ ローマ字変換
+        function convertJapaneseToRomaji(text) {
+            const hira = katakanaToHiragana(text);
+            let res = '';
+            let i = 0;
+            while (i < hira.length) {
+                if (hira[i] === 'っ' && i + 1 < hira.length) {
+                    const nextChar = hira[i+1];
+                    const nextRomaji = hiraganaToRomajiMap[nextChar];
+                    if (nextRomaji && !['a','i','u','e','o'].includes(nextRomaji[0])) {
+                        res += nextRomaji[0];
+                        i++;
+                        continue;
+                    }
+                }
+
+                if (i + 1 < hira.length) {
+                    const pair = hira.substring(i, i + 2);
+                    if (hiraganaToRomajiMap[pair]) {
+                        res += hiraganaToRomajiMap[pair];
+                        i += 2;
+                        continue;
+                    }
+                }
+
+                const single = hira[i];
+                if (hiraganaToRomajiMap[single]) {
+                    res += hiraganaToRomajiMap[single];
+                } else {
+                    res += single;
+                }
+                i++;
+            }
+            return res;
+        }
+
+        // 1単語ごとの単体Funa置換（人類語ローマ字 ➔ Funa語記号）
+        function singleHumanToFuna(text) {
+            let processed = convertJapaneseToRomaji(text).split('m').join('^_^');
+            let res = '';
+            for (let i = 0; i < processed.length; i++) {
+                const c = processed[i];
+                res += humanToFunaMap.hasOwnProperty(c) ? humanToFunaMap[c] : c;
+            }
+            return res;
+        }
+
+        // 1単語ごとの単体Funa解読（Funa語記号 ➔ 人類語ローマ字）
+        function singleFunaToHuman(text) {
+            let processed = text.split('^_^').join('m');
+            let res = '';
+            for (let i = 0; i < processed.length; i++) {
+                const c = processed[i];
+                res += funaToHumanMap.hasOwnProperty(c) ? funaToHumanMap[c] : c;
+            }
+            return res;
+        }
+
+        // テキストをMD囲みトークンに分割する関数
+        function tokenizeMarkdown(text) {
+            const regex = /(`[^`]+`|\*[^*]+\*|[^`*]+)/g;
+            const matches = text.match(regex);
+            return matches || [text];
+        }
+
+        // メイン処理（双方向でMD構造保持）
+        function performReplacement(text) {
+            if (!text) return '';
+
+            const tokens = tokenizeMarkdown(text);
+
+            if (currentMode === 'humanToFuna') {
+                // 【人類語 ➔ Funa語】
+                return tokens.map(token => {
+                    if (token.startsWith('`') && token.endsWith('`') && token.length >= 2) {
+                        const inner = token.slice(1, -1);
+                        return '`' + singleHumanToFuna(inner) + '`';
+                    } else if (token.startsWith('*') && token.endsWith('*') && token.length >= 2) {
+                        const inner = token.slice(1, -1);
+                        return '*' + singleHumanToFuna(inner) + '*';
+                    } else {
+                        return singleHumanToFuna(token);
+                    }
+                }).join('');
+
+            } else {
+                // 【Funa語 ➔ 人類語】
+                return tokens.map(token => {
+                    if (token.startsWith('`') && token.endsWith('`') && token.length >= 2) {
+                        const inner = token.slice(1, -1);
+                        return singleFunaToHuman(inner);
+                    } else if (token.startsWith('*') && token.endsWith('*') && token.length >= 2) {
+                        const inner = token.slice(1, -1);
+                        const romaji = singleFunaToHuman(inner);
+                        const hira = convertRomajiToHiragana(romaji);
+                        return hiraganaToKatakana(hira);
+                    } else {
+                        const romaji = singleFunaToHuman(token);
+                        return convertRomajiToHiragana(romaji);
+                    }
+                }).join('');
+            }
+        }
 
         // DOM要素
         const inputText = document.getElementById('inputText');
@@ -160,41 +361,6 @@
         const directionDesc = document.getElementById('directionDesc');
         const inputLabel = document.getElementById('inputLabel');
         const outputLabel = document.getElementById('outputLabel');
-
-        // 置換処理
-        function performReplacement(text) {
-            if (!text) return '';
-
-            if (currentMode === 'humanToFuna') {
-                // 人類語 ➔ Funa語 : 1. 「m」 -> 「^_^」
-                let processedText = text.split('m').join('^_^');
-                // 2. 残りの人類語（アルファベット等）をFuna語（記号）にマッピング
-                let result = '';
-                for (let i = 0; i < processedText.length; i++) {
-                    const char = processedText[i];
-                    if (humanToFunaMap.hasOwnProperty(char)) {
-                        result += humanToFunaMap[char];
-                    } else {
-                        result += char;
-                    }
-                }
-                return result;
-            } else {
-                // Funa語 ➔ 人類語 : 1. 「^_^」 -> 「m」
-                let processedText = text.split('^_^').join('m');
-                // 2. 残りのFuna語（記号）を人類語（アルファベット等）にマッピング
-                let result = '';
-                for (let i = 0; i < processedText.length; i++) {
-                    const char = processedText[i];
-                    if (funaToHumanMap.hasOwnProperty(char)) {
-                        result += funaToHumanMap[char];
-                    } else {
-                        result += char;
-                    }
-                }
-                return result;
-            }
-        }
 
         // テキスト更新処理
         function updateConversion() {
@@ -215,8 +381,8 @@
                 directionDesc.textContent = "人類語をFuna語に変換します";
                 inputLabel.textContent = "人類語を入力";
                 outputLabel.textContent = "Funa語の翻訳結果";
-                inputText.placeholder = "人類語を入力（例: wem）...";
-                outputText.placeholder = "ここにFuna語が表示されます...";
+                inputText.placeholder = "変換したい文章を入力...";
+                outputText.placeholder = "ここに結果が表示されます...";
             } else {
                 normalModeBtn.className = "flex-1 sm:flex-none px-4 py-2 text-sm font-bold rounded-lg transition-all duration-200 text-teal-700 hover:text-teal-900";
                 reverseModeBtn.className = "flex-1 sm:flex-none px-4 py-2 text-sm font-bold rounded-lg transition-all duration-200 bg-teal-600 text-white shadow";
@@ -224,8 +390,8 @@
                 directionDesc.textContent = "Funa語を人類語に解読します";
                 inputLabel.textContent = "Funa語を入力";
                 outputLabel.textContent = "人類語への解読結果";
-                inputText.placeholder = "Funa語を入力（例: 23^_^）...";
-                outputText.placeholder = "ここに人類語が表示されます...";
+                inputText.placeholder = "解読したいFuna語を入力...";
+                outputText.placeholder = "ここに結果が表示されます...";
             }
             updateConversion();
         }
