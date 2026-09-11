@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>カラフル文字タグジェネレーター</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#f0fdf4',
+              500: '#22c55e',
+              600: '#16a34a',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    /* カスタムスクロールバー */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #1e293b;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #475569;
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #64748b;
+    }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen font-sans antialiased selection:bg-pink-500 selection:text-white pb-12">
+
+  <!-- ヘッダー -->
+  <header class="border-b border-slate-800 bg-slate-900/70 backdrop-blur sticky top-0 z-30">
+    <div class="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-pink-500 via-purple-500 to-cyan-400 flex items-center justify-center shadow-lg shadow-pink-500/20">
+          <i class="fa-solid fa-palette text-white text-sm"></i>
+        </div>
+        <div>
+          <h1 class="font-bold text-base sm:text-lg tracking-tight bg-gradient-to-r from-pink-400 via-purple-300 to-cyan-300 bg-clip-text text-transparent">
+            カラフル文字タグジェネレーター
+          </h1>
+          <p class="text-[10px] sm:text-xs text-slate-400">&lt;色="カラーコード"&gt;形式への自動一括変換</p>
+        </div>
+      </div>
+      <div class="text-xs text-slate-400 hidden sm:block bg-slate-800/60 px-3 py-1.5 rounded-full border border-slate-700/50">
+        <i class="fa-solid fa-compress-alt mr-1 text-emerald-400"></i>文字数節約モード対応
+      </div>
+    </div>
+  </header>
+
+  <!-- メインコンテンツ -->
+  <main class="max-w-5xl mx-auto px-4 py-6 space-y-6">
+
+    <!-- 入力エリア -->
+    <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 sm:p-5 shadow-xl">
+      <div class="flex items-center justify-between mb-2">
+        <label for="inputText" class="text-xs font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+          <i class="fa-solid fa-pen-nib text-pink-400"></i>
+          テキストを入力
+        </label>
+        <div class="text-xs text-slate-400 flex items-center gap-3">
+          <button id="clearInputBtn" class="hover:text-pink-400 transition-colors flex items-center gap-1 text-[11px]">
+            <i class="fa-regular fa-trash-can"></i> クリア
+          </button>
+          <span id="charCountBadge" class="bg-slate-800 px-2 py-0.5 rounded text-[11px] font-mono text-slate-300">0 文字</span>
+        </div>
+      </div>
+      <textarea
+        id="inputText"
+        rows="3"
+        placeholder="ここにおしゃれに色付けしたいテキストを入力"
+        class="w-full bg-slate-950/80 border border-slate-700/70 rounded-xl p-3.5 text-sm sm:text-base text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-pink-500/50 focus:border-pink-500 transition duration-150 resize-y"
+      >abcdefg</textarea>
+    </div>
+
+    <!-- 設定 & パレット -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+      
+      <!-- カラープリセット選択 (2カラム分) -->
+      <div class="md:col-span-2 bg-slate-900/90 border border-slate-800 rounded-2xl p-4 sm:p-5 shadow-xl space-y-4">
+        <div class="flex items-center justify-between">
+          <h2 class="text-xs font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+            <i class="fa-solid fa-wand-magic-sparkles text-purple-400"></i>
+            カラースタイル・プリセット
+          </h2>
+          <span class="text-[11px] text-slate-400">タップして切り替え</span>
+        </div>
+
+        <div id="presetsGrid" class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+          <!-- プリセットボタンはJSで動的に生成 -->
+        </div>
+
+        <!-- カスタムカラー選択エリア（プリセットがカスタムの時表示） -->
+        <div id="customColorPickerWrap" class="pt-3 border-t border-slate-800 space-y-2">
+          <div class="flex items-center justify-between text-xs text-slate-300">
+            <span>グラデーションの色を自分で決める:</span>
+            <button id="addCustomColorBtn" class="text-[11px] bg-slate-800 hover:bg-slate-700 text-pink-400 px-2 py-1 rounded transition border border-slate-700 flex items-center gap-1">
+              <i class="fa-solid fa-plus"></i> 色を追加
+            </button>
+          </div>
+          <div id="customColorInputs" class="flex flex-wrap items-center gap-2">
+            <!-- カラーピッカーは動的追加 -->
+          </div>
+        </div>
+      </div>
+
+      <!-- 出力・タグ設定 (1カラム分) -->
+      <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 sm:p-5 shadow-xl space-y-4 flex flex-col justify-between">
+        <div>
+          <h2 class="text-xs font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-1.5 mb-3">
+            <i class="fa-solid fa-sliders text-cyan-400"></i>
+            オプション設定
+          </h2>
+
+          <div class="space-y-3.5">
+            <!-- 文字のまとめ設定（チャンクサイズ）★新機能 -->
+            <div>
+              <div class="flex items-center justify-between mb-1.5">
+                <label class="text-xs text-slate-300 font-medium flex items-center gap-1">
+                  <i class="fa-solid fa-layer-group text-pink-400"></i>
+                  何文字ごとに色を変えるか
+                </label>
+                <span id="chunkDisplayBadge" class="text-[11px] font-mono text-pink-300 bg-pink-500/10 px-1.5 py-0.5 rounded border border-pink-500/20">
+                  1文字ずつ
+                </span>
+              </div>
+              <div class="grid grid-cols-4 gap-1.5 text-xs mb-2">
+                <button type="button" data-chunk-val="1" class="chunk-btn bg-slate-800 border border-pink-500/50 text-pink-300 py-1.5 rounded-lg font-medium text-center">
+                  1文字
+                </button>
+                <button type="button" data-chunk-val="2" class="chunk-btn bg-slate-950/60 border border-slate-800 text-slate-400 py-1.5 rounded-lg font-medium text-center hover:border-slate-700">
+                  2文字
+                </button>
+                <button type="button" data-chunk-val="3" class="chunk-btn bg-slate-950/60 border border-slate-800 text-slate-400 py-1.5 rounded-lg font-medium text-center hover:border-slate-700">
+                  3文字
+                </button>
+                <button type="button" data-chunk-val="custom" class="chunk-btn bg-slate-950/60 border border-slate-800 text-slate-400 py-1.5 rounded-lg font-medium text-center hover:border-slate-700">
+                  カスタム
+                </button>
+              </div>
+              <!-- カスタム文字数スライダー -->
+              <div id="customChunkWrap" class="hidden items-center gap-2 pt-1">
+                <input type="range" id="chunkSlider" min="1" max="10" value="1" class="w-full accent-pink-500 h-1.5 bg-slate-800 rounded-lg cursor-pointer">
+                <span id="sliderValueText" class="text-xs font-mono text-pink-300 w-8 text-right">1文字</span>
+              </div>
+            </div>
+
+            <!-- プレフィックス/サフィックスのカラーコード形式 -->
+            <div>
+              <label class="text-xs text-slate-400 block mb-1">カラーコードの形式</label>
+              <div class="grid grid-cols-2 gap-2 text-xs">
+                <button type="button" data-hex-mode="hash" class="hex-mode-btn bg-slate-800 border border-pink-500/50 text-pink-300 py-1.5 px-2 rounded-lg font-mono text-center font-medium">
+                  #あり (#FF00FF)
+                </button>
+                <button type="button" data-hex-mode="plain" class="hex-mode-btn bg-slate-950/60 border border-slate-800 text-slate-400 py-1.5 px-2 rounded-lg font-mono text-center font-medium">
+                  #なし (FF00FF)
+                </button>
+              </div>
+            </div>
+
+            <!-- 大文字 / 小文字 -->
+            <div>
+              <label class="text-xs text-slate-400 block mb-1">英字の大文字/小文字</label>
+              <div class="grid grid-cols-2 gap-2 text-xs">
+                <button type="button" data-case-mode="upper" class="case-mode-btn bg-slate-800 border border-pink-500/50 text-pink-300 py-1.5 px-2 rounded-lg font-mono text-center font-medium">
+                  大文字 (FF55AA)
+                </button>
+                <button type="button" data-case-mode="lower" class="case-mode-btn bg-slate-950/60 border border-slate-800 text-slate-400 py-1.5 px-2 rounded-lg font-mono text-center font-medium">
+                  小文字 (ff55aa)
+                </button>
+              </div>
+            </div>
+
+            <!-- 空白・改行の除外トグル -->
+            <div class="pt-2 border-t border-slate-800 space-y-2">
+              <label class="flex items-center gap-2 cursor-pointer text-xs text-slate-300">
+                <input type="checkbox" id="skipSpacesCheck" class="w-4 h-4 rounded border-slate-700 bg-slate-800 text-pink-500 focus:ring-pink-500/40" checked>
+                <span>半角/全角スペースにはタグをつけない</span>
+              </label>
+              <label class="flex items-center gap-2 cursor-pointer text-xs text-slate-300">
+                <input type="checkbox" id="skipNewlinesCheck" class="w-4 h-4 rounded border-slate-700 bg-slate-800 text-pink-500 focus:ring-pink-500/40" checked>
+                <span>改行コードにはタグをつけない</span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- タグ構文カスタマイズ（アコーディオン） -->
+        <div class="pt-2 border-t border-slate-800">
+          <details class="text-xs group">
+            <summary class="cursor-pointer text-slate-400 group-hover:text-slate-200 transition flex items-center justify-between list-none">
+              <span><i class="fa-solid fa-code mr-1"></i> タグ名の変更 (&lt;色=...&gt;)</span>
+              <i class="fa-solid fa-chevron-down text-[10px] group-open:rotate-180 transition-transform"></i>
+            </summary>
+            <div class="mt-2 space-y-1.5 pt-1 text-slate-300">
+              <label class="text-[11px] text-slate-400">タグ名 (デフォルト: 色)</label>
+              <input type="text" id="customTagName" value="色" class="w-full bg-slate-950 border border-slate-700 rounded px-2 py-1 text-xs text-slate-200 focus:outline-none focus:border-pink-500">
+            </div>
+          </details>
+        </div>
+      </div>
+    </div>
+
+    <!-- プレビュー表示 -->
+    <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 sm:p-5 shadow-xl space-y-2">
+      <div class="flex items-center justify-between">
+        <h2 class="text-xs font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+          <i class="fa-solid fa-eye text-emerald-400"></i>
+          見た目プレビュー
+        </h2>
+        <span class="text-[11px] text-slate-500">実際の文字色イメージ</span>
+      </div>
+      <div id="previewBox" class="min-h-[64px] max-h-[160px] overflow-y-auto bg-slate-950/90 border border-slate-800/80 rounded-xl p-4 text-base sm:text-lg font-medium leading-relaxed break-words whitespace-pre-wrap">
+        <!-- プレビュー文字 -->
+      </div>
+    </div>
+
+    <!-- 変換結果出力エリア -->
+    <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 sm:p-5 shadow-xl space-y-3">
+      <div class="flex flex-wrap items-center justify-between gap-2">
+        <div class="flex flex-wrap items-center gap-2">
+          <h2 class="text-xs font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+            <i class="fa-solid fa-code text-cyan-400"></i>
+            変換コード結果
+          </h2>
+          <span id="outputLengthBadge" class="bg-slate-800 text-[11px] font-mono px-2 py-0.5 rounded text-slate-300">0 文字</span>
+          <span id="savingsBadge" class="hidden bg-emerald-950/80 text-emerald-400 border border-emerald-500/30 text-[11px] font-mono px-2 py-0.5 rounded">
+            タグ削減: -0%
+          </span>
+        </div>
+        
+        <!-- コピーボタン -->
+        <button id="copyBtn" class="bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 active:scale-95 text-white text-xs sm:text-sm font-semibold px-4 py-2 rounded-xl shadow-lg shadow-pink-500/20 flex items-center gap-2 transition duration-150">
+          <i class="fa-regular fa-copy"></i>
+          <span>コードをコピー</span>
+        </button>
+      </div>
+
+      <div class="relative">
+        <textarea
+          id="outputText"
+          rows="6"
+          readonly
+          class="w-full bg-slate-950/90 border border-slate-700/60 rounded-xl p-3.5 text-xs sm:text-sm font-mono text-cyan-300/90 focus:outline-none focus:ring-1 focus:ring-cyan-500 select-all cursor-text leading-relaxed"
+          placeholder="変換されたコードがここに表示されます..."
+        ></textarea>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- トースト通知 -->
+  <div id="toast" class="fixed bottom-6 right-6 z-50 bg-slate-800 border border-emerald-500/40 text-emerald-300 px-4 py-3 rounded-xl shadow-2xl flex items-center gap-2.5 text-sm transform translate-y-20 opacity-0 transition-all duration-300 pointer-events-none">
+    <div class="w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-xs">
+      <i class="fa-solid fa-check"></i>
+    </div>
+    <span id="toastMessage">クリップボードにコピーしたよ！</span>
+  </div>
+
+  <script>
+    // --- プリセット定義 ---
+    const PRESETS = [
+      {
+        id: 'rainbow',
+        name: 'レインボー',
+        colors: ['#FF0055', '#FF7700', '#FFDD00', '#00DD77', '#00AAFF', '#8844FF', '#FF00AA'],
+        type: 'gradient'
+      },
+      {
+        id: 'sunset',
+        name: 'サンセット',
+        colors: ['#FF4E50', '#F9D423', '#E100FF', '#7F00FF'],
+        type: 'gradient'
+      },
+      {
+        id: 'cyberpunk',
+        name: 'ネオンサイバー',
+        colors: ['#FF007F', '#7928CA', '#00F0FF'],
+        type: 'gradient'
+      },
+      {
+        id: 'pastel',
+        name: 'パステル',
+        colors: ['#FFB7B2', '#FFDAC1', '#E2F0CB', '#B5EAD7', '#C7CEEA'],
+        type: 'gradient'
+      },
+      {
+        id: 'ocean',
+        name: 'オーシャン',
+        colors: ['#00F2FE', '#4FACFE', '#000851'],
+        type: 'gradient'
+      },
+      {
+        id: 'sakura',
+        name: 'サクラピンク',
+        colors: ['#FF758C', '#FF7EB3', '#FED6E3', '#FF7EB3'],
+        type: 'gradient'
+      },
+      {
+        id: 'fire',
+        name: 'フレイム',
+        colors: ['#FF0844', '#FF4E50', '#F9D423'],
+        type: 'gradient'
+      },
+      {
+        id: 'random',
+        name: '完全ランダム',
+        colors: [],
+        type: 'random'
+      },
+      {
+        id: 'custom',
+        name: 'カスタム',
+        colors: ['#38ef7d', '#11998e'],
+        type: 'custom'
+      }
+    ];
+
+    // --- 状態管理 ---
+    let currentPresetId = 'rainbow';
+    let customColors = ['#FF007F', '#00F0FF'];
+    let hexMode = 'hash'; // 'hash' (#あり) or 'plain' (#なし)
+    let caseMode = 'upper'; // 'upper' or 'lower'
+    let chunkSize = 1; // まとめる文字数
+
+    // DOM要素
+    const inputText = document.getElementById('inputText');
+    const outputText = document.getElementById('outputText');
+    const previewBox = document.getElementById('previewBox');
+    const charCountBadge = document.getElementById('charCountBadge');
+    const outputLengthBadge = document.getElementById('outputLengthBadge');
+    const savingsBadge = document.getElementById('savingsBadge');
+    const chunkDisplayBadge = document.getElementById('chunkDisplayBadge');
+    const chunkSlider = document.getElementById('chunkSlider');
+    const customChunkWrap = document.getElementById('customChunkWrap');
+    const sliderValueText = document.getElementById('sliderValueText');
+    const clearInputBtn = document.getElementById('clearInputBtn');
+    const copyBtn = document.getElementById('copyBtn');
+    const presetsGrid = document.getElementById('presetsGrid');
+    const customColorPickerWrap = document.getElementById('customColorPickerWrap');
+    const customColorInputs = document.getElementById('customColorInputs');
+    const addCustomColorBtn = document.getElementById('addCustomColorBtn');
+    const skipSpacesCheck = document.getElementById('skipSpacesCheck');
+    const skipNewlinesCheck = document.getElementById('skipNewlinesCheck');
+    const customTagName = document.getElementById('customTagName');
+    const toast = document.getElementById('toast');
+    const toastMessage = document.getElementById('toastMessage');
+
+    // --- 色計算ユーティリティ ---
+    function hexToRgb(hex) {
+      hex = hex.replace('#', '');
+      if (hex.length === 3) {
+        hex = hex.split('').map(c => c + c).join('');
+      }
+      const num = parseInt(hex, 16);
+      return {
+        r: (num >> 16) & 255,
+        g: (num >> 8) & 255,
+        b: num & 255
+      };
+    }
+
+    function rgbToHex(r, g, b) {
+      const toHex = (n) => {
+        const h = Math.max(0, Math.min(255, Math.round(n))).toString(16);
+        return h.length === 1 ? '0' + h : h;
+      };
+      return `${toHex(r)}${toHex(g)}${toHex(b)}`;
+    }
+
+    function interpolateColor(color1, color2, factor) {
+      const c1 = hexToRgb(color1);
+      const c2 = hexToRgb(color2);
+      const r = c1.r + factor * (c2.r - c1.r);
+      const g = c1.g + factor * (c2.g - c1.g);
+      const b = c1.b + factor * (c2.b - c1.b);
+      return rgbToHex(r, g, b);
+    }
+
+    function getMultiStopColor(colors, factor) {
+      if (!colors || colors.length === 0) return 'FFFFFF';
+      if (colors.length === 1) return colors[0].replace('#', '');
+      if (factor <= 0) return colors[0].replace('#', '');
+      if (factor >= 1) return colors[colors.length - 1].replace('#', '');
+
+      const segments = colors.length - 1;
+      const pos = factor * segments;
+      const index = Math.floor(pos);
+      const subFactor = pos - index;
+
+      return interpolateColor(colors[index], colors[index + 1], subFactor);
+    }
+
+    function getRandomColorHex() {
+      const letters = '0123456789ABCDEF';
+      let color = '';
+      for (let i = 0; i < 6; i++) {
+        color += letters[Math.floor(Math.random() * 16)];
+      }
+      return color;
+    }
+
+    // --- プリセット描画 ---
+    function renderPresets() {
+      presetsGrid.innerHTML = '';
+      PRESETS.forEach(preset => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        const isSelected = preset.id === currentPresetId;
+
+        btn.className = `preset-card text-left p-2.5 rounded-xl border transition-all duration-150 flex flex-col justify-between h-16 relative overflow-hidden ${
+          isSelected
+            ? 'bg-slate-800 border-pink-500 shadow-md shadow-pink-500/10 ring-1 ring-pink-500'
+            : 'bg-slate-950/60 border-slate-800 hover:border-slate-700 hover:bg-slate-800/50'
+        }`;
+
+        let barStyle = '';
+        if (preset.type === 'random') {
+          barStyle = 'background: linear-gradient(90deg, #f00, #ff0, #0f0, #0ff, #00f, #f0f);';
+        } else if (preset.colors.length > 0) {
+          barStyle = `background: linear-gradient(90deg, ${preset.colors.join(', ')});`;
+        } else {
+          barStyle = 'background: #64748b;';
+        }
+
+        btn.innerHTML = `
+          <span class="text-xs font-medium ${isSelected ? 'text-pink-300' : 'text-slate-300'} truncate">${preset.name}</span>
+          <div class="w-full h-2 rounded-full overflow-hidden" style="${barStyle}"></div>
+        `;
+
+        btn.addEventListener('click', () => {
+          currentPresetId = preset.id;
+          renderPresets();
+          updateCustomColorVisibility();
+          generateTags();
+        });
+
+        presetsGrid.appendChild(btn);
+      });
+    }
+
+    // カスタムカラーピッカー入力欄描画
+    function renderCustomColorInputs() {
+      customColorInputs.innerHTML = '';
+      customColors.forEach((color, index) => {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'flex items-center gap-1 bg-slate-950 border border-slate-700 rounded-lg p-1';
+
+        const colorInput = document.createElement('input');
+        colorInput.type = 'color';
+        colorInput.value = color;
+        colorInput.className = 'w-7 h-7 rounded cursor-pointer bg-transparent border-0 p-0';
+        colorInput.addEventListener('input', (e) => {
+          customColors[index] = e.target.value;
+          generateTags();
+        });
+
+        const hexText = document.createElement('span');
+        hexText.className = 'text-[11px] font-mono text-slate-300 px-1 uppercase';
+        hexText.textContent = color;
+
+        colorInput.addEventListener('input', () => {
+          hexText.textContent = colorInput.value;
+        });
+
+        wrapper.appendChild(colorInput);
+        wrapper.appendChild(hexText);
+
+        if (customColors.length > 2) {
+          const removeBtn = document.createElement('button');
+          removeBtn.innerHTML = '<i class="fa-solid fa-xmark text-slate-500 hover:text-red-400 p-1"></i>';
+          removeBtn.addEventListener('click', () => {
+            customColors.splice(index, 1);
+            renderCustomColorInputs();
+            generateTags();
+          });
+          wrapper.appendChild(removeBtn);
+        }
+
+        customColorInputs.appendChild(wrapper);
+      });
+    }
+
+    function updateCustomColorVisibility() {
+      if (currentPresetId === 'custom') {
+        customColorPickerWrap.classList.remove('hidden');
+      } else {
+        customColorPickerWrap.classList.add('hidden');
+      }
+    }
+
+    // --- メイン生成ロジック（チャンク対応） ---
+    function generateTags() {
+      const text = inputText.value;
+      const chars = Array.from(text); // サロゲートペア対応
+      const tagName = customTagName.value.trim() || '色';
+      const skipSpaces = skipSpacesCheck.checked;
+      const skipNewlines = skipNewlinesCheck.checked;
+
+      charCountBadge.textContent = `${chars.length} 文字`;
+
+      if (chars.length === 0) {
+        outputText.value = '';
+        previewBox.innerHTML = '<span class="text-slate-600 italic">テキストを入力するとここにリアルタイムプレビューが表示されます</span>';
+        outputLengthBadge.textContent = '0 文字';
+        savingsBadge.classList.add('hidden');
+        return;
+      }
+
+      const activePreset = PRESETS.find(p => p.id === currentPresetId) || PRESETS[0];
+      const colorsList = currentPresetId === 'custom' ? customColors : activePreset.colors;
+
+      // 1. テキストをグループ（チャンク）に分割
+      // 改行やタグ除外スペースはグループの境界にするか単体で出力
+      const segments = [];
+      let currentChunk = [];
+
+      for (let i = 0; i < chars.length; i++) {
+        const char = chars[i];
+        const isSpace = /\s/.test(char) && char !== '\n';
+        const isNewline = char === '\n';
+
+        if (isNewline) {
+          if (currentChunk.length > 0) {
+            segments.push({ type: 'colored', text: currentChunk.join('') });
+            currentChunk = [];
+          }
+          segments.push({ type: 'newline', text: '\n' });
+          continue;
+        }
+
+        if (isSpace && skipSpaces) {
+          if (currentChunk.length > 0) {
+            segments.push({ type: 'colored', text: currentChunk.join('') });
+            currentChunk = [];
+          }
+          segments.push({ type: 'space', text: char });
+          continue;
+        }
+
+        // 通常文字（またはスペース含む）
+        currentChunk.push(char);
+        if (currentChunk.length >= chunkSize) {
+          segments.push({ type: 'colored', text: currentChunk.join('') });
+          currentChunk = [];
+        }
+      }
+
+      if (currentChunk.length > 0) {
+        segments.push({ type: 'colored', text: currentChunk.join('') });
+      }
+
+      // 色付け対象のチャンク数を計算
+      const coloredSegmentsCount = segments.filter(s => s.type === 'colored').length;
+
+      let outputCode = '';
+      let previewHtml = '';
+      let coloredIndex = 0;
+
+      // 2. タグとプレビューHTMLの生成
+      segments.forEach(seg => {
+        if (seg.type === 'newline') {
+          outputCode += '\n';
+          previewHtml += '<br>';
+          return;
+        }
+
+        if (seg.type === 'space') {
+          outputCode += seg.text;
+          previewHtml += seg.text === ' ' ? '&nbsp;' : seg.text;
+          return;
+        }
+
+        // colored チャンク
+        let rawHex = '';
+        if (activePreset.type === 'random') {
+          rawHex = getRandomColorHex();
+        } else {
+          const factor = coloredSegmentsCount <= 1 ? 0 : coloredIndex / (coloredSegmentsCount - 1);
+          rawHex = getMultiStopColor(colorsList, factor);
+        }
+        coloredIndex++;
+
+        // カラーコード整形
+        let formattedHex = caseMode === 'lower' ? rawHex.toLowerCase() : rawHex.toUpperCase();
+        let displayColor = '#' + rawHex;
+        let tagColorValue = hexMode === 'hash' ? ('#' + formattedHex) : formattedHex;
+
+        // タグ生成
+        outputCode += `<${tagName}="${tagColorValue}">${seg.text}</${tagName}>`;
+
+        // プレビュー生成
+        const safeText = seg.text
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/ /g, '&nbsp;');
+
+        previewHtml += `<span style="color: ${displayColor}; text-shadow: 0 0 10px ${displayColor}33;">${safeText}</span>`;
+      });
+
+      outputText.value = outputCode;
+      previewBox.innerHTML = previewHtml;
+      outputLengthBadge.textContent = `${outputCode.length} 文字 (タグ込み)`;
+
+      // 節約率の計算 (1文字ずつの場合と比較)
+      if (chunkSize > 1) {
+        // 1文字ずつの概算タグ文字数
+        const singleCharEstimated = chars.length * (tagName.length * 2 + 6 + (hexMode === 'hash' ? 7 : 6)) + chars.length;
+        if (singleCharEstimated > outputCode.length) {
+          const savedPercent = Math.round((1 - (outputCode.length / singleCharEstimated)) * 100);
+          savingsBadge.textContent = `文字数 約${savedPercent}% 節約中！`;
+          savingsBadge.classList.remove('hidden');
+        } else {
+          savingsBadge.classList.add('hidden');
+        }
+      } else {
+        savingsBadge.classList.add('hidden');
+      }
+    }
+
+    // --- トースト通知表示 ---
+    let toastTimeout;
+    function showToast(msg) {
+      if (msg) toastMessage.textContent = msg;
+      toast.classList.remove('translate-y-20', 'opacity-0');
+      toast.classList.add('translate-y-0', 'opacity-100');
+
+      clearTimeout(toastTimeout);
+      toastTimeout = setTimeout(() => {
+        toast.classList.add('translate-y-20', 'opacity-0');
+        toast.classList.remove('translate-y-0', 'opacity-100');
+      }, 2500);
+    }
+
+    // --- クリップボードコピー ---
+    function copyToClipboard() {
+      const textToCopy = outputText.value;
+      if (!textToCopy) {
+        showToast('コピーするテキストがありません');
+        return;
+      }
+
+      outputText.select();
+      outputText.setSelectionRange(0, 99999);
+
+      let successful = false;
+      try {
+        successful = document.execCommand('copy');
+      } catch (err) {
+        successful = false;
+      }
+
+      if (successful) {
+        showToast('クリップボードにコピーしました');
+      } else {
+        showToast('コピーに失敗しました。手動でコピーしてください');
+      }
+    }
+
+    // --- イベントリスナー登録 ---
+    inputText.addEventListener('input', generateTags);
+    skipSpacesCheck.addEventListener('change', generateTags);
+    skipNewlinesCheck.addEventListener('change', generateTags);
+    customTagName.addEventListener('input', generateTags);
+
+    clearInputBtn.addEventListener('click', () => {
+      inputText.value = '';
+      inputText.focus();
+      generateTags();
+    });
+
+    copyBtn.addEventListener('click', copyToClipboard);
+
+    // まとめる文字数（チャンクサイズ）切り替え
+    const chunkBtns = document.querySelectorAll('.chunk-btn');
+    function updateChunkUI(val, isCustom = false) {
+      chunkSize = Math.max(1, parseInt(val, 10) || 1);
+      chunkDisplayBadge.textContent = `${chunkSize}文字ごと`;
+      sliderValueText.textContent = `${chunkSize}文字`;
+      chunkSlider.value = chunkSize;
+
+      chunkBtns.forEach(b => {
+        b.classList.remove('bg-slate-800', 'border-pink-500/50', 'text-pink-300');
+        b.classList.add('bg-slate-950/60', 'border-slate-800', 'text-slate-400');
+      });
+
+      if (isCustom) {
+        document.querySelector('.chunk-btn[data-chunk-val="custom"]').classList.add('bg-slate-800', 'border-pink-500/50', 'text-pink-300');
+        document.querySelector('.chunk-btn[data-chunk-val="custom"]').classList.remove('bg-slate-950/60', 'border-slate-800', 'text-slate-400');
+        customChunkWrap.classList.remove('hidden');
+        customChunkWrap.classList.add('flex');
+      } else {
+        const activeBtn = document.querySelector(`.chunk-btn[data-chunk-val="${val}"]`);
+        if (activeBtn) {
+          activeBtn.classList.add('bg-slate-800', 'border-pink-500/50', 'text-pink-300');
+          activeBtn.classList.remove('bg-slate-950/60', 'border-slate-800', 'text-slate-400');
+        }
+        customChunkWrap.classList.add('hidden');
+        customChunkWrap.classList.remove('flex');
+      }
+
+      generateTags();
+    }
+
+    chunkBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const val = btn.getAttribute('data-chunk-val');
+        if (val === 'custom') {
+          updateChunkUI(chunkSlider.value, true);
+        } else {
+          updateChunkUI(val, false);
+        }
+      });
+    });
+
+    chunkSlider.addEventListener('input', (e) => {
+      updateChunkUI(e.target.value, true);
+    });
+
+    // #あり/なし 切替
+    document.querySelectorAll('.hex-mode-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const mode = btn.getAttribute('data-hex-mode');
+        hexMode = mode;
+        document.querySelectorAll('.hex-mode-btn').forEach(b => {
+          b.classList.remove('bg-slate-800', 'border-pink-500/50', 'text-pink-300');
+          b.classList.add('bg-slate-950/60', 'border-slate-800', 'text-slate-400');
+        });
+        btn.classList.add('bg-slate-800', 'border-pink-500/50', 'text-pink-300');
+        btn.classList.remove('bg-slate-950/60', 'border-slate-800', 'text-slate-400');
+        generateTags();
+      });
+    });
+
+    // 大文字/小文字 切替
+    document.querySelectorAll('.case-mode-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const mode = btn.getAttribute('data-case-mode');
+        caseMode = mode;
+        document.querySelectorAll('.case-mode-btn').forEach(b => {
+          b.classList.remove('bg-slate-800', 'border-pink-500/50', 'text-pink-300');
+          b.classList.add('bg-slate-950/60', 'border-slate-800', 'text-slate-400');
+        });
+        btn.classList.add('bg-slate-800', 'border-pink-500/50', 'text-pink-300');
+        btn.classList.remove('bg-slate-950/60', 'border-slate-800', 'text-slate-400');
+        generateTags();
+      });
+    });
+
+    // 色追加ボタン
+    addCustomColorBtn.addEventListener('click', () => {
+      if (customColors.length >= 6) {
+        showToast('追加できる色は最大6色までです');
+        return;
+      }
+      customColors.push('#' + getRandomColorHex());
+      renderCustomColorInputs();
+      generateTags();
+    });
+
+    // 初期化実行
+    renderPresets();
+    renderCustomColorInputs();
+    updateCustomColorVisibility();
+    generateTags();
+  </script>
+</body>
+</html>
