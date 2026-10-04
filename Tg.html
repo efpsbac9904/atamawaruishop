@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>個人成績票作成システム</title>
+  <!-- PapaParse（CSV解析用） -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background: #eef2f5;
+      margin: 0;
+      padding: 20px;
+      color: #333;
+    }
+
+    /* 操作エリア（印刷時非表示） */
+    .no-print {
+      max-width: 900px;
+      margin: 0 auto 30px;
+      background: #fff;
+      padding: 20px 25px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+    .setting-group {
+      display: flex;
+      gap: 15px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+    }
+    .setting-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .drop-zone {
+      border: 2px dashed #2563eb;
+      border-radius: 6px;
+      padding: 18px;
+      background: #eff6ff;
+      text-align: center;
+      cursor: pointer;
+      margin: 12px 0;
+    }
+    .drop-zone:hover {
+      background: #dbeafe;
+    }
+    .btn {
+      padding: 8px 18px;
+      font-size: 14px;
+      font-weight: bold;
+      background: #2563eb;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .btn:hover {
+      background: #1d4ed8;
+    }
+    .input-text, .select-box {
+      padding: 6px 10px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-family: inherit;
+    }
+
+    /* 正答率手入力エリア */
+    .rate-config-box {
+      border: 1px solid #e5e7eb;
+      background: #f9fafb;
+      padding: 12px;
+      margin-top: 15px;
+      max-height: 180px;
+      overflow-y: auto;
+      border-radius: 6px;
+    }
+    .rate-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+      gap: 6px;
+      margin-top: 8px;
+    }
+    .rate-item {
+      font-size: 11px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border: 1px solid #ddd;
+      padding: 2px 6px;
+      background: #fff;
+      border-radius: 3px;
+    }
+    .rate-item input {
+      width: 45px;
+      text-align: right;
+      padding: 2px;
+      border: 1px solid #ccc;
+      border-radius: 3px;
+    }
+
+    /* 成績個票のスタイル（A4縦） */
+    .report-card {
+      width: 210mm;
+      height: 297mm; /* A4固定 */
+      margin: 0 auto 30px;
+      background: #fff;
+      padding: 12mm 12mm;
+      border: 1px solid #bbb;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      page-break-after: always;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card-header {
+      border-bottom: 2px solid #2563eb;
+      padding-bottom: 6px;
+      margin-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+    }
+    .card-header h1 {
+      margin: 0;
+      font-size: 18px;
+      color: #1e3a8a;
+    }
+    .student-badge {
+      font-size: 14px;
+      font-weight: bold;
+      border: 1px solid #2563eb;
+      padding: 3px 10px;
+      background: #eff6ff;
+      border-radius: 4px;
+    }
+
+    /* 統計テーブル（6項目対応） */
+    .stats-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 8px;
+    }
+    .stats-table th, .stats-table td {
+      border: 1px solid #94a3b8;
+      padding: 4px 2px;
+      text-align: center;
+    }
+    .stats-table th {
+      background: #f1f5f9;
+      font-size: 10px;
+      color: #334155;
+    }
+    .stats-table td {
+      font-size: 15px;
+      font-weight: bold;
+    }
+    .stats-table td.highlight {
+      color: #2563eb;
+      background: #eff6ff;
+    }
+
+    .section-title {
+      font-size: 11px;
+      font-weight: bold;
+      color: #1e293b;
+      border-left: 3px solid #2563eb;
+      padding-left: 6px;
+      margin: 8px 0 4px;
+    }
+
+    .comment-box {
+      border: 1px solid #cbd5e1;
+      padding: 6px 10px;
+      font-size: 10px;
+      line-height: 1.4;
+      background: #f8fafc;
+      border-radius: 4px;
+    }
+
+    /* 2列レイアウト用コンテナ */
+    .details-container {
+      display: flex;
+      gap: 10px;
+      margin-top: 4px;
+    }
+    .details-column {
+      flex: 1;
+    }
+
+    /* 明細テーブル */
+    .details-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 9px;
+    }
+    .details-table th, .details-table td {
+      border: 1px solid #cbd5e1;
+      padding: 2.5px 4px;
+      text-align: left;
+    }
+    .details-table th {
+      background: #f1f5f9;
+      text-align: center;
+      font-size: 8.5px;
+    }
+    .details-table td.col-ans {
+      max-width: 90px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* 印刷用設定 */
+    @media print {
+      body { background: none; padding: 0; }
+      .no-print { display: none; }
+      .report-card {
+        box-shadow: none;
+        margin: 0;
+        width: 100%;
+        height: 100vh;
+        border: none;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="no-print">
+    <h2 style="margin-top: 0; border-bottom: 2px solid #2563eb; padding-bottom: 5px;">個人成績票作成システム</h2>
+    
+    <div class="setting-group">
+      <div class="setting-item">
+        <label><b>試験名称: </b></label>
+        <input type="text" id="examTitle" class="input-text" value="実力判定総合テスト" style="width: 180px;">
+      </div>
+      <div class="setting-item">
+        <label><b>発行元名: </b></label>
+        <input type="text" id="organizerName" class="input-text" value="試験実行委員会" style="width: 180px;">
+      </div>
+      <div class="setting-item" id="nameColumnContainer" style="display: none;">
+        <label><b>「氏名」列の指定: </b></label>
+        <select id="nameKeySelect" class="select-box" onchange="renderReportCards()" style="max-width: 200px;"></select>
+      </div>
+    </div>
+
+    <div class="drop-zone" id="dropZone">
+      <p style="margin: 0; font-weight: bold;">【① GoogleフォームのCSVをドロップ】</p>
+      <p style="font-size: 11px; color: #666; margin: 3px 0 0;">またはクリックして選択</p>
+      <input type="file" id="fileInput" accept=".csv" style="display:none;">
+    </div>
+
+    <!-- 正答率手入力パネル -->
+    <div id="rateConfigContainer" style="display: none;" class="rate-config-box">
+      <div style="font-weight: bold; font-size: 11px; border-bottom: 1px solid #ccc; padding-bottom: 3px;">
+        【② 各問題の全体正答率（%）を手入力・調整】
+      </div>
+      <div class="rate-grid" id="rateGrid"></div>
+      <button class="btn" onclick="renderReportCards()" style="margin-top: 8px; width: 100%; padding: 5px;">再生成する</button>
+    </div>
+
+    <div style="text-align: center; margin-top: 15px;">
+      <button class="btn" onclick="renderReportCards()" style="background: #475569; margin-right: 10px;">設定反映</button>
+      <button class="btn" onclick="window.print()">一括印刷 / PDF出力</button>
+    </div>
+  </div>
+
+  <div id="output"></div>
+
+  <script>
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('fileInput');
+
+    let globalParsedData = null;
+    let questionKeysGlobal = [];
+
+    dropZone.addEventListener('click', () => fileInput.click());
+    dropZone.addEventListener('dragover', (e) => e.preventDefault());
+    dropZone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
+    });
+    fileInput.addEventListener('change', (e) => {
+      if (e.target.files.length) handleFile(e.target.files[0]);
+    });
+
+    function handleFile(file) {
+      Papa.parse(file, {
+        header: true,
+        skipEmptyLines: true,
+        complete: function(results) {
+          globalParsedData = results.data;
+          setupNameKeySelect(results.data);
+          setupRateConfig(results.data);
+          renderReportCards();
+        }
+      });
+    }
+
+    // 氏名カラムのドロップダウン生成＆自動検知
+    function setupNameKeySelect(data) {
+      if (!data || data.length === 0) return;
+      const headers = Object.keys(data[0]);
+
+      const select = document.getElementById('nameKeySelect');
+      select.innerHTML = '';
+
+      // 「氏名」「名前」「回答者」「Name」などを優先検知（スコアやタイムスタンプは完全除外）
+      let detectedKey = headers.find(h => 
+        (h.includes('氏名') || h.includes('名前') || h.includes('回答者') || h.toLowerCase().includes('name')) &&
+        !h.includes('スコア') && !h.includes('タイムスタンプ')
+      );
+
+      // 見つからない場合はメール系、それでも無ければ2番目以降の列
+      if (!detectedKey) {
+        detectedKey = headers.find(h => h.includes('メール') || h.includes('アドレス'));
+      }
+      if (!detectedKey) {
+        detectedKey = headers.find(h => !h.includes('タイムスタンプ') && !h.includes('スコア')) || headers[1] || headers[0];
+      }
+
+      headers.forEach(h => {
+        const option = document.createElement('option');
+        option.value = h;
+        option.textContent = h;
+        if (h === detectedKey) option.selected = true;
+        select.appendChild(option);
+      });
+
+      document.getElementById('nameColumnContainer').style.display = 'flex';
+    }
+
+    function setupRateConfig(data) {
+      const headers = Object.keys(data[0]);
+      questionKeysGlobal = headers.filter(h => 
+        !h.includes('タイムスタンプ') && 
+        !h.includes('スコア') && 
+        !h.includes('メール') && 
+        !h.includes('氏名') && 
+        !h.includes('名前')
+      );
+
+      const rateGrid = document.getElementById('rateGrid');
+      rateGrid.innerHTML = '';
+
+      questionKeysGlobal.forEach((qKey, idx) => {
+        let defaultRate = (Math.floor(Math.random() * 400) / 10 + 20.0).toFixed(1);
+
+        const item = document.createElement('div');
+        item.className = 'rate-item';
+        item.innerHTML = `
+          <span>問${idx + 1}:</span>
+          <div>
+            <input type="number" id="rate-input-${idx}" step="0.1" min="0" max="100" value="${defaultRate}">%
+          </div>
+        `;
+        rateGrid.appendChild(item);
+      });
+
+      document.getElementById('rateConfigContainer').style.display = 'block';
+    }
+
+    function calculateMedian(numbers) {
+      const sorted = [...numbers].sort((a, b) => a - b);
+      const middle = Math.floor(sorted.length / 2);
+      if (sorted.length % 2 === 0) {
+        return (sorted[middle - 1] + sorted[middle]) / 2;
+      }
+      return sorted[middle];
+    }
+
+    function renderReportCards() {
+      if (!globalParsedData) return;
+
+      const output = document.getElementById('output');
+      output.innerHTML = '';
+
+      const examTitle = document.getElementById('examTitle').value || "学力評価試験";
+      const organizerName = document.getElementById('organizerName').value || "試験実行委員会";
+      const headers = Object.keys(globalParsedData[0]);
+
+      // スコア列の判定（絶対スコア列のみ選択）
+      let scoreKey = headers.find(k => k.includes('スコア') || k.includes('点数'));
+      
+      // 氏名列の取得（ドロップダウンでの選択値を最優先使用）
+      const selectedNameKey = document.getElementById('nameKeySelect').value;
+
+      if (!scoreKey) {
+        alert('CSV内にスコア列が存在しません。\nGoogleフォームの「テストにする」が有効になっているか確認してください。');
+        return;
+      }
+
+      const totalStudents = globalParsedData.length;
+
+      const customRates = questionKeysGlobal.map((_, idx) => {
+        const input = document.getElementById(`rate-input-${idx}`);
+        return input ? parseFloat(input.value || 0).toFixed(1) : "50.0";
+      });
+
+      const students = globalParsedData.map((row, index) => {
+        let scoreRaw = row[scoreKey] || '0';
+        let score = parseFloat(scoreRaw.split('/')[0].trim()) || 0;
+        let maxScore = parseFloat(scoreRaw.split('/')[1]?.trim()) || 100;
+        return {
+          id: index + 1,
+          name: row[selectedNameKey] || `受検者_${index + 1}`,
+          score: score,
+          maxScore: maxScore,
+          answers: row
+        };
+      });
+
+      const scores = students.map(s => s.score);
+      const totalScore = scores.reduce((a, b) => a + b, 0);
+      const avg = totalScore / scores.length;
+      const median = calculateMedian(scores);
+      const variance = scores.reduce((a, b) => a + Math.pow(b - avg, 2), 0) / scores.length;
+      const stdDev = Math.sqrt(variance) || 1;
+      const sortedScores = [...scores].sort((a, b) => b - a);
+
+      students.forEach((student) => {
+        const deviation = (50 + 10 * (student.score - avg) / stdDev).toFixed(1);
+        const rank = sortedScores.indexOf(student.score) + 1;
+
+        const card = document.createElement('div');
+        card.className = 'report-card';
+        
+        const halfLength = Math.ceil(questionKeysGlobal.length / 2);
+        const col1Keys = questionKeysGlobal.slice(0, halfLength);
+        const col2Keys = questionKeysGlobal.slice(halfLength);
+
+        const generateTableRows = (keys, offset) => {
+          let rows = '';
+          keys.forEach((qKey, idx) => {
+            let actualIdx = offset + idx;
+            let ans = student.answers[qKey] || '-';
+            let rate = customRates[actualIdx] || "50.0";
+
+            rows += `
+              <tr>
+                <td style="text-align: center; width: 10%;">問${actualIdx + 1}</td>
+                <td style="width: 40%; font-size: 8.5px;" title="${escapeHtml(qKey)}">${escapeHtml(qKey)}</td>
+                <td class="col-ans" style="width: 35%; font-size: 8.5px;" title="${escapeHtml(ans)}">${escapeHtml(ans)}</td>
+                <td style="text-align: center; width: 15%; font-weight: bold; font-size: 8.5px;">${rate}%</td>
+              </tr>
+            `;
+          });
+          return rows;
+        };
+
+        card.innerHTML = `
+          <div class="card-header">
+            <div>
+              <div style="font-size: 10px; color: #64748b; font-weight: bold;">個人成績票</div>
+              <h1>${escapeHtml(examTitle)}</h1>
+            </div>
+            <div class="student-badge">氏名: ${escapeHtml(student.name)} 殿</div>
+          </div>
+
+          <table class="stats-table">
+            <thead>
+              <tr>
+                <th style="width: 20%;">得点 / 満点</th>
+                <th style="width: 16%;">平均点</th>
+                <th style="width: 16%;">中央値</th>
+                <th style="width: 16%;">標準偏差</th>
+                <th style="width: 16%;">偏差値</th>
+                <th style="width: 16%;">順位</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>${student.score} / ${student.maxScore}</td>
+                <td>${avg.toFixed(1)}</td>
+                <td>${median.toFixed(1)}</td>
+                <td>${stdDev.toFixed(1)}</td>
+                <td class="highlight">${deviation}</td>
+                <td>${rank} / ${students.length}</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div class="section-title">【学習所見・講評】</div>
+          <div class="comment-box">
+            <b>■ 総合評価 (偏差値: ${deviation})</b><br>
+            ${getComment(parseFloat(deviation))}
+          </div>
+
+          <div class="section-title">【設問別 解答状況・正答率一覧】</div>
+          <div class="details-container">
+            <!-- 左列 -->
+            <div class="details-column">
+              <table class="details-table">
+                <thead>
+                  <tr>
+                    <th>番号</th>
+                    <th>設問</th>
+                    <th>解答</th>
+                    <th>正答率</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${generateTableRows(col1Keys, 0)}
+                </tbody>
+              </table>
+            </div>
+            <!-- 右列 -->
+            <div class="details-column">
+              <table class="details-table">
+                <thead>
+                  <tr>
+                    <th>番号</th>
+                    <th>設問</th>
+                    <th>解答</th>
+                    <th>正答率</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${generateTableRows(col2Keys, halfLength)}
+                </tbody>
+              </table>
+            </div>
+          </div>
+          
+          <div style="position: absolute; bottom: 8mm; right: 12mm; font-size: 9px; color: #64748b; text-align: right;">
+            全体受検者数: ${totalStudents}名 / 発行: ${escapeHtml(organizerName)}
+          </div>
+        `;
+
+        output.appendChild(card);
+      });
+    }
+
+    function getComment(dev) {
+      if (dev >= 65) {
+        return "素晴らしい結果です！応用問題までしっかり手が届いています。自信を持ってこの調子を維持していきましょう。";
+      } else if (dev >= 55) {
+        return "良好な成績です。基礎知識は定着しているので、間違えた設問を再確認してさらに高みを目指しましょう。";
+      } else if (dev >= 45) {
+        return "平均的な成果です。基本的な問題の取りこぼしがないか見直しを行い、確実に解ける問題を増やしましょう。";
+      } else if (dev >= 35) {
+        return "少し苦戦したようです。まずは間違えた基礎的な問題からしっかり復習して理解を深めていきましょう。";
+      } else {
+        return "もう一度基礎から丁寧に確認しましょう。諦めずに1問ずつ理解を重ねていくことが大切です。";
+      }
+    }
+
+    function escapeHtml(str) {
+      return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+  </script>
+</body>
+</html>
