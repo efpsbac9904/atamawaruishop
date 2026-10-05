@@ -70,7 +70,7 @@
       font-family: inherit;
     }
 
-    /* 正答率手入力エリア */
+    /* 正答率調整エリア */
     .rate-config-box {
       border: 1px solid #e5e7eb;
       background: #f9fafb;
@@ -82,7 +82,7 @@
     }
     .rate-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
       gap: 6px;
       margin-top: 8px;
     }
@@ -197,11 +197,11 @@
     .details-table {
       width: 100%;
       border-collapse: collapse;
-      font-size: 9px;
+      font-size: 8.5px;
     }
     .details-table th, .details-table td {
       border: 1px solid #cbd5e1;
-      padding: 2.5px 4px;
+      padding: 2.5px 3px;
       text-align: left;
     }
     .details-table th {
@@ -210,10 +210,17 @@
       font-size: 8.5px;
     }
     .details-table td.col-ans {
-      max-width: 90px;
+      max-width: 75px;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+    }
+    .score-badge {
+      font-weight: bold;
+      color: #16a34a;
+    }
+    .score-badge.zero {
+      color: #dc2626;
     }
 
     /* 印刷用設定 */
@@ -238,7 +245,7 @@
     <div class="setting-group">
       <div class="setting-item">
         <label><b>試験名称: </b></label>
-        <input type="text" id="examTitle" class="input-text" value="実力判定総合テスト" style="width: 160px;">
+        <input type="text" id="examTitle" class="input-text" value="学力到達度測定試験" style="width: 160px;">
       </div>
       <div class="setting-item">
         <label><b>発行元名: </b></label>
@@ -248,7 +255,7 @@
 
     <div class="setting-group" id="columnSelectContainer" style="display: none; background: #f8fafc; padding: 10px; border: 1px solid #e2e8f0; border-radius: 6px;">
       <div class="setting-item">
-        <label><b>「スコア（得点）」列: </b></label>
+        <label><b>「総得点」列: </b></label>
         <select id="scoreKeySelect" class="select-box" onchange="renderReportCards()" style="max-width: 200px;"></select>
       </div>
       <div class="setting-item">
@@ -266,7 +273,7 @@
     <!-- 正答率手入力パネル -->
     <div id="rateConfigContainer" style="display: none;" class="rate-config-box">
       <div style="font-weight: bold; font-size: 11px; border-bottom: 1px solid #ccc; padding-bottom: 3px;">
-        【② 各問題の全体正答率（%）を手入力・調整】
+        【② 自動計算された正答率（%）の確認・手動調整】
       </div>
       <div class="rate-grid" id="rateGrid"></div>
       <button class="btn" onclick="renderReportCards()" style="margin-top: 8px; width: 100%; padding: 5px;">再生成する</button>
@@ -304,13 +311,13 @@
         complete: function(results) {
           globalParsedData = results.data;
           setupColumnSelects(results.data);
-          setupRateConfig(results.data);
+          setupQuestionKeysAndRates(results.data);
           renderReportCards();
         }
       });
     }
 
-    // スコア列＆氏名列のドロップダウン生成＆自動選択
+    // 列の自動選択設定
     function setupColumnSelects(data) {
       if (!data || data.length === 0) return;
       const headers = Object.keys(data[0]);
@@ -321,69 +328,98 @@
       scoreSelect.innerHTML = '';
       nameSelect.innerHTML = '';
 
-      // スコア列の優先自動判定
-      let detectedScoreKey = headers.find(h => 
-        h.includes('スコア') || h.includes('点数') || h.toLowerCase().includes('score') || h.includes('得点')
-      ) || headers[1] || headers[0];
+      // 総得点列の検知
+      let detectedScoreKey = headers.find(h => h.includes('総得点') || h.includes('スコア')) || headers[1];
 
-      // 氏名列の優先自動判定
+      // 氏名列の優先自動判定（[スコア] や [フィードバック] が付かない素のカラムを優先）
       let detectedNameKey = headers.find(h => 
-        (h.includes('氏名') || h.includes('名前') || h.includes('回答者') || h.toLowerCase().includes('name')) &&
-        !h.includes('スコア') && !h.includes('タイムスタンプ') && !h.includes('点数')
+        (h.includes('表示名') || h.includes('氏名') || h.includes('名前') || h.includes('回答者') || h.toLowerCase().includes('name')) &&
+        !h.includes('[スコア]') && !h.includes('[フィードバック]') && !h.includes('タイムスタンプ') && !h.includes('総得点')
       );
 
       if (!detectedNameKey) {
-        detectedNameKey = headers.find(h => h.includes('メール') || h.includes('アドレス'));
-      }
-      if (!detectedNameKey) {
-        detectedNameKey = headers.find(h => h !== detectedScoreKey && !h.includes('タイムスタンプ')) || headers[0];
+        detectedNameKey = headers.find(h => !h.includes('[スコア]') && !h.includes('[フィードバック]') && !h.includes('タイムスタンプ') && h !== detectedScoreKey) || headers[2];
       }
 
       headers.forEach(h => {
-        // スコア用ドロップダウン
-        const optScore = document.createElement('option');
-        optScore.value = h;
-        optScore.textContent = h;
-        if (h === detectedScoreKey) optScore.selected = true;
-        scoreSelect.appendChild(optScore);
+        // [スコア]や[フィードバック]でないものだけ候補にする
+        if (!h.endsWith(' [フィードバック]')) {
+          const optScore = document.createElement('option');
+          optScore.value = h;
+          optScore.textContent = h.replace(/\n/g, ' ');
+          if (h === detectedScoreKey) optScore.selected = true;
+          scoreSelect.appendChild(optScore);
 
-        // 氏名用ドロップダウン
-        const optName = document.createElement('option');
-        optName.value = h;
-        optName.textContent = h;
-        if (h === detectedNameKey) optName.selected = true;
-        nameSelect.appendChild(optName);
+          const optName = document.createElement('option');
+          optName.value = h;
+          optName.textContent = h.replace(/\n/g, ' ');
+          if (h === detectedNameKey) optName.selected = true;
+          nameSelect.appendChild(optName);
+        }
       });
 
       document.getElementById('columnSelectContainer').style.display = 'flex';
     }
 
-    function setupRateConfig(data) {
+    // 設問カラムの抽出＆CSVからの正答率自動算出手入力パネル作成
+    function setupQuestionKeysAndRates(data) {
       const headers = Object.keys(data[0]);
-      
       const selectedScoreKey = document.getElementById('scoreKeySelect').value;
       const selectedNameKey = document.getElementById('nameKeySelect').value;
 
-      // 設問列の抽出（タイムスタンプ・選択されたスコア列・氏名列・メールアドレス等を除外）
-      questionKeysGlobal = headers.filter(h => 
-        !h.includes('タイムスタンプ') && 
-        h !== selectedScoreKey && 
-        h !== selectedNameKey && 
-        !h.includes('メール')
-      );
+      // 純粋な問題のカラム（ベースキー）を抽出
+      // 末尾に [スコア] または [フィードバック] がつくカラムからベースキーを取得
+      const baseKeys = [];
+      headers.forEach(h => {
+        if (h.endsWith(' [スコア]')) {
+          let base = h.replace(' [スコア]', '');
+          if (base !== selectedNameKey && base !== selectedScoreKey && !base.includes('タイムスタンプ') && !base.includes('表示名') && !base.includes('LINEの名前')) {
+            baseKeys.push(base);
+          }
+        }
+      });
+
+      // もし [スコア] 列形式でなければ旧ロジックで抽出
+      if (baseKeys.length > 0) {
+        questionKeysGlobal = baseKeys;
+      } else {
+        questionKeysGlobal = headers.filter(h => 
+          !h.includes('タイムスタンプ') && 
+          !h.includes('スコア') && 
+          !h.includes('フィードバック') &&
+          h !== selectedNameKey &&
+          h !== selectedScoreKey
+        );
+      }
 
       const rateGrid = document.getElementById('rateGrid');
       rateGrid.innerHTML = '';
 
+      const totalStudents = data.length;
+
       questionKeysGlobal.forEach((qKey, idx) => {
-        let defaultRate = (Math.floor(Math.random() * 400) / 10 + 20.0).toFixed(1);
+        let scoreCol = qKey + ' [スコア]';
+        let calculatedRate = "50.0";
+
+        // CSVから実際の正答率を自動算出（得点 > 0 の割合）
+        if (headers.includes(scoreCol) && totalStudents > 0) {
+          let correctCount = 0;
+          data.forEach(row => {
+            let scoreVal = row[scoreCol] || '0';
+            let earned = parseFloat(scoreVal.split('/')[0].trim()) || 0;
+            if (earned > 0) correctCount++;
+          });
+          calculatedRate = ((correctCount / totalStudents) * 100).toFixed(1);
+        } else {
+          calculatedRate = (Math.floor(Math.random() * 400) / 10 + 20.0).toFixed(1);
+        }
 
         const item = document.createElement('div');
         item.className = 'rate-item';
         item.innerHTML = `
           <span>問${idx + 1}:</span>
           <div>
-            <input type="number" id="rate-input-${idx}" step="0.1" min="0" max="100" value="${defaultRate}">%
+            <input type="number" id="rate-input-${idx}" step="0.1" min="0" max="100" value="${calculatedRate}">%
           </div>
         `;
         rateGrid.appendChild(item);
@@ -410,19 +446,8 @@
       const examTitle = document.getElementById('examTitle').value || "学力評価試験";
       const organizerName = document.getElementById('organizerName').value || "試験実行委員会";
       
-      // 手動選択されたスコア列と氏名列を取得
       const selectedScoreKey = document.getElementById('scoreKeySelect').value;
       const selectedNameKey = document.getElementById('nameKeySelect').value;
-
-      const headers = Object.keys(globalParsedData[0]);
-
-      // 再設定用に問題キーを最新に更新
-      questionKeysGlobal = headers.filter(h => 
-        !h.includes('タイムスタンプ') && 
-        h !== selectedScoreKey && 
-        h !== selectedNameKey && 
-        !h.includes('メール')
-      );
 
       const totalStudents = globalParsedData.length;
 
@@ -468,14 +493,27 @@
           keys.forEach((qKey, idx) => {
             let actualIdx = offset + idx;
             let ans = student.answers[qKey] || '-';
+            let scoreVal = student.answers[qKey + ' [スコア]'] || '';
+            let feedbackVal = student.answers[qKey + ' [フィードバック]'] || '';
             let rate = customRates[actualIdx] || "50.0";
+
+            // スコア表示の整形 (例: "11/11点" や "0/11点")
+            let scoreDisplay = '';
+            if (scoreVal && scoreVal.includes('/')) {
+              let pts = scoreVal.split('/');
+              let earned = parseFloat(pts[0].trim());
+              let maxPts = parseFloat(pts[1].trim());
+              let isZero = earned === 0;
+              scoreDisplay = `<span class="score-badge ${isZero ? 'zero' : ''}">${earned}/${maxPts}点</span>`;
+            }
 
             rows += `
               <tr>
-                <td style="text-align: center; width: 10%;">問${actualIdx + 1}</td>
-                <td style="width: 40%; font-size: 8.5px;" title="${escapeHtml(qKey)}">${escapeHtml(qKey)}</td>
-                <td class="col-ans" style="width: 35%; font-size: 8.5px;" title="${escapeHtml(ans)}">${escapeHtml(ans)}</td>
-                <td style="text-align: center; width: 15%; font-weight: bold; font-size: 8.5px;">${rate}%</td>
+                <td style="text-align: center; width: 8%;">問${actualIdx + 1}</td>
+                <td style="width: 36%; font-size: 8.5px;" title="${escapeHtml(qKey)}">${escapeHtml(qKey)}</td>
+                <td class="col-ans" style="width: 30%; font-size: 8.5px;" title="${escapeHtml(ans)}">${escapeHtml(ans)}</td>
+                <td style="text-align: center; width: 14%; font-size: 8px;">${scoreDisplay}</td>
+                <td style="text-align: center; width: 12%; font-weight: bold; font-size: 8.5px;">${rate}%</td>
               </tr>
             `;
           });
@@ -520,7 +558,7 @@
             ${getComment(parseFloat(deviation))}
           </div>
 
-          <div class="section-title">【設問別 解答状況・正答率一覧】</div>
+          <div class="section-title">【設問別 解答状況・得点・正答率一覧】</div>
           <div class="details-container">
             <!-- 左列 -->
             <div class="details-column">
@@ -530,6 +568,7 @@
                     <th>番号</th>
                     <th>設問</th>
                     <th>解答</th>
+                    <th>配点</th>
                     <th>正答率</th>
                   </tr>
                 </thead>
@@ -546,6 +585,7 @@
                     <th>番号</th>
                     <th>設問</th>
                     <th>解答</th>
+                    <th>配点</th>
                     <th>正答率</th>
                   </tr>
                 </thead>
