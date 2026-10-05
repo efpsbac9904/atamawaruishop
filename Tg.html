@@ -238,14 +238,21 @@
     <div class="setting-group">
       <div class="setting-item">
         <label><b>試験名称: </b></label>
-        <input type="text" id="examTitle" class="input-text" value="実力判定総合テスト" style="width: 180px;">
+        <input type="text" id="examTitle" class="input-text" value="実力判定総合テスト" style="width: 160px;">
       </div>
       <div class="setting-item">
         <label><b>発行元名: </b></label>
-        <input type="text" id="organizerName" class="input-text" value="試験実行委員会" style="width: 180px;">
+        <input type="text" id="organizerName" class="input-text" value="試験実行委員会" style="width: 160px;">
       </div>
-      <div class="setting-item" id="nameColumnContainer" style="display: none;">
-        <label><b>「氏名」列の指定: </b></label>
+    </div>
+
+    <div class="setting-group" id="columnSelectContainer" style="display: none; background: #f8fafc; padding: 10px; border: 1px solid #e2e8f0; border-radius: 6px;">
+      <div class="setting-item">
+        <label><b>「スコア（得点）」列: </b></label>
+        <select id="scoreKeySelect" class="select-box" onchange="renderReportCards()" style="max-width: 200px;"></select>
+      </div>
+      <div class="setting-item">
+        <label><b>「氏名」列: </b></label>
         <select id="nameKeySelect" class="select-box" onchange="renderReportCards()" style="max-width: 200px;"></select>
       </div>
     </div>
@@ -296,54 +303,73 @@
         skipEmptyLines: true,
         complete: function(results) {
           globalParsedData = results.data;
-          setupNameKeySelect(results.data);
+          setupColumnSelects(results.data);
           setupRateConfig(results.data);
           renderReportCards();
         }
       });
     }
 
-    // 氏名カラムのドロップダウン生成＆自動検知
-    function setupNameKeySelect(data) {
+    // スコア列＆氏名列のドロップダウン生成＆自動選択
+    function setupColumnSelects(data) {
       if (!data || data.length === 0) return;
       const headers = Object.keys(data[0]);
 
-      const select = document.getElementById('nameKeySelect');
-      select.innerHTML = '';
+      const scoreSelect = document.getElementById('scoreKeySelect');
+      const nameSelect = document.getElementById('nameKeySelect');
 
-      // 「氏名」「名前」「回答者」「Name」などを優先検知（スコアやタイムスタンプは完全除外）
-      let detectedKey = headers.find(h => 
+      scoreSelect.innerHTML = '';
+      nameSelect.innerHTML = '';
+
+      // スコア列の優先自動判定
+      let detectedScoreKey = headers.find(h => 
+        h.includes('スコア') || h.includes('点数') || h.toLowerCase().includes('score') || h.includes('得点')
+      ) || headers[1] || headers[0];
+
+      // 氏名列の優先自動判定
+      let detectedNameKey = headers.find(h => 
         (h.includes('氏名') || h.includes('名前') || h.includes('回答者') || h.toLowerCase().includes('name')) &&
-        !h.includes('スコア') && !h.includes('タイムスタンプ')
+        !h.includes('スコア') && !h.includes('タイムスタンプ') && !h.includes('点数')
       );
 
-      // 見つからない場合はメール系、それでも無ければ2番目以降の列
-      if (!detectedKey) {
-        detectedKey = headers.find(h => h.includes('メール') || h.includes('アドレス'));
+      if (!detectedNameKey) {
+        detectedNameKey = headers.find(h => h.includes('メール') || h.includes('アドレス'));
       }
-      if (!detectedKey) {
-        detectedKey = headers.find(h => !h.includes('タイムスタンプ') && !h.includes('スコア')) || headers[1] || headers[0];
+      if (!detectedNameKey) {
+        detectedNameKey = headers.find(h => h !== detectedScoreKey && !h.includes('タイムスタンプ')) || headers[0];
       }
 
       headers.forEach(h => {
-        const option = document.createElement('option');
-        option.value = h;
-        option.textContent = h;
-        if (h === detectedKey) option.selected = true;
-        select.appendChild(option);
+        // スコア用ドロップダウン
+        const optScore = document.createElement('option');
+        optScore.value = h;
+        optScore.textContent = h;
+        if (h === detectedScoreKey) optScore.selected = true;
+        scoreSelect.appendChild(optScore);
+
+        // 氏名用ドロップダウン
+        const optName = document.createElement('option');
+        optName.value = h;
+        optName.textContent = h;
+        if (h === detectedNameKey) optName.selected = true;
+        nameSelect.appendChild(optName);
       });
 
-      document.getElementById('nameColumnContainer').style.display = 'flex';
+      document.getElementById('columnSelectContainer').style.display = 'flex';
     }
 
     function setupRateConfig(data) {
       const headers = Object.keys(data[0]);
+      
+      const selectedScoreKey = document.getElementById('scoreKeySelect').value;
+      const selectedNameKey = document.getElementById('nameKeySelect').value;
+
+      // 設問列の抽出（タイムスタンプ・選択されたスコア列・氏名列・メールアドレス等を除外）
       questionKeysGlobal = headers.filter(h => 
         !h.includes('タイムスタンプ') && 
-        !h.includes('スコア') && 
-        !h.includes('メール') && 
-        !h.includes('氏名') && 
-        !h.includes('名前')
+        h !== selectedScoreKey && 
+        h !== selectedNameKey && 
+        !h.includes('メール')
       );
 
       const rateGrid = document.getElementById('rateGrid');
@@ -383,18 +409,20 @@
 
       const examTitle = document.getElementById('examTitle').value || "学力評価試験";
       const organizerName = document.getElementById('organizerName').value || "試験実行委員会";
-      const headers = Object.keys(globalParsedData[0]);
-
-      // スコア列の判定（絶対スコア列のみ選択）
-      let scoreKey = headers.find(k => k.includes('スコア') || k.includes('点数'));
       
-      // 氏名列の取得（ドロップダウンでの選択値を最優先使用）
+      // 手動選択されたスコア列と氏名列を取得
+      const selectedScoreKey = document.getElementById('scoreKeySelect').value;
       const selectedNameKey = document.getElementById('nameKeySelect').value;
 
-      if (!scoreKey) {
-        alert('CSV内にスコア列が存在しません。\nGoogleフォームの「テストにする」が有効になっているか確認してください。');
-        return;
-      }
+      const headers = Object.keys(globalParsedData[0]);
+
+      // 再設定用に問題キーを最新に更新
+      questionKeysGlobal = headers.filter(h => 
+        !h.includes('タイムスタンプ') && 
+        h !== selectedScoreKey && 
+        h !== selectedNameKey && 
+        !h.includes('メール')
+      );
 
       const totalStudents = globalParsedData.length;
 
@@ -404,7 +432,7 @@
       });
 
       const students = globalParsedData.map((row, index) => {
-        let scoreRaw = row[scoreKey] || '0';
+        let scoreRaw = row[selectedScoreKey] || '0';
         let score = parseFloat(scoreRaw.split('/')[0].trim()) || 0;
         let maxScore = parseFloat(scoreRaw.split('/')[1]?.trim()) || 100;
         return {
