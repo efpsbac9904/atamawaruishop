@@ -1,0 +1,1365 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>本格対局 将棋 (Shogi - Modern Spawner Chaos)</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts for Traditional Japanese Look -->
+    <link href="https://fonts.googleapis.com/css2?family=Yuji+Syuku&family=Zen+Kaku+Gothic+New:wght@500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Zen Kaku Gothic New', sans-serif;
+            background: radial-gradient(circle at center, #2d261e 0%, #15100c 100%);
+            touch-action: manipulation;
+        }
+        .shogi-font {
+            font-family: 'Yuji Syuku', serif;
+        }
+        /* Wooden Textures & Aesthetics */
+        .board-wood {
+            background-color: #e3b061;
+            background-image: 
+                radial-gradient(ellipse at 50% 50%, rgba(255, 255, 255, 0.15) 0%, rgba(0, 0, 0, 0.1) 100%),
+                linear-gradient(90deg, rgba(160, 90, 20, 0.08) 0%, rgba(0, 0, 0, 0) 50%, rgba(160, 90, 20, 0.08) 100%);
+            box-shadow: inset 0 0 30px rgba(70, 35, 10, 0.4), 0 12px 35px rgba(0,0,0,0.6);
+        }
+        .komadai-wood {
+            background-color: #d19a4b;
+            background-image: radial-gradient(ellipse at center, rgba(255,255,255,0.1) 0%, rgba(0,0,0,0.15) 100%);
+            box-shadow: inset 0 0 15px rgba(60, 30, 5, 0.3), 0 4px 10px rgba(0,0,0,0.4);
+        }
+        /* Shogi Piece Styling */
+        .shogi-piece {
+            clip-path: polygon(18% 100%, 82% 100%, 93% 36%, 50% 0%, 7% 36%);
+            background: linear-gradient(180deg, #fcebc2 0%, #edd39a 70%, #d8b066 100%);
+            box-shadow: 2px 3px 5px rgba(0,0,0,0.4);
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+            user-select: none;
+        }
+        .shogi-piece:hover {
+            transform: translateY(-2px) scale(1.03);
+            box-shadow: 3px 6px 10px rgba(0,0,0,0.5);
+        }
+        .shogi-piece.gote {
+            transform: rotate(180deg);
+        }
+        .shogi-piece.gote:hover {
+            transform: rotate(180deg) translateY(-2px) scale(1.03);
+        }
+        .shogi-piece.promoted {
+            color: #bd1a1a;
+        }
+        .shogi-piece.spawner {
+            background: linear-gradient(180deg, #e2e8f0 0%, #cbd5e1 70%, #94a3b8 100%);
+            border-bottom: 2px solid #475569;
+        }
+        /* Board Cells & Highlights */
+        .board-cell {
+            border: 1px solid rgba(80, 45, 15, 0.7);
+        }
+        .cell-selected {
+            background-color: rgba(234, 179, 8, 0.5) !important;
+        }
+        .cell-target {
+            position: relative;
+        }
+        .cell-target::after {
+            content: '';
+            position: absolute;
+            width: 32%;
+            height: 32%;
+            background-color: rgba(34, 197, 94, 0.75);
+            border-radius: 50%;
+            top: 34%;
+            left: 34%;
+            pointer-events: none;
+            box-shadow: 0 0 8px rgba(34, 197, 94, 0.8);
+        }
+        .cell-last-move {
+            background-color: rgba(59, 130, 246, 0.35) !important;
+        }
+        .cell-check {
+            background-color: rgba(239, 68, 68, 0.6) !important;
+            animation: pulse-check 1.2s infinite ease-in-out;
+        }
+        @keyframes pulse-check {
+            0%, 100% { background-color: rgba(239, 68, 68, 0.6); }
+            50% { background-color: rgba(239, 68, 68, 0.2); }
+        }
+        /* Custom Scrollbars */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(0,0,0,0.2);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(210, 160, 90, 0.5);
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body class="text-amber-100 min-h-screen flex flex-col items-center justify-between p-2 md:p-6 select-none overflow-x-hidden">
+
+    <!-- Header Section -->
+    <header class="w-full max-w-5xl flex flex-wrap items-center justify-between mb-3 px-2 gap-2">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-lg bg-amber-700/60 border border-amber-500/40 flex items-center justify-center text-amber-200 text-2xl font-bold shogi-font shadow-lg">
+                将
+            </div>
+            <div>
+                <h1 class="text-2xl md:text-3xl font-bold text-amber-200 shogi-font tracking-wide">本格対局 将棋</h1>
+                <p class="text-xs text-amber-400/80">Japanese Chess - Modern Chaos Spawner Edition</p>
+            </div>
+        </div>
+
+        <!-- Header Actions -->
+        <div class="flex flex-wrap items-center gap-2">
+            <button id="btn-piece-mode" class="bg-amber-900/70 hover:bg-amber-800 text-amber-200 border border-amber-600/50 px-3 py-1.5 rounded-lg text-sm flex items-center gap-2 transition shadow">
+                <i class="fa-solid fa-industry text-amber-400"></i>
+                <span id="piece-mode-label">現代カオス (歩工場)</span>
+            </button>
+            <button id="btn-mode" class="bg-amber-900/70 hover:bg-amber-800 text-amber-200 border border-amber-600/50 px-3 py-1.5 rounded-lg text-sm flex items-center gap-2 transition shadow">
+                <i class="fa-solid fa-robot text-amber-400"></i>
+                <span id="mode-label">vs AI モード</span>
+            </button>
+            <button id="btn-restart" class="bg-amber-800/80 hover:bg-amber-700 text-amber-100 border border-amber-500/50 px-3 py-1.5 rounded-lg text-sm flex items-center gap-1.5 transition shadow">
+                <i class="fa-solid fa-rotate-right"></i>
+                <span>対局やり直し</span>
+            </button>
+            <button id="btn-export-json" class="bg-amber-900/70 hover:bg-amber-800 text-amber-200 border border-amber-600/50 px-3 py-1.5 rounded-lg text-sm flex items-center gap-1.5 transition shadow">
+                <i class="fa-solid fa-copy text-amber-400"></i>
+                <span>JSONコピー</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Game Workspace -->
+    <main class="w-full max-w-6xl flex flex-col lg:flex-row items-center lg:items-start justify-center gap-4 md:gap-6 my-auto">
+        
+        <!-- Left Side: Player Info & Control / Gote Captured Pieces (Desktop) -->
+        <div class="w-full lg:w-64 flex flex-col gap-3 order-2 lg:order-1">
+            
+            <!-- Gote (後手 / White) Profile & Komadai -->
+            <div id="gote-card" class="bg-stone-900/80 border border-amber-900/40 rounded-xl p-3 shadow-xl transition-all">
+                <div class="flex items-center justify-between mb-2 pb-2 border-b border-amber-900/30">
+                    <div class="flex items-center gap-2">
+                        <span class="w-3 h-3 rounded-full bg-stone-400 inline-block border border-stone-200"></span>
+                        <span class="font-bold text-amber-200 shogi-font text-lg">後手 (Gote)</span>
+                        <span id="gote-badge" class="text-xs bg-stone-800 text-amber-400 px-2 py-0.5 rounded border border-amber-700/30">AI</span>
+                    </div>
+                    <div id="gote-timer" class="font-mono text-xs bg-black/40 px-2 py-1 rounded text-amber-300">00:00</div>
+                </div>
+
+                <!-- Gote Komadai (Captured Pieces) -->
+                <div class="text-xs text-amber-400/80 mb-1 flex justify-between">
+                    <span><i class="fa-solid fa-box-archive mr-1"></i>後手 駒台</span>
+                    <span id="gote-komadai-count" class="text-amber-500">0駒</span>
+                </div>
+                <div id="gote-komadai" class="komadai-wood rounded-lg p-2 min-h-[90px] flex flex-wrap gap-1.5 items-start justify-start border border-amber-800/50">
+                    <!-- Drop pieces dynamically rendered here -->
+                </div>
+            </div>
+
+            <!-- Game Status Panel -->
+            <div class="bg-stone-900/80 border border-amber-900/40 rounded-xl p-3.5 shadow-xl flex flex-col gap-2">
+                <div class="flex justify-between items-center text-xs text-amber-400/90 font-semibold border-b border-amber-900/30 pb-1.5">
+                    <span>対局状況</span>
+                    <span id="turn-indicator" class="text-amber-300 bg-amber-950 px-2 py-0.5 rounded border border-amber-700/40">▲ 先手の番</span>
+                </div>
+                <div id="status-message" class="text-sm font-medium text-amber-100 min-h-[2.5rem] flex items-center justify-center text-center bg-black/30 rounded p-2 border border-amber-900/20">
+                    対局を開始します。先手の手番です。
+                </div>
+            </div>
+
+            <!-- Game Controls -->
+            <div class="flex gap-2">
+                <button id="btn-resign" class="flex-1 bg-red-950/60 hover:bg-red-900/80 border border-red-800/50 text-red-200 py-2 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1">
+                    <i class="fa-solid fa-flag"></i> 投了 (Resign)
+                </button>
+                <button id="btn-sound" class="bg-stone-800 hover:bg-stone-700 border border-stone-600/50 text-amber-300 px-3 py-2 rounded-lg text-xs transition">
+                    <i id="sound-icon" class="fa-solid fa-volume-high"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Center: Shogi Board Container -->
+        <div class="order-1 lg:order-2 flex flex-col items-center">
+            
+            <!-- Shogi Board Box -->
+            <div class="p-2 md:p-4 rounded-2xl bg-stone-950 border-2 border-amber-800/60 shadow-2xl relative">
+                
+                <!-- Board Grid Column Labels (9 to 1) -->
+                <div class="grid grid-cols-9 text-center text-xs font-bold text-amber-400/80 mb-1 w-[324px] sm:w-[414px] md:w-[468px] mx-auto">
+                    <span>9</span><span>8</span><span>7</span><span>6</span><span>5</span><span>4</span><span>3</span><span>2</span><span>1</span>
+                </div>
+
+                <div class="flex items-center">
+                    <!-- The 9x9 Shogi Board -->
+                    <div id="shogi-board" class="board-wood grid grid-cols-9 grid-rows-9 w-[324px] h-[324px] sm:w-[414px] sm:h-[414px] md:w-[468px] md:h-[468px] border-2 border-amber-950 rounded relative overflow-hidden">
+                        <!-- 81 Cells dynamically built -->
+                    </div>
+
+                    <!-- Board Row Labels (一 to 九) -->
+                    <div class="grid grid-rows-9 text-center text-xs font-bold text-amber-400/80 ml-1.5 h-[324px] sm:h-[414px] md:h-[468px] flex flex-col justify-around">
+                        <span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span><span>七</span><span>八</span><span>九</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Side: Move History & Sente Captured Pieces -->
+        <div class="w-full lg:w-64 flex flex-col gap-3 order-3">
+            
+            <!-- Sente (先手 / Black) Profile & Komadai -->
+            <div id="sente-card" class="bg-stone-900/80 border border-amber-900/40 rounded-xl p-3 shadow-xl transition-all">
+                <div class="flex items-center justify-between mb-2 pb-2 border-b border-amber-900/30">
+                    <div class="flex items-center gap-2">
+                        <span class="w-3 h-3 rounded-full bg-amber-600 inline-block border border-amber-300"></span>
+                        <span class="font-bold text-amber-200 shogi-font text-lg">先手 (Sente)</span>
+                        <span class="text-xs bg-amber-950 text-amber-300 px-2 py-0.5 rounded border border-amber-700/40">You</span>
+                    </div>
+                    <div id="sente-timer" class="font-mono text-xs bg-black/40 px-2 py-1 rounded text-amber-300">00:00</div>
+                </div>
+
+                <!-- Sente Komadai (Captured Pieces) -->
+                <div class="text-xs text-amber-400/80 mb-1 flex justify-between">
+                    <span><i class="fa-solid fa-box-archive mr-1"></i>先手 駒台</span>
+                    <span id="sente-komadai-count" class="text-amber-500">0駒</span>
+                </div>
+                <div id="sente-komadai" class="komadai-wood rounded-lg p-2 min-h-[90px] flex flex-wrap gap-1.5 items-start justify-start border border-amber-800/50">
+                    <!-- Drop pieces dynamically rendered here -->
+                </div>
+            </div>
+
+            <!-- Move History Box -->
+            <div class="bg-stone-900/80 border border-amber-900/40 rounded-xl p-3 shadow-xl flex flex-col h-[180px] lg:h-[210px]">
+                <div class="text-xs font-bold text-amber-300 pb-1.5 border-b border-amber-900/40 flex justify-between items-center">
+                    <span><i class="fa-solid fa-list-ol mr-1"></i>棋譜 (Move Record)</span>
+                    <span id="move-count" class="text-[10px] text-amber-500">0 手</span>
+                </div>
+                <div id="move-history" class="flex-1 overflow-y-auto mt-2 space-y-1 text-xs font-mono pr-1">
+                    <div class="text-amber-600/70 text-center py-4">対局が始まるとここに棋譜が記録されます</div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Promotion Modal Dialog -->
+    <div id="promotion-modal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-stone-900 border-2 border-amber-600 rounded-2xl p-6 max-w-xs w-full text-center shadow-2xl animate-fade-in">
+            <h3 class="text-xl font-bold text-amber-200 shogi-font mb-2">成りますか？</h3>
+            <p class="text-xs text-amber-400 mb-6">敵陣に入りました。駒を成ることができます。</p>
+            <div class="flex gap-4 justify-center">
+                <button id="btn-promote-yes" class="flex-1 bg-amber-600 hover:bg-amber-500 text-amber-950 font-bold py-2.5 rounded-xl border border-amber-300 shadow-lg transition text-base">
+                    成る (Promote)
+                </button>
+                <button id="btn-promote-no" class="flex-1 bg-stone-800 hover:bg-stone-700 text-amber-200 font-bold py-2.5 rounded-xl border border-stone-600 shadow transition text-base">
+                    不成 (Keep)
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Game Over Modal -->
+    <div id="gameover-modal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-stone-900 border-2 border-amber-500 rounded-2xl p-6 max-w-sm w-full text-center shadow-2xl">
+            <div id="gameover-icon" class="text-5xl text-amber-400 mb-3">
+                <i class="fa-solid fa-trophy"></i>
+            </div>
+            <h2 id="gameover-title" class="text-2xl font-bold text-amber-100 shogi-font mb-2">終局</h2>
+            <p id="gameover-body" class="text-sm text-amber-300 mb-6">先手の勝利です！</p>
+            
+            <div class="flex flex-col gap-2.5">
+                <button id="btn-gameover-view" class="w-full bg-stone-800 hover:bg-stone-700 text-amber-200 font-bold py-2.5 rounded-xl border border-amber-600/60 shadow transition text-sm flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-eye"></i> 盤面をじっくり見る
+                </button>
+                <button id="btn-gameover-restart" class="w-full bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-stone-950 font-bold py-2.5 rounded-xl shadow-lg transition text-sm flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-rotate-right"></i> もう一度対局する
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <footer class="text-center text-[11px] text-amber-600/60 mt-4">
+        本格将棋 9x9 • Sente (▲) vs Gote (▽)
+    </footer>
+
+    <!-- Game Logic JavaScript -->
+    <script>
+        /**
+         * Shogi Web Application
+         * Standard 9x9 Board with Modern Chaos Pieces + Spawner & Optimized AI
+         */
+
+        const PIECES = {
+            KING: { name: '玉', promotedName: '玉', isPromoted: false, kanji: '玉' },
+            ROOK: { name: '飛', promotedName: '龍', isPromoted: false, kanji: '飛' },
+            BISHOP: { name: '角', promotedName: '馬', isPromoted: false, kanji: '角' },
+            GOLD: { name: '金', promotedName: '金', isPromoted: false, kanji: '金' },
+            SILVER: { name: '銀', promotedName: '成銀', isPromoted: false, kanji: '銀' },
+            KNIGHT: { name: '桂', promotedName: '成桂', isPromoted: false, kanji: '桂' },
+            LANCE: { name: '香', promotedName: '成香', isPromoted: false, kanji: '香' },
+            PAWN: { name: '歩', promotedName: 'と', isPromoted: false, kanji: '歩' },
+            // 現代風カスタム駒
+            FACTORY: { name: '工', promotedName: '量', isPromoted: false, kanji: '工' },  // 歩スポナー（工場）
+            SMARTPHONE: { name: '机', promotedName: '5G', isPromoted: false, kanji: '机' }, // スマホ
+            DELIVERY: { name: '配', promotedName: '爆', isPromoted: false, kanji: '配' },  // Uber配達員
+            OSHI: { name: '推', promotedName: '神', isPromoted: false, kanji: '推' },       // 推し
+            FLAME: { name: '炎', promotedName: '大炎', isPromoted: false, kanji: '炎' },    // 炎上
+            CRASH: { name: '暴', promotedName: '恐慌', isPromoted: false, kanji: '暴' }     // 株暴落
+        };
+
+        const PROMOTED_KANJI = {
+            '飛': '龍',
+            '角': '馬',
+            '銀': '全',
+            '桂': '圭',
+            '香': '杏',
+            '歩': 'と',
+            '工': '量',
+            '机': '5G',
+            '配': '爆',
+            '推': '神',
+            '炎': '大炎',
+            '暴': '恐'
+        };
+
+        const SENTE = 'sente'; 
+        const GOTE = 'gote';   
+
+        // Game State Variables
+        let board = Array(9).fill(null).map(() => Array(9).fill(null));
+        let senteKomadai = [];
+        let goteKomadai = [];
+        let turn = SENTE;
+        let selectedSquare = null;
+        let selectedKomadaiIndex = null;
+        let validMoves = [];
+        let lastMove = null;
+        let moveHistory = [];
+        let isVsAI = true;
+        // 'modern_pawn' (歩工場) | 'modern_gold' (金工場) | 'standard' (標準)
+        let gameMode = 'modern_pawn';
+        let isGameOver = false;
+        let soundEnabled = true;
+        
+        let senteTime = 0, goteTime = 0;
+        let timerInterval = null;
+        let pendingMove = null;
+
+        // Sound Effects
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        function playKomaSound() {
+            if (!soundEnabled) return;
+            try {
+                if (audioCtx.state === 'suspended') audioCtx.resume();
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(220, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(60, audioCtx.currentTime + 0.08);
+                
+                gain.gain.setValueAtTime(0.8, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.08);
+
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.08);
+            } catch (e) { console.error(e); }
+        }
+
+        const KANJI_NUMS = ['一', '二', '三', '四', '五', '六', '七', '八', '九'];
+
+        function initBoard() {
+            board = Array(9).fill(null).map(() => Array(9).fill(null));
+            senteKomadai = [];
+            goteKomadai = [];
+            turn = SENTE;
+            selectedSquare = null;
+            selectedKomadaiIndex = null;
+            validMoves = [];
+            lastMove = null;
+            moveHistory = [];
+            isGameOver = false;
+            senteTime = 0;
+            goteTime = 0;
+
+            if (gameMode === 'modern_pawn' || gameMode === 'modern_gold') {
+                // 現代カオス駒配置（「工：スポナー」搭載）
+                board[0][0] = createPiece('FLAME', GOTE);
+                board[0][1] = createPiece('KNIGHT', GOTE);
+                board[0][2] = createPiece('FACTORY', GOTE);
+                board[0][3] = createPiece('GOLD', GOTE);
+                board[0][4] = createPiece('KING', GOTE, '王');
+                board[0][5] = createPiece('GOLD', GOTE);
+                board[0][6] = createPiece('FACTORY', GOTE);
+                board[0][7] = createPiece('KNIGHT', GOTE);
+                board[0][8] = createPiece('FLAME', GOTE);
+
+                board[1][1] = createPiece('ROOK', GOTE);
+                board[1][4] = createPiece('OSHI', GOTE);
+                board[1][7] = createPiece('CRASH', GOTE);
+
+                for (let c = 0; c < 9; c++) board[2][c] = createPiece('PAWN', GOTE);
+                for (let c = 0; c < 9; c++) board[6][c] = createPiece('PAWN', SENTE);
+
+                board[7][1] = createPiece('CRASH', SENTE);
+                board[7][4] = createPiece('OSHI', SENTE);
+                board[7][7] = createPiece('ROOK', SENTE);
+
+                board[8][0] = createPiece('FLAME', SENTE);
+                board[8][1] = createPiece('KNIGHT', SENTE);
+                board[8][2] = createPiece('FACTORY', SENTE);
+                board[8][3] = createPiece('GOLD', SENTE);
+                board[8][4] = createPiece('KING', SENTE, '玉');
+                board[8][5] = createPiece('GOLD', SENTE);
+                board[8][6] = createPiece('FACTORY', SENTE);
+                board[8][7] = createPiece('KNIGHT', SENTE);
+                board[8][8] = createPiece('FLAME', SENTE);
+            } else {
+                // 通常将棋配置
+                board[0][0] = createPiece('LANCE', GOTE);
+                board[0][1] = createPiece('KNIGHT', GOTE);
+                board[0][2] = createPiece('SILVER', GOTE);
+                board[0][3] = createPiece('GOLD', GOTE);
+                board[0][4] = createPiece('KING', GOTE, '王');
+                board[0][5] = createPiece('GOLD', GOTE);
+                board[0][6] = createPiece('SILVER', GOTE);
+                board[0][7] = createPiece('KNIGHT', GOTE);
+                board[0][8] = createPiece('LANCE', GOTE);
+
+                board[1][1] = createPiece('ROOK', GOTE);
+                board[1][7] = createPiece('BISHOP', GOTE);
+
+                for (let c = 0; c < 9; c++) board[2][c] = createPiece('PAWN', GOTE);
+                for (let c = 0; c < 9; c++) board[6][c] = createPiece('PAWN', SENTE);
+
+                board[7][1] = createPiece('BISHOP', SENTE);
+                board[7][7] = createPiece('ROOK', SENTE);
+
+                board[8][0] = createPiece('LANCE', SENTE);
+                board[8][1] = createPiece('KNIGHT', SENTE);
+                board[8][2] = createPiece('SILVER', SENTE);
+                board[8][3] = createPiece('GOLD', SENTE);
+                board[8][4] = createPiece('KING', SENTE, '玉');
+                board[8][5] = createPiece('GOLD', SENTE);
+                board[8][6] = createPiece('SILVER', SENTE);
+                board[8][7] = createPiece('KNIGHT', SENTE);
+                board[8][8] = createPiece('LANCE', SENTE);
+            }
+
+            const modeLabels = {
+                'modern_pawn': '現代カオス(歩工場)',
+                'modern_gold': '現代カオス(金工場💰)',
+                'standard': '通常将棋'
+            };
+
+            startTimer();
+            render();
+            updateStatus(`対局を開始しました。(${modeLabels[gameMode]}モード) 先手の手番です。`);
+        }
+
+        function createPiece(type, owner, customKanji = null) {
+            return {
+                type: type,
+                owner: owner,
+                promoted: false,
+                kanji: customKanji || PIECES[type].kanji
+            };
+        }
+
+        function render() {
+            renderBoard();
+            renderKomadais();
+            renderHistory();
+            updateUIState();
+        }
+
+        function renderBoard() {
+            const boardEl = document.getElementById('shogi-board');
+            boardEl.innerHTML = '';
+
+            const kingInCheckPos = findKingInCheck(turn);
+
+            for (let r = 0; r < 9; r++) {
+                for (let c = 0; c < 9; c++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'board-cell flex items-center justify-center relative cursor-pointer select-none';
+                    cell.dataset.r = r;
+                    cell.dataset.c = c;
+
+                    if (selectedSquare && selectedSquare.r === r && selectedSquare.c === c) {
+                        cell.classList.add('cell-selected');
+                    } else if (lastMove && ((lastMove.from && lastMove.from.r === r && lastMove.from.c === c) || (lastMove.to.r === r && lastMove.to.c === c))) {
+                        cell.classList.add('cell-last-move');
+                    }
+
+                    if (kingInCheckPos && kingInCheckPos.r === r && kingInCheckPos.c === c) {
+                        cell.classList.add('cell-check');
+                    }
+
+                    const isTarget = validMoves.some(m => m.r === r && m.c === c);
+                    if (isTarget) {
+                        cell.classList.add('cell-target');
+                    }
+
+                    const piece = board[r][c];
+                    if (piece) {
+                        const pEl = document.createElement('div');
+                        const isGote = piece.owner === GOTE;
+                        const isSpawner = piece.type === 'FACTORY';
+                        pEl.className = `shogi-piece w-[82%] h-[88%] flex flex-col items-center justify-center font-bold text-amber-950 shogi-font text-lg sm:text-2xl md:text-3xl relative z-10 ${isGote ? 'gote' : ''} ${piece.promoted ? 'promoted' : ''} ${isSpawner ? 'spawner' : ''}`;
+                        
+                        let displayKanji = piece.kanji;
+                        if (piece.promoted) {
+                            displayKanji = PROMOTED_KANJI[piece.kanji] || PIECES[piece.type].promotedName;
+                        }
+                        
+                        pEl.innerText = displayKanji;
+                        cell.appendChild(pEl);
+                    }
+
+                    cell.addEventListener('click', () => handleSquareClick(r, c));
+                    boardEl.appendChild(cell);
+                }
+            }
+        }
+
+        function renderKomadais() {
+            const senteEl = document.getElementById('sente-komadai');
+            senteEl.innerHTML = '';
+            document.getElementById('sente-komadai-count').innerText = `${senteKomadai.length} 駒`;
+
+            senteKomadai.forEach((piece, idx) => {
+                const kPiece = createKomadaiPieceEl(piece, SENTE, idx);
+                senteEl.appendChild(kPiece);
+            });
+
+            const goteEl = document.getElementById('gote-komadai');
+            goteEl.innerHTML = '';
+            document.getElementById('gote-komadai-count').innerText = `${goteKomadai.length} 駒`;
+
+            goteKomadai.forEach((piece, idx) => {
+                const kPiece = createKomadaiPieceEl(piece, GOTE, idx);
+                goteEl.appendChild(kPiece);
+            });
+        }
+
+        function createKomadaiPieceEl(piece, owner, index) {
+            const el = document.createElement('div');
+            const isSelected = selectedKomadaiIndex === index && turn === owner;
+            el.className = `shogi-piece w-8 h-9 sm:w-10 sm:h-11 flex items-center justify-center font-bold text-amber-950 shogi-font text-base sm:text-lg cursor-pointer ${owner === GOTE ? 'gote' : ''} ${isSelected ? 'ring-2 ring-yellow-400 scale-105' : ''}`;
+            el.innerText = piece.kanji;
+            
+            el.addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (turn !== owner || isGameOver) return;
+                if (isVsAI && turn === GOTE) return;
+
+                if (selectedKomadaiIndex === index) {
+                    selectedKomadaiIndex = null;
+                    validMoves = [];
+                } else {
+                    selectedSquare = null;
+                    selectedKomadaiIndex = index;
+                    calculateDropMoves(owner, piece);
+                }
+                render();
+            });
+            return el;
+        }
+
+        function renderHistory() {
+            const container = document.getElementById('move-history');
+            document.getElementById('move-count').innerText = `${moveHistory.length} 手`;
+
+            if (moveHistory.length === 0) {
+                container.innerHTML = `<div class="text-amber-600/70 text-center py-4">対局が始まるとここに棋譜が記録されます</div>`;
+                return;
+            }
+
+            container.innerHTML = '';
+            moveHistory.forEach((item, index) => {
+                const row = document.createElement('div');
+                row.className = `flex justify-between px-2 py-0.5 rounded ${index === moveHistory.length - 1 ? 'bg-amber-900/40 text-amber-200 font-bold' : 'text-amber-400/80'}`;
+                row.innerHTML = `
+                    <span>${index + 1}. ${item.player === SENTE ? '▲' : '▽'} ${item.notation}</span>
+                    <span class="text-[10px] text-amber-600/80">${item.time}</span>
+                `;
+                container.appendChild(row);
+            });
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function updateUIState() {
+            const turnInd = document.getElementById('turn-indicator');
+            if (isGameOver) {
+                turnInd.innerText = '終局 (Game Over)';
+                turnInd.className = 'text-red-300 bg-red-950 px-2 py-0.5 rounded border border-red-700/40';
+            } else if (turn === SENTE) {
+                turnInd.innerText = '▲ 先手の番 (Sente)';
+                turnInd.className = 'text-amber-300 bg-amber-950 px-2 py-0.5 rounded border border-amber-700/40';
+            } else {
+                turnInd.innerText = '▽ 後手の番 (Gote)';
+                turnInd.className = 'text-stone-300 bg-stone-950 px-2 py-0.5 rounded border border-stone-700/40';
+            }
+
+            document.getElementById('sente-card').style.opacity = turn === SENTE ? '1' : '0.65';
+            document.getElementById('gote-card').style.opacity = turn === GOTE ? '1' : '0.65';
+        }
+
+        function handleSquareClick(r, c) {
+            if (isGameOver) return;
+            if (isVsAI && turn === GOTE) return;
+
+            const clickedPiece = board[r][c];
+
+            if (selectedKomadaiIndex !== null) {
+                if (validMoves.some(m => m.r === r && m.c === c)) {
+                    executeDrop(turn, selectedKomadaiIndex, r, c);
+                } else {
+                    selectedKomadaiIndex = null;
+                    validMoves = [];
+                    render();
+                }
+                return;
+            }
+
+            if (selectedSquare) {
+                if (selectedSquare.r === r && selectedSquare.c === c) {
+                    selectedSquare = null;
+                    validMoves = [];
+                    render();
+                    return;
+                }
+
+                if (validMoves.some(m => m.r === r && m.c === c)) {
+                    attemptMove(selectedSquare.r, selectedSquare.c, r, c);
+                    return;
+                }
+            }
+
+            if (clickedPiece && clickedPiece.owner === turn) {
+                selectedSquare = { r, c };
+                selectedKomadaiIndex = null;
+                validMoves = getValidMovesForPiece(r, c);
+                render();
+            } else {
+                selectedSquare = null;
+                validMoves = [];
+                render();
+            }
+        }
+
+        function getValidMovesForPiece(r, c) {
+            const piece = board[r][c];
+            if (!piece) return [];
+
+            const pseudoMoves = getPseudoMoves(r, c, piece, board);
+            return pseudoMoves.filter(m => {
+                const tempBoard = cloneBoard(board);
+                tempBoard[m.r][m.c] = tempBoard[r][c];
+                tempBoard[r][c] = null;
+                return !isKingInCheck(piece.owner, tempBoard);
+            });
+        }
+
+        function getPseudoMoves(r, c, piece, b) {
+            const moves = [];
+            const dir = piece.owner === SENTE ? -1 : 1; 
+            const owner = piece.owner;
+
+            const addMoveIfValid = (nr, nc) => {
+                if (nr < 0 || nr >= 9 || nc < 0 || nc >= 9) return false;
+                const target = b[nr][nc];
+                if (!target) {
+                    moves.push({ r: nr, c: nc });
+                    return true;
+                } else if (target.owner !== owner) {
+                    moves.push({ r: nr, c: nc });
+                    return false;
+                }
+                return false;
+            };
+
+            const slide = (dr, dc) => {
+                let nr = r + dr;
+                let nc = c + dc;
+                while (nr >= 0 && nr < 9 && nc >= 0 && nc < 9) {
+                    if (!addMoveIfValid(nr, nc)) break;
+                    nr += dr;
+                    nc += dc;
+                }
+            };
+
+            if (piece.promoted) {
+                if (piece.type === 'ROOK') {
+                    slide(-1, 0); slide(1, 0); slide(0, -1); slide(0, 1);
+                    [[-1,-1],[-1,1],[1,-1],[1,1]].forEach(([dr,dc]) => addMoveIfValid(r+dr, c+dc));
+                } else if (piece.type === 'BISHOP') {
+                    slide(-1, -1); slide(-1, 1); slide(1, -1); slide(1, 1);
+                    [[-1,0],[1,0],[0,-1],[0,1]].forEach(([dr,dc]) => addMoveIfValid(r+dr, c+dc));
+                } else if (piece.type === 'FACTORY') {
+                    slide(-1, 0); slide(1, 0); slide(0, -1); slide(0, 1);
+                    slide(-1, -1); slide(-1, 1); slide(1, -1); slide(1, 1);
+                } else if (piece.type === 'SMARTPHONE') {
+                    slide(-1, 0); slide(1, 0); slide(0, -1); slide(0, 1);
+                    slide(-1, -1); slide(-1, 1); slide(1, -1); slide(1, 1);
+                } else if (piece.type === 'DELIVERY') {
+                    [[2*dir, -1], [2*dir, 1], [3*dir, 0]].forEach(([dr, dc]) => addMoveIfValid(r + dr, c + dc));
+                    slide(dir, 0);
+                } else if (piece.type === 'OSHI') {
+                    for (let dr = -2; dr <= 2; dr++) {
+                        for (let dc = -2; dc <= 2; dc++) {
+                            if (dr !== 0 || dc !== 0) addMoveIfValid(r + dr, c + dc);
+                        }
+                    }
+                } else if (piece.type === 'FLAME') {
+                    slide(-1, 0); slide(1, 0); slide(0, -1); slide(0, 1);
+                    slide(-1, -1); slide(-1, 1); slide(1, -1); slide(1, 1);
+                } else if (piece.type === 'CRASH') {
+                    slide(-1, -1); slide(-1, 1); slide(1, -1); slide(1, 1);
+                    [[-1,0],[1,0],[0,-1],[0,1]].forEach(([dr,dc]) => addMoveIfValid(r+dr, c+dc));
+                    [[-2,0],[2,0],[0,-2],[0,2]].forEach(([dr,dc]) => addMoveIfValid(r+dr, c+dc));
+                } else {
+                    const goldOffsets = [[dir, 0], [dir, -1], [dir, 1], [0, -1], [0, 1], [-dir, 0]];
+                    goldOffsets.forEach(([dr, dc]) => addMoveIfValid(r + dr, c + dc));
+                }
+                return moves;
+            }
+
+            switch (piece.type) {
+                case 'PAWN': addMoveIfValid(r + dir, c); break;
+                case 'LANCE': slide(dir, 0); break;
+                case 'KNIGHT': addMoveIfValid(r + 2 * dir, c - 1); addMoveIfValid(r + 2 * dir, c + 1); break;
+                case 'SILVER': [[dir, -1], [dir, 0], [dir, 1], [-dir, -1], [-dir, 1]].forEach(([dr, dc]) => addMoveIfValid(r + dr, c + dc)); break;
+                case 'GOLD': [[dir, -1], [dir, 0], [dir, 1], [0, -1], [0, 1], [-dir, 0]].forEach(([dr, dc]) => addMoveIfValid(r + dr, c + dc)); break;
+                case 'KING': for (let dr = -1; dr <= 1; dr++) for (let dc = -1; dc <= 1; dc++) if (dr !== 0 || dc !== 0) addMoveIfValid(r + dr, c + dc); break;
+                case 'ROOK': slide(-1, 0); slide(1, 0); slide(0, -1); slide(0, 1); break;
+                case 'BISHOP': slide(-1, -1); slide(-1, 1); slide(1, -1); slide(1, 1); break;
+                case 'FACTORY': [[dir, -1], [dir, 0], [dir, 1], [0, -1], [0, 1], [-dir, 0]].forEach(([dr, dc]) => addMoveIfValid(r + dr, c + dc)); break;
+                case 'SMARTPHONE': for (let dr = -1; dr <= 1; dr++) for (let dc = -1; dc <= 1; dc++) if (dr !== 0 || dc !== 0) addMoveIfValid(r + dr, c + dc); break;
+                case 'DELIVERY': [[dir, -1], [dir, 0], [dir, 1], [-dir, -1], [-dir, 1], [2 * dir, 0]].forEach(([dr, dc]) => addMoveIfValid(r + dr, c + dc)); break;
+                case 'OSHI': [[-2, 0], [2, 0], [0, -2], [0, 2], [-2, -2], [-2, 2], [2, -2], [2, 2]].forEach(([dr, dc]) => addMoveIfValid(r + dr, c + dc)); break;
+                case 'FLAME': slide(dir, 0); addMoveIfValid(r, c - 1); addMoveIfValid(r, c + 1); break;
+                case 'CRASH': slide(-1, -1); slide(-1, 1); slide(1, -1); slide(1, 1); break;
+            }
+
+            return moves;
+        }
+
+        function calculateDropMoves(owner, piece) {
+            validMoves = [];
+            for (let r = 0; r < 9; r++) {
+                for (let c = 0; c < 9; c++) {
+                    if (board[r][c] === null) {
+                        if (piece.type === 'PAWN' || piece.type === 'LANCE') {
+                            if ((owner === SENTE && r === 0) || (owner === GOTE && r === 8)) continue;
+                        }
+                        if (piece.type === 'KNIGHT') {
+                            if ((owner === SENTE && r <= 1) || (owner === GOTE && r >= 7)) continue;
+                        }
+
+                        if (piece.type === 'PAWN') {
+                            let hasPawnInCol = false;
+                            for (let row = 0; row < 9; row++) {
+                                const p = board[row][c];
+                                if (p && p.owner === owner && p.type === 'PAWN' && !p.promoted) {
+                                    hasPawnInCol = true;
+                                    break;
+                                }
+                            }
+                            if (hasPawnInCol) continue;
+                        }
+
+                        const tempBoard = cloneBoard(board);
+                        tempBoard[r][c] = createPiece(piece.type, owner);
+                        if (!isKingInCheck(owner, tempBoard)) {
+                            validMoves.push({ r, c });
+                        }
+                    }
+                }
+            }
+        }
+
+        function attemptMove(fromR, fromC, toR, toC) {
+            const piece = board[fromR][fromC];
+            const isEnemyZone = piece.owner === SENTE ? (toR <= 2 || fromR <= 2) : (toR >= 6 || fromR >= 6);
+            const canPromote = !piece.promoted && PIECES[piece.type].promotedName !== piece.type && isEnemyZone;
+
+            const mustPromote = canPromote && (
+                (piece.type === 'PAWN' || piece.type === 'LANCE') && ((piece.owner === SENTE && toR === 0) || (piece.owner === GOTE && toR === 8)) ||
+                (piece.type === 'KNIGHT') && ((piece.owner === SENTE && toR <= 1) || (piece.owner === GOTE && toR >= 7))
+            );
+
+            if (mustPromote) {
+                executeMove(fromR, fromC, toR, toC, true);
+            } else if (canPromote) {
+                if (isVsAI && turn === GOTE) {
+                    executeMove(fromR, fromC, toR, toC, true);
+                } else {
+                    pendingMove = { fromR, fromC, toR, toC };
+                    document.getElementById('promotion-modal').classList.remove('hidden');
+                }
+            } else {
+                executeMove(fromR, fromC, toR, toC, false);
+            }
+        }
+
+        function executeMove(fromR, fromC, toR, toC, promote) {
+            const piece = board[fromR][fromC];
+            const capturedPiece = board[toR][toC];
+
+            if (capturedPiece) {
+                const newCaptured = createPiece(capturedPiece.type, turn, PIECES[capturedPiece.type].kanji);
+                if (turn === SENTE) senteKomadai.push(newCaptured);
+                else goteKomadai.push(newCaptured);
+            }
+
+            piece.promoted = piece.promoted || promote;
+            board[toR][toC] = piece;
+            board[fromR][fromC] = null;
+
+            spawnPawnsFromFactory(toR, toC, piece);
+
+            lastMove = { from: { r: fromR, c: fromC }, to: { r: toR, c: toC } };
+            playKomaSound();
+
+            recordMoveHistory(piece, fromR, fromC, toR, toC, promote, capturedPiece !== null, false);
+
+            selectedSquare = null;
+            validMoves = [];
+
+            switchTurn();
+        }
+
+        function spawnPawnsFromFactory(r, c, piece) {
+            if (piece.type !== 'FACTORY') return;
+
+            const dir = piece.owner === SENTE ? -1 : 1;
+            const spawnTargets = [];
+
+            if (!piece.promoted) {
+                spawnTargets.push([r + dir, c]);
+            } else {
+                spawnTargets.push([r + dir, c], [r, c - 1], [r, c + 1]);
+            }
+
+            const spawnType = gameMode === 'modern_gold' ? 'GOLD' : 'PAWN';
+
+            spawnTargets.forEach(([sr, sc]) => {
+                if (sr >= 0 && sr < 9 && sc >= 0 && sc < 9) {
+                    if (board[sr][sc] === null) {
+                        const spawnedPiece = createPiece(spawnType, piece.owner);
+                        // 歩の場合で最前列（行き所のない場所）にスポーンした場合は最初から「と金」にする
+                        if (spawnType === 'PAWN' && ((piece.owner === SENTE && sr === 0) || (piece.owner === GOTE && sr === 8))) {
+                            spawnedPiece.promoted = true;
+                        }
+                        board[sr][sc] = spawnedPiece;
+                    }
+                }
+            });
+        }
+
+        function executeDrop(owner, komadaiIndex, toR, toC) {
+            const komadai = owner === SENTE ? senteKomadai : goteKomadai;
+            const piece = komadai.splice(komadaiIndex, 1)[0];
+
+            board[toR][toC] = createPiece(piece.type, owner, piece.kanji);
+
+            spawnPawnsFromFactory(toR, toC, board[toR][toC]);
+
+            lastMove = { from: null, to: { r: toR, c: toC } };
+            playKomaSound();
+
+            recordMoveHistory(piece, null, null, toR, toC, false, false, true);
+
+            selectedKomadaiIndex = null;
+            validMoves = [];
+
+            switchTurn();
+        }
+
+        function switchTurn() {
+            turn = turn === SENTE ? GOTE : SENTE;
+            render();
+
+            const kingPos = findKingInCheck(turn);
+            if (kingPos) {
+                if (isCheckmate(turn)) {
+                    const winner = turn === SENTE ? '後手 (Gote)' : '先手 (Sente)';
+                    endGame(`${winner} の詰み（勝利）です！`);
+                    return;
+                } else {
+                    updateStatus(`王手！ (${turn === SENTE ? '先手' : '後手'}の玉が狙われています)`);
+                }
+            } else {
+                updateStatus(`${turn === SENTE ? '先手' : '後手'}の手番です。`);
+            }
+
+            if (!isGameOver && isVsAI && turn === GOTE) {
+                setTimeout(makeAIMove, 300);
+            }
+        }
+
+        function recordMoveHistory(piece, fromR, fromC, toR, toC, promoted, isCapture, isDrop) {
+            const colKanji = (9 - toC).toString();
+            const rowKanji = KANJI_NUMS[toR];
+            let pieceKanji = piece.kanji;
+            
+            if (promoted) pieceKanji += '成';
+            if (isDrop) pieceKanji += '打';
+
+            const notation = `${colKanji}${rowKanji}${pieceKanji}`;
+            const timeStr = turn === SENTE ? formatTime(senteTime) : formatTime(goteTime);
+
+            moveHistory.push({
+                player: turn,
+                notation: notation,
+                time: timeStr
+            });
+        }
+
+        function isKingInCheck(owner, b) {
+            let kingPos = null;
+            for (let r = 0; r < 9; r++) {
+                for (let c = 0; c < 9; c++) {
+                    const p = b[r][c];
+                    if (p && p.owner === owner && p.type === 'KING') {
+                        kingPos = { r, c };
+                        break;
+                    }
+                }
+            }
+            if (!kingPos) return false;
+
+            const opponent = owner === SENTE ? GOTE : SENTE;
+            for (let r = 0; r < 9; r++) {
+                for (let c = 0; c < 9; c++) {
+                    const p = b[r][c];
+                    if (p && p.owner === opponent) {
+                        const moves = getPseudoMoves(r, c, p, b);
+                        if (moves.some(m => m.r === kingPos.r && m.c === kingPos.c)) {
+                            return true;
+                        }
+                    }
+                }
+            }
+            return false;
+        }
+
+        function findKingInCheck(owner) {
+            return isKingInCheck(owner, board) ? getKingPosition(owner) : null;
+        }
+
+        function getKingPosition(owner) {
+            for (let r = 0; r < 9; r++) {
+                for (let c = 0; c < 9; c++) {
+                    const p = board[r][c];
+                    if (p && p.owner === owner && p.type === 'KING') return { r, c };
+                }
+            }
+            return null;
+        }
+
+        function isCheckmate(owner) {
+            for (let r = 0; r < 9; r++) {
+                for (let c = 0; c < 9; c++) {
+                    const p = board[r][c];
+                    if (p && p.owner === owner) {
+                        const moves = getValidMovesForPiece(r, c);
+                        if (moves.length > 0) return false;
+                    }
+                }
+            }
+
+            const komadai = owner === SENTE ? senteKomadai : goteKomadai;
+            for (let i = 0; i < komadai.length; i++) {
+                calculateDropMoves(owner, komadai[i]);
+                if (validMoves.length > 0) {
+                    validMoves = [];
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        // --- AI思考エンジン & アルファベータ探索 ---
+
+        function getPieceValue(type, isPromoted) {
+            const baseValues = {
+                KING: 10000,
+                ROOK: 100,
+                BISHOP: 90,
+                GOLD: 60,
+                SILVER: 50,
+                KNIGHT: 40,
+                LANCE: 30,
+                PAWN: 10,
+                FACTORY: 75,   // スポナーは価値高め
+                SMARTPHONE: 65,
+                DELIVERY: 55,
+                OSHI: 70,
+                FLAME: 85,
+                CRASH: 80
+            };
+            let val = baseValues[type] || 20;
+            if (isPromoted) val = Math.floor(val * 1.5);
+            return val;
+        }
+
+        function makeAIMove() {
+            if (isGameOver || turn !== GOTE) return;
+
+            setTimeout(() => {
+                const allMoves = generateAllLegalActions(GOTE, board, goteKomadai);
+
+                if (allMoves.length === 0) {
+                    endGame('先手 (Sente) の詰み勝利です！');
+                    return;
+                }
+
+                let totalPieces = 0;
+                for (let r = 0; r < 9; r++) {
+                    for (let c = 0; c < 9; c++) if (board[r][c]) totalPieces++;
+                }
+                const depth = totalPieces < 18 ? 4 : 3;
+
+                orderActions(allMoves, board);
+
+                let bestScore = -Infinity;
+                let bestMove = allMoves[0];
+                let alpha = -Infinity;
+                let beta = Infinity;
+
+                for (const move of allMoves) {
+                    const state = applyAction(board, senteKomadai, goteKomadai, GOTE, move);
+                    const score = minimax(state.board, state.senteK, state.goteK, depth - 1, alpha, beta, false);
+
+                    if (score > bestScore) {
+                        bestScore = score;
+                        bestMove = move;
+                    }
+                    alpha = Math.max(alpha, score);
+                }
+
+                if (bestMove.type === 'move') {
+                    attemptMove(bestMove.fromR, bestMove.fromC, bestMove.toR, bestMove.toC);
+                } else {
+                    executeDrop(GOTE, bestMove.komadaiIndex, bestMove.toR, bestMove.toC);
+                }
+            }, 50);
+        }
+
+        function orderActions(actions, currentBoard) {
+            actions.sort((a, b) => {
+                let scoreA = 0;
+                let scoreB = 0;
+
+                if (a.type === 'move') {
+                    const targetA = currentBoard[a.toR][a.toC];
+                    if (targetA) scoreA += getPieceValue(targetA.type, targetA.promoted) * 10;
+                }
+                if (b.type === 'move') {
+                    const targetB = currentBoard[b.toR][b.toC];
+                    if (targetB) scoreB += getPieceValue(targetB.type, targetB.promoted) * 10;
+                }
+
+                return scoreB - scoreA;
+            });
+        }
+
+        function minimax(b, senteK, goteK, depth, alpha, beta, isMaximizing) {
+            const currentTurn = isMaximizing ? GOTE : SENTE;
+            
+            if (depth === 0) {
+                return evaluateBoardFast(b, senteK, goteK);
+            }
+
+            const actions = generateAllLegalActions(currentTurn, b, isMaximizing ? goteK : senteK);
+
+            if (actions.length === 0) {
+                return isMaximizing ? -99999 : 99999;
+            }
+
+            orderActions(actions, b);
+
+            if (isMaximizing) {
+                let maxEval = -Infinity;
+                for (const act of actions) {
+                    const st = applyAction(b, senteK, goteK, GOTE, act);
+                    const evalVal = minimax(st.board, st.senteK, st.goteK, depth - 1, alpha, beta, false);
+                    maxEval = Math.max(maxEval, evalVal);
+                    alpha = Math.max(alpha, evalVal);
+                    if (beta <= alpha) break;
+                }
+                return maxEval;
+            } else {
+                let minEval = Infinity;
+                for (const act of actions) {
+                    const st = applyAction(b, senteK, goteK, SENTE, act);
+                    const evalVal = minimax(st.board, st.senteK, st.goteK, depth - 1, alpha, beta, true);
+                    minEval = Math.min(minEval, evalVal);
+                    beta = Math.min(beta, evalVal);
+                    if (beta <= alpha) break;
+                }
+                return minEval;
+            }
+        }
+
+        function evaluateBoardFast(b, senteK, goteK) {
+            let score = 0;
+            for (let r = 0; r < 9; r++) {
+                for (let c = 0; c < 9; c++) {
+                    const p = b[r][c];
+                    if (p) {
+                        const val = getPieceValue(p.type, p.promoted);
+                        if (p.owner === GOTE) {
+                            score += val;
+                            if (r >= 6) score += 20;
+                        } else {
+                            score -= val;
+                            if (r <= 2) score -= 20;
+                        }
+                    }
+                }
+            }
+
+            for (let i = 0; i < goteK.length; i++) score += getPieceValue(goteK[i].type, false) * 1.1;
+            for (let i = 0; i < senteK.length; i++) score -= getPieceValue(senteK[i].type, false) * 1.1;
+
+            return score;
+        }
+
+        function generateAllLegalActions(player, b, komadai) {
+            const actions = [];
+            for (let r = 0; r < 9; r++) {
+                for (let c = 0; c < 9; c++) {
+                    const p = b[r][c];
+                    if (p && p.owner === player) {
+                        const moves = getPseudoMoves(r, c, p, b).filter(m => {
+                            const tb = cloneBoard(b);
+                            tb[m.r][m.c] = tb[r][c];
+                            tb[r][c] = null;
+                            return !isKingInCheck(player, tb);
+                        });
+
+                        moves.forEach(m => {
+                            actions.push({
+                                type: 'move',
+                                fromR: r, fromC: c, toR: m.r, toC: m.c
+                            });
+                        });
+                    }
+                }
+            }
+            komadai.forEach((piece, idx) => {
+                for (let r = 0; r < 9; r++) {
+                    for (let c = 0; c < 9; c++) {
+                        if (b[r][c] === null) {
+                            if (piece.type === 'PAWN' || piece.type === 'LANCE') {
+                                if ((player === SENTE && r === 0) || (player === GOTE && r === 8)) continue;
+                            }
+                            if (piece.type === 'KNIGHT') {
+                                if ((player === SENTE && r <= 1) || (player === GOTE && r >= 7)) continue;
+                            }
+                            if (piece.type === 'PAWN') {
+                                let hasPawn = false;
+                                for (let row = 0; row < 9; row++) {
+                                    const p = b[row][c];
+                                    if (p && p.owner === player && p.type === 'PAWN' && !p.promoted) {
+                                        hasPawn = true; break;
+                                    }
+                                }
+                                if (hasPawn) continue;
+                            }
+                            const tb = cloneBoard(b);
+                            tb[r][c] = createPiece(piece.type, player);
+                            if (!isKingInCheck(player, tb)) {
+                                actions.push({ type: 'drop', komadaiIndex: idx, toR: r, toC: c, piece: piece });
+                            }
+                        }
+                    }
+                }
+            });
+
+            return actions;
+        }
+
+        function applyAction(b, senteK, goteK, player, act) {
+            const nb = cloneBoard(b);
+            const nsK = [...senteK];
+            const ngK = [...goteK];
+
+            if (act.type === 'move') {
+                const target = nb[act.toR][act.toC];
+                if (target) {
+                    const cap = createPiece(target.type, player);
+                    if (player === SENTE) nsK.push(cap);
+                    else ngK.push(cap);
+                }
+                const p = nb[act.fromR][act.fromC];
+                const isEnemyZone = player === SENTE ? (act.toR <= 2) : (act.toR >= 6);
+                if (isEnemyZone && !p.promoted && PIECES[p.type].promotedName !== p.type) {
+                    p.promoted = true;
+                }
+                nb[act.toR][act.toC] = p;
+                nb[act.fromR][act.fromC] = null;
+
+                const dir = player === SENTE ? -1 : 1;
+                const sr = act.toR + dir;
+                if (p.type === 'FACTORY' && sr >= 0 && sr < 9 && nb[sr][act.toC] === null) {
+                    const spawnType = gameMode === 'modern_gold' ? 'GOLD' : 'PAWN';
+                    const spawnedPiece = createPiece(spawnType, player);
+                    if (spawnType === 'PAWN' && ((player === SENTE && sr === 0) || (player === GOTE && sr === 8))) {
+                        spawnedPiece.promoted = true;
+                    }
+                    nb[sr][act.toC] = spawnedPiece;
+                }
+            } else {
+                const list = player === SENTE ? nsK : ngK;
+                const p = list.splice(act.komadaiIndex, 1)[0];
+                nb[act.toR][act.toC] = createPiece(p.type, player);
+            }
+            return { board: nb, senteK: nsK, goteK: ngK };
+        }
+
+        // Helper Utility Functions
+        function cloneBoard(b) {
+            return b.map(row => row.map(cell => cell ? { ...cell } : null));
+        }
+
+        function updateStatus(msg) {
+            document.getElementById('status-message').innerText = msg;
+        }
+
+        function endGame(message) {
+            isGameOver = true;
+            stopTimer();
+            document.getElementById('gameover-body').innerText = message;
+            document.getElementById('gameover-modal').classList.remove('hidden');
+        }
+
+        function startTimer() {
+            stopTimer();
+            timerInterval = setInterval(() => {
+                if (isGameOver) return;
+                if (turn === SENTE) senteTime++;
+                else goteTime++;
+
+                document.getElementById('sente-timer').innerText = formatTime(senteTime);
+                document.getElementById('gote-timer').innerText = formatTime(goteTime);
+            }, 1000);
+        }
+
+        function stopTimer() {
+            if (timerInterval) clearInterval(timerInterval);
+        }
+
+        function formatTime(seconds) {
+            const m = Math.floor(seconds / 60).toString().padStart(2, '0');
+            const s = (seconds % 60).toString().padStart(2, '0');
+            return `${m}:${s}`;
+        }
+
+        // Event Listeners Setup
+        document.getElementById('btn-piece-mode').addEventListener('click', () => {
+            if (gameMode === 'modern_pawn') {
+                gameMode = 'modern_gold';
+                document.getElementById('piece-mode-label').innerText = '現代カオス (金工場💰)';
+            } else if (gameMode === 'modern_gold') {
+                gameMode = 'standard';
+                document.getElementById('piece-mode-label').innerText = '標準将棋モード';
+            } else {
+                gameMode = 'modern_pawn';
+                document.getElementById('piece-mode-label').innerText = '現代カオス (歩工場)';
+            }
+            initBoard();
+        });
+
+        document.getElementById('btn-mode').addEventListener('click', () => {
+            isVsAI = !isVsAI;
+            document.getElementById('mode-label').innerText = isVsAI ? 'vs AI モード' : '対人対局 モード';
+            document.getElementById('gote-badge').innerText = isVsAI ? 'AI' : '2P';
+            initBoard();
+        });
+
+        document.getElementById('btn-restart').addEventListener('click', () => {
+            initBoard();
+        });
+
+        document.getElementById('btn-export-json').addEventListener('click', () => {
+            const gameState = {
+                turn: turn,
+                isVsAI: isVsAI,
+                gameMode: gameMode,
+                board: board,
+                senteKomadai: senteKomadai,
+                goteKomadai: goteKomadai,
+                moveHistory: moveHistory
+            };
+            const jsonStr = JSON.stringify(gameState, null, 2);
+            
+            const textarea = document.createElement('textarea');
+            textarea.value = jsonStr;
+            document.body.appendChild(textarea);
+            textarea.select();
+            try {
+                document.execCommand('copy');
+                updateStatus('盤面状況をJSON形式でクリップボードにコピーしました！');
+            } catch (err) {
+                updateStatus('クリップボードへのコピーに失敗しました。');
+            }
+            document.body.removeChild(textarea);
+        });
+
+        document.getElementById('btn-resign').addEventListener('click', () => {
+            if (isGameOver) return;
+            const loser = turn === SENTE ? '先手' : '後手';
+            const winner = turn === SENTE ? '後手' : '先手';
+            endGame(`${loser} が投了しました。${winner} の勝利です。`);
+        });
+
+        document.getElementById('btn-sound').addEventListener('click', () => {
+            soundEnabled = !soundEnabled;
+            document.getElementById('sound-icon').className = soundEnabled ? 'fa-solid fa-volume-high' : 'fa-solid fa-volume-xmark';
+        });
+
+        document.getElementById('btn-promote-yes').addEventListener('click', () => {
+            document.getElementById('promotion-modal').classList.add('hidden');
+            if (pendingMove) {
+                executeMove(pendingMove.fromR, pendingMove.fromC, pendingMove.toR, pendingMove.toC, true);
+                pendingMove = null;
+            }
+        });
+
+        document.getElementById('btn-promote-no').addEventListener('click', () => {
+            document.getElementById('promotion-modal').classList.add('hidden');
+            if (pendingMove) {
+                executeMove(pendingMove.fromR, pendingMove.fromC, pendingMove.toR, pendingMove.toC, false);
+                pendingMove = null;
+            }
+        });
+
+        document.getElementById('btn-gameover-view').addEventListener('click', () => {
+            document.getElementById('gameover-modal').classList.add('hidden');
+        });
+
+        document.getElementById('btn-gameover-restart').addEventListener('click', () => {
+            document.getElementById('gameover-modal').classList.add('hidden');
+            initBoard();
+        });
+
+        window.onload = function() {
+            initBoard();
+        };
+    </script>
+</body>
+</html>
